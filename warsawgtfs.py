@@ -38,7 +38,7 @@ def warsawgtfs(getDate="", prevVer="", local=False):
     print("Zipping to gtfs.zip")
     finish.zip()
 
-    return filename.lstrip("input/").rstrip(".txt")
+    return filename.lstrip("input/").rstrip(".TXT")
 
 if __name__ == "__main__":
     import argparse
