@@ -1,0 +1,10 @@
+__pycache__/
+output/*
+input/*
+ignore*
+*.zip
+*.html
+bad-stops.txt
+config.yaml
+._.DS_Store
+.DS_Store
