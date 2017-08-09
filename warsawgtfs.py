@@ -17,6 +17,10 @@ def warsawgtfs(getDate="", prevVer="", local=False):
         print("Downloading ZTM file")
         filename = get.download(getDate, prevVer)
 
+    if not filename:
+        print("File already parsed, aborting")
+        return(prevVer)
+
     print("Converting to GTFS")
     parser.parse(filename, conf)
 
