@@ -149,6 +149,7 @@ def routeTypeColor(desc):
         return("3", ",", "ztm")
 
 def tripHeadsigns(stop, stopNames, upper):
+    if type(stop) is not str: print(stop)
     if stop in ["503803", "503804"]: #Tram Depot R1 Wola
         x = "Zjazd do zajezdni Wola"
     elif stop == "103002": #Tram Depot R2 Praga
@@ -306,10 +307,11 @@ def parse(fileloc, config):
                     if railStopWrite.det(stop_num):
                         if stop_num in railData:
                             data = railData[stop_num]
-                            if data["oneplatform"]:
+                            stop_name = data["name"]
+                            if data["oneplatform"] == "true":
                                 fileStops.write(",".join([stop_num, data["name"], data["zone"], data["pos"], "", "", "\n"]))
                             else:
-                                fileStops.write(",".join([stop_id, "", data["name"], data["zone"], data["pos"], "", "1", "\n"]))
+                                fileStops.write(",".join([stop_num, "", data["name"], data["zone"], data["pos"], "", "1", "\n"]))
                                 for platform_id in sorted(data["platforms"]):
                                     platform_pos = data["platforms"][platform_id]
                                     platform_name = " peron ".join([data["name"], platform_id.split("p")[1]])
@@ -320,6 +322,7 @@ def parse(fileloc, config):
                             stop_lon = avglist(railStops["lons"][stop_num])
                             stop_zone = "2" if stop_num == "1918" else stopZone(stop_lat, stop_lon)
                             fileStops.write(",".join([stop_num, "", stop_name, stop_zone, stop_lat, stop_lon, "", "", "\n"]))
+                        namedecap.ids[stop_num] = stop_name
                 inZP = False
             elif line.startswith("*PR"): #Stops
                 inPR = True
@@ -446,7 +449,7 @@ def parse(fileloc, config):
                         #Some Stop ID Changes
                         if stop[1:3] in railNumbers: #Rail Stops
                             try:
-                                stop = railData[stop[:4]]["stops"]
+                                stop = railData[stop[:4]]["stops"][stop]
                             except KeyError:
                                 stop = stop[:4]
                         elif stop in virtualStopsFixer: #Virtual Stops
