@@ -26,7 +26,7 @@ def warsawgtfs(getDate="", prevVer="", local=False):
 
     if conf["addMetro"]:
         print("Adding metro schedules")
-        finish.addMetro
+        finish.addMetro()
 
     print("Creating fare files")
     finish.fare()
