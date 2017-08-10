@@ -224,7 +224,7 @@ def parse(fileloc, config):
     #Railway Stations data read
     if getRailwayPlatforms:
         railData = request.urlopen("https://gist.github.com/MKuranowski/4ab75be96a5f136e0f907500e8b8a31c/raw")
-        railData = yaml.load(decode(railData.read()))
+        railData = yaml.load(decode(railData.read()), Loader=yaml.BaseLoader)
     else:
         railData = {}
 
