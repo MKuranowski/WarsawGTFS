@@ -309,13 +309,13 @@ def parse(fileloc, config):
                             data = railData[stop_num]
                             stop_name = data["name"]
                             if data["oneplatform"] == "true":
-                                fileStops.write(",".join([stop_num, data["name"], data["zone"], data["pos"], "", "", "\n"]))
+                                fileStops.write(",".join([stop_num, "", data["name"], data["zone"], data["pos"], "", "", "\n"]))
                             else:
                                 fileStops.write(",".join([stop_num, "", data["name"], data["zone"], data["pos"], "", "1", "\n"]))
                                 for platform_id in sorted(data["platforms"]):
                                     platform_pos = data["platforms"][platform_id]
                                     platform_name = " peron ".join([data["name"], platform_id.split("p")[1]])
-                                    fileStops.write(",".join([platform_id, "", platform_name, data["zone"], platform_pos, platform_id.split("p")[1], "0", stop_id+"\n"]))
+                                    fileStops.write(",".join([platform_id, "", platform_name, data["zone"], platform_pos, platform_id.split("p")[1], "0", stop_num+"\n"]))
                         else:
                             stop_name = railStops["names"][stop_num]
                             stop_lat = avglist(railStops["lats"][stop_num])
