@@ -148,7 +148,7 @@ def routeTypeColor(desc):
     else:
         return("3", ",", "ztm")
 
-def tripHeadsigns(stop, stopNames, upper):
+def tripHeadsigns(stop, stopNames):
     if type(stop) is not str: print(stop)
     if stop in ["503803", "503804"]: #Tram Depot R1 Wola
         x = "Zjazd do zajezdni Wola"
@@ -162,10 +162,7 @@ def tripHeadsigns(stop, stopNames, upper):
         x = "Lotnisko Chopina"
     else:
         x = stopNames[stop[:4]]
-    if upper:
-        return(x.upper())
-    else:
-        return(x)
+    return(x)
 
 def parse(fileloc, config):
     #Load Config
@@ -269,7 +266,7 @@ def parse(fileloc, config):
                     trip = trips[trip_id]
                     if len(trip) > 1:
                         service_id = trip_id.split("/")[2]
-                        trip_headsign = tripHeadsigns(trip[-1]["stop"], namedecap.ids, decapNames)
+                        trip_headsign = tripHeadsigns(trip[-1]["stop"], namedecap.ids)
                         if trip_id in tripsLowFloor or route_type != "0": trip_low = "1"
                         else: trip_low = "2"
                         fileTrips.write(",".join([route_id, service_id, trip_id, trip_headsign, "", trip_low, "1", "\n"]))
