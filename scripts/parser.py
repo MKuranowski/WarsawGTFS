@@ -404,7 +404,7 @@ def parse(fileloc, config):
                         trip_direction = trMatch.group(4)
                         trip_position = trMatch.group(5)
                         if trip_direction == "A" and trip_position == "0": #Route Long Name
-                            route_name = " - ".join([trip_origin, trip_dest])
+                            route_name = " — ".join([trip_origin, trip_dest])
                     elif inLW: #OnDemand stops + stoplist for trams to get line color
                         lwMatchNZ = re.match(".*(\d{6})\s*.+,\s*[\w|-]{2}\s+\d{2}\s+NŻ", line)
                         lwMatch = re.match(".*(\d{6})\s*.+,\s*[\w|-]{2}\s+\d{2}\s+", line)
