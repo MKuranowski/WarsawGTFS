@@ -81,7 +81,7 @@ def pointInPath(lat, lon, path):
     y = pathlen - 1
     z = False
     for x in range(pathlen):
-        if ((path[x][1] > lon) != (path[y][1] > lon)) and (lat < (path[y][0] - path[x][0]) * (lat - path[x][1]) / (path[y][1] - path[x][1]) + path[x][0]):
+        if ((path[x][1] > lon) != (path[y][1] > lon)) and (lat < (path[y][0] - path[x][0]) * (lon - path[x][1]) / (path[y][1] - path[x][1]) + path[x][0]):
             z = not z
         y = x
     return(z)
