@@ -1,3 +1,9 @@
+# Static
 beautifulsoup4
 pyyaml
 pylzma
+
+# Realtime
+gtfs-realtime-bindings>=0.0.5
+feedparser
+requests

@@ -1,7 +1,9 @@
 __pycache__/
 output/*
+output-rt/*
 input/*
 ignore*
+*.json
 *.zip
 *.html
 bad-stops.txt

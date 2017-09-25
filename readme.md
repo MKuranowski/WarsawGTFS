@@ -15,6 +15,7 @@ Data comes from [ZTM Warszawa FTP server](ftp://rozklady.ztm.waw.pl/) and option
 7. Geting missing stop positions from [external gist](https://gist.github.com/MKuranowski/05f6e819a482ccec606caa64573c9b5b)
 8. Inserting metro schedules from [otp-pl.tk](http://otp-pl.tk)
 9. Fares (ZTM Warszawa only)
+10. Realtime data
 
 
 ## Running
@@ -39,6 +40,36 @@ All of those are optional.
 
 After setting up `config.yaml`, run `python3 warsawgtfs.py` with desired command line options.
 After some time (up to 1 min, or 15 mins with the nameDecap turned on) the `gtfs.zip` file should be created.
+
+
+## Realtime data
+
+The `warsawgtfs_realtime.py` contains three realtime functions.
+
+All rt data is created in `output-rt/` directory.
+
+A `.pb` file contains a human-readable respresentation of `.pbn` (binary) GTFS-RT file.
+
+- **Alerts()**
+  - (No arguments required),
+  - Only a one-time parse - you have to run it every 30s/60s, or any other desired interval.
+
+
+- **Brigades()**
+  - *apikey* (String) - The apikey yo https://api.um.warszawa.pl,
+  - *gtfsloc* (String) - Location of GTFS feed, can be a URL or a path,
+  - *export* (Boolean) - Output brigades to a json file,
+  - Returns an OrderedDict with mapping of brigades to trip_ids,
+  - Data is valid only on the date of creation - this process has to be run every day.
+
+
+- **Positions()**
+  - *apikey* (String) - The apikey to https://api.um.warszawa.pl,
+  - *brigades* (Dict/OrderedDict or String) - Dict of brigades table, or path/URL to JSON file with them,
+  - *previous* (Dict) - The dict of previous positions, as returned by this function (needed to figure out the trip_id, otherwise assumes all trip are on shedule),
+  - Returns a dict of all positions,
+  - Only a one-time parse - you have to run it every 30s/60s, or any other desired interval.
+
 
 ## License
 
