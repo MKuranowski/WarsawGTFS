@@ -2,7 +2,7 @@
 
 ## Description
 Creates GTFS data feed for Warsaw.
-Data comes from [ZTM Warszawa FTP server](ftp://rozklady.ztm.waw.pl/) and optionally [otp-pl.tk website](http://otp-pl.tk/).
+Data comes from [ZTM Warszawa FTP server](ftp://rozklady.ztm.waw.pl/) and optionally [mkuran.pl website](https://mkuran.pl/).
 
 ## Fetures
 
@@ -13,7 +13,7 @@ Data comes from [ZTM Warszawa FTP server](ftp://rozklady.ztm.waw.pl/) and option
 5. Merging railway stops into one
 6. Geting railway platforms from [external gist](https://gist.github.com/MKuranowski/4ab75be96a5f136e0f907500e8b8a31c)
 7. Geting missing stop positions from [external gist](https://gist.github.com/MKuranowski/05f6e819a482ccec606caa64573c9b5b)
-8. Inserting metro schedules from [otp-pl.tk](http://otp-pl.tk)
+8. Inserting metro schedules from [mkuran.pl](https://mkuran.pl)
 9. Fares (ZTM Warszawa only)
 10. Realtime data
 

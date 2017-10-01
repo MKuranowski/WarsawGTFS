@@ -3,7 +3,7 @@ import zipfile
 import os
 
 def addMetro():
-    urllib.request.urlretrieve("http://otp-pl.tk/feed/metro/metro-latest.zip", "input/metro.zip")
+    urllib.request.urlretrieve("https://mkuran.pl/feed/metro/metro-latest.zip", "input/metro.zip")
     routesFile = open("output/routes.txt", "a", encoding="utf-8", newline="\r\n")
     stopsFile = open("output/stops.txt", "a", encoding="utf-8", newline="\r\n")
     tripsFile = open("output/trips.txt", "a", encoding="utf-8", newline="\r\n")
