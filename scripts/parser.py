@@ -213,6 +213,7 @@ def parse(fileloc, config):
 
     #Other Variables, used per one line
     trips = {}
+    tripDirectionStops = {"A": [], "B": []}
     tripsSorted = []
     tripStops = []
     tripsLowFloor = []
@@ -239,6 +240,9 @@ def parse(fileloc, config):
             elif line.startswith("*TR"): #Line Description
                 inTR = True
             elif line.startswith("#TR"):
+                tripDirectionStops["A"] = set(tripDirectionStops["A"])
+                tripDirectionStops["B"] = set(tripDirectionStops["B"])
+                tripDirectionStops["unique"] = tripDirectionStops["A"] ^ tripDirectionStops["B"]
                 if parsable:
                     fileRoutes.write(",".join([route_id, agency, route_id, route_name, route_type, route_color+"\n"]))
                 inTR = False
@@ -269,13 +273,29 @@ def parse(fileloc, config):
                         trip_headsign = tripHeadsigns(trip[-1]["stop"], namedecap.ids)
                         if trip_id in tripsLowFloor or route_type != "0": trip_low = "1"
                         else: trip_low = "2"
-                        fileTrips.write(",".join([route_id, service_id, trip_id, trip_headsign, "", trip_low, "1", "\n"]))
+                        stops = set([i["original_stop"] for i in trip]) & tripDirectionStops["unique"]
+                        # trip_direction is determined by sharing common stops with main patterns
+                        direction_a_length = len(stops & tripDirectionStops["A"])
+                        direction_b_length = len(stops & tripDirectionStops["B"])
+                        if not stops:
+                            # Trips with all bi-directional stops -> a lasso/circular trip
+                            # Assume trip_direction = 0
+                            trip_direction = "0"
+                        elif direction_a_length > direction_b_length:
+                            trip_direction = "0"
+                        elif direction_a_length < direction_b_length:
+                            trip_direction = "1"
+                        else:
+                            trip_direction = ""
+                            print("Can't find trip_direction for trip {}".format(trip_id))
+                        fileTrips.write(",".join([route_id, service_id, trip_id, trip_headsign, trip_direction, trip_low, "1", "\n"]))
                         sequence = 0
                         for stopt in trip:
                             sequence += 1
                             #trip_id,arrival_time,departure_time,stop_id,stop_sequence,pickup_type,drop_off_type,shape_dist_traveled
                             fileTimes.write(",".join([trip_id, stopt["time"], stopt["time"], stopt["stop"], str(sequence), stopt["pickDropType"], "\n"]))
                 trips = {}
+                tripDirectionStops = {"A": [], "B": []}
                 tripsSorted = []
                 tripsLowFloor = []
                 stopsDemanded = []
@@ -410,10 +430,11 @@ def parse(fileloc, config):
                         lwMatch = re.match(".*(\d{6})\s*.+,\s*[\w|-]{2}\s+\d{2}\s+", line)
                         if lwMatchNZ:
                             stopsDemanded.append(lwMatchNZ.group(1))
-                            if route_type == "0":
-                                tripStops.append(lwMatchNZ.group(1))
-                        elif lwMatch and route_type == "0":
-                            tripStops.append(lwMatch.group(1))
+                            tripStops.append(lwMatchNZ.group(1))
+                            if lwMatchNZ.group(1) not in tripDirectionStops[trip_direction]:
+                                tripDirectionStops[trip_direction].append(lwMatchNZ.group(1))
+                        elif lwMatch and lwMatch.group(1) not in tripDirectionStops[trip_direction]:
+                            tripDirectionStops[trip_direction].append(lwMatch.group(1))
                     elif inWG and route_type == "0": #Low Floor tram trips catcher - read timetable
                         wgMatch = re.match("G\s+\d+\s+(\d+):\s+(.+)", line)
                         if wgMatch:
@@ -455,7 +476,7 @@ def parse(fileloc, config):
                         if stop not in incorrectStops:
                             if trip_id not in tripsSorted: tripsSorted.append(trip_id)
                             if trip_id not in trips: trips[trip_id] = []
-                            trips[trip_id].append({"time": time, "stop": stop, "pickDropType": pickDropType})
+                            trips[trip_id].append({"time": time, "stop": stop, "original_stop": wkMatch.group(2), "pickDropType": pickDropType})
 
     #Write info on incorrect stops
     if incorrectStops:
