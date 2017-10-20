@@ -18,11 +18,13 @@ import os
 # Some random Functions
 
 def _DictFactory(cursor, row):
+    "A simple DictFactory that returns data in a dict"
     d = {}
     for idx, col in enumerate(cursor.description): d[col[0]] = row[idx]
-    return(d)
+    return d
 
 def _FilterLines(rlist):
+    "Filter lines in ZTM alerts to match ids in GTFS"
     for x in rlist:
         if x.startswith("R") or x.startswith("KM") or x in ["Z", "", "KM", "WKD", "POP", "INFO"]:
             while x in rlist: rlist.remove(x)
@@ -32,10 +34,12 @@ def _FilterLines(rlist):
             x.append("M2")
 
 def _CleanTags(html):
+    "Clean text from html tags"
     if raw_html == "None": return ""
     else: return re.sub("<.*?>", "", raw_html)
 
 def _AlertDesc(link):
+    "Get alert description from website"
     text = str(request.urlopen(link).read(), "utf-8")
     soup = BeautifulSoup(website.text, 'html.parser')
     descsoup = soup.find("div", id="PageContent")
@@ -51,6 +55,7 @@ def _AlertDesc(link):
         return ""
 
 def _FindTrip(timepoint, route, stop, times):
+    "Try find trip_id in times for given timepoint route and stop"
     times = list(filter(lambda x: x["routeId"] == route and x["stopId"] == stop, times))
     trips = list(filter(lambda x: x["timepoint"] == timepoint, times))
     if trips: return(trips[0]["tripId"])
@@ -58,9 +63,8 @@ def _FindTrip(timepoint, route, stop, times):
     timepointAM = ":".join([str(int(timepoint.split(":")[0]) + 24), timepoint.split(":")[1], timepoint.split(":")[2]])
     trips = list(filter(lambda x: x["timepoint"] == timepointAM, times))
     if trips: return(trips[0]["tripId"])
-    else:
+    #else:
         #print("Trip not found for R%s S%s T%s" % (route, stop, timepoint))
-        return()
 
 def _TimeDifference(t1, t2):
     "Check if t2 happended after t1"
@@ -70,18 +74,19 @@ def _TimeDifference(t1, t2):
     if t1[0] < t2[0]: return(True)
     elif t1[0] == t2[0] and t1[1] < t2[1]: return(True)
     elif t1[0] == t2[0] and t1[1] == t2[1] and t1[2] <= t2[2]: return(True)
-    else: return(False)
+    else: return False
 
 def _Distance(pos1, pos2):
     "Calculate the distance between pos1 and pos2 in kilometers"
     lat1, lon1, lat2, lon2 = map(math.radians, [pos1[0], pos1[1], pos2[0], pos[1]])
     lat, lon = lat2 - lat1, lon2 - lon1
     dist = 2 * 6371 * math.asin(math.sqrt(math.sin(lat * 0.5) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(lon * 0.5) ** 2))
-    return(dist)
+    return dist
 
 # Main Functions
 
 def Alerts():
+    "Get ZTM Warszawa Alerts"
     # Container
     container = gtfs_rt.FeedMessage()
     feed = feedparser.parse("http://www.ztm.waw.pl/rss.php?l=1&IDRss=6")
@@ -121,6 +126,7 @@ def Alerts():
         f.write(container.SerializeToString())
 
 def Brigades(apikey, gtfsloc="https://mkuran.pl/feed/ztm/ztm-latest.zip", export=False):
+    "Create a brigades table to match positions to gtfs"
     # Variables
     gtfsServices = []
     gtfsRoutes = []
@@ -262,9 +268,10 @@ def Brigades(apikey, gtfsloc="https://mkuran.pl/feed/ztm/ztm-latest.zip", export
         print("Exporting")
         with open("output-rt/brigades.json", "w") as jsonfile:
             jsonfile.write(json.dumps(brigades, indent=2))
-    return(brigades)
+    return brigades
 
 def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", previous={}):
+    "Get ZTM Warszawa positions"
     # Variables
     container = gtfs_rt.FeedMessage()
     positions = OrderedDict()
@@ -370,7 +377,7 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
     with open("output-rt/vehicles.pbn", "wb") as f:
         f.write(container.SerializeToString())
 
-    return(positions)
+    return positions
 
 # A simple interface
 if __name__ == "__main__":
