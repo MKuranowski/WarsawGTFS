@@ -426,7 +426,7 @@ def parse(fileloc, config):
                         odMatch = re.match("(\d{1,2}.\d{2})\s+(.{17})", line)
                         if odMatch:
                             time = odMatch.group(1)
-                            trip_id = odMatch.group(2)
+                            trip_id = "/".join([route_id, odMatch.group(2)])
                             if time in lowFloorTimes:
                                 tripsLowFloor.append(trip_id)
                             else:
