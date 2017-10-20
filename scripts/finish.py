@@ -1,5 +1,6 @@
 import urllib.request
 import zipfile
+import zlib
 import os
 
 def addMetro():
@@ -159,7 +160,7 @@ def fare():
     attribs.close()
 
 def zip():
-    archive = zipfile.ZipFile("gtfs.zip", mode="w")
+    archive = zipfile.ZipFile("gtfs.zip", mode="w", compression=zipfile.ZIP_DEFLATED)
     for file in os.listdir("output"):
         if file.endswith(".txt"):
             archive.write("output/" + file, arcname=file)
