@@ -249,7 +249,7 @@ def parse(fileloc, config):
             elif line.startswith("*LW"): #Route Description
                 inLW = True
             elif line.startswith("#LW"):
-                if route_type == "0" and trip_position == "0":
+                if route_type == "0" and trip_direction == "A" and trip_position == "0":
                     route_color = tramColor(tripStops)
                 tripStops = []
                 inLW = False
@@ -434,6 +434,7 @@ def parse(fileloc, config):
                             if lwMatchNZ.group(1) not in tripDirectionStops[trip_direction]:
                                 tripDirectionStops[trip_direction].append(lwMatchNZ.group(1))
                         elif lwMatch and lwMatch.group(1) not in tripDirectionStops[trip_direction]:
+                            tripStops.append(lwMatch.group(1))
                             tripDirectionStops[trip_direction].append(lwMatch.group(1))
                     elif inWG and route_type == "0": #Low Floor tram trips catcher - read timetable
                         wgMatch = re.match("G\s+\d+\s+(\d+):\s+(.+)", line)
