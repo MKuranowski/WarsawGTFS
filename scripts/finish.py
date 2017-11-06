@@ -61,8 +61,8 @@ def fare():
     routes = []
     routeFile  = open("output/routes.txt", "r", encoding="utf-8", newline="\r\n")
     for line in routeFile:
-        route_id = line.split(",")[0]
-        if route_id != "route_id":
+        route_id, agency = line.split(",")[0], line.split(",")[1]
+        if route_id != "route_id" and agency == "ztm":
             routes.append(route_id)
     routeFile.close()
 

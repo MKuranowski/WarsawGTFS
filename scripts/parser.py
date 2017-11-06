@@ -119,7 +119,7 @@ def tramColor(stoplist):
         return("800080,FFFFFF") #Neither of above
 
 def routeParsable(rid, config):
-    if (not config["parseKM"]) and rid.startswith("R"):
+    if (not config["parseKM"]) and (rid.startswith("R") or rid in ["ZB", "ZM", "ZG"]):
         return(False)
     elif (not config["parseWKD"]) and rid == "WKD":
         return(False)
@@ -128,7 +128,7 @@ def routeParsable(rid, config):
     else:
         return(True)
 
-def routeTypeColor(desc):
+def routeTypeColor(rid, desc):
     desc = desc.lower()
     if "tram" in desc:
         return("0", "000080,FFFFFF", "ztm")
@@ -139,6 +139,8 @@ def routeTypeColor(desc):
             return("2", "008000,FFFFFF", "km")
         else:
             return("2", "000080,FFFFFF", "ztm")
+    elif rid in ["ZM", "ZB", "ZG"]:
+        return("3", ",", "km")
     elif "nocna" in desc:
         return("3", "000000,FFFFFF", "ztm")
     elif "ekspresowa" in desc or "przyspieszona" in desc:
@@ -281,7 +283,7 @@ def parse(fileloc, config):
                             # Trips with all bi-directional stops -> a lasso/circular trip
                             # Assume trip_direction = 0
                             trip_direction = "0"
-                        elif direction_a_length > direction_b_length:
+                        elif direction_a_length >= direction_b_length:
                             trip_direction = "0"
                         elif direction_a_length < direction_b_length:
                             trip_direction = "1"
@@ -414,7 +416,7 @@ def parse(fileloc, config):
                 if llMatch:
                     route_id = llMatch.group(1)
                     route_desc = llMatch.group(2)
-                    route_type, route_color, agency = routeTypeColor(route_desc)
+                    route_type, route_color, agency = routeTypeColor(route_id, route_desc)
                     parsable = routeParsable(route_id, config)
                 elif inTR and parsable: #Trip Descriptions
                     trMatch = re.match("(\w{2}-\w+).*,\s+(.*),.*==>\s*(.*),\s*[\w|-]{2}\s*Kier.\s(\w{1})\s+Poz.\s(\d).*", line)
