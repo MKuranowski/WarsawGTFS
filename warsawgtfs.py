@@ -36,7 +36,7 @@ def warsawgtfs(getDate="", prevVer="", local=False):
     finish.feedinfo(filename)
 
     print("Zipping to gtfs.zip")
-    finish.zip()
+    finish.compress()
 
     return filename.lstrip("input/").rstrip(".TXT")
 

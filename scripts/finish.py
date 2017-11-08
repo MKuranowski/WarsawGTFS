@@ -1,43 +1,48 @@
 import urllib.request
 import zipfile
 import zlib
+import csv
 import os
+
+def _FieldNames(f):
+    r = csv.DictReader(f)
+    return r.fieldnames
+
+def _RewriteFile(filename, metrofile):
+    gtfs_fileloc = os.path.join("output", filename)
+
+    if os.path.exists(gtfs_fileloc):
+        # Get gtfs file header
+        with open(gtfs_fileloc, "r", encoding="utf-8", newline="") as f:
+            gtfs_fieldnames = _FieldNames(f)
+
+        # Decode metrofile
+        metro_lines = [str(x, "utf-8").rstrip() for x in metrofile.readlines()]
+        metro_header = metro_lines[0].split(",")
+
+        # Append to gtfs - csv module is to keep columns aligned
+        with open(gtfs_fileloc, "a", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=gtfs_fieldnames)
+            for row in metro_lines[1:]:
+                writer.writerow(dict(zip(metro_header, row.split(","))))
+
+    else:
+        # If file does not exist then simply copy it, without caring about the content
+        with open(gtfs_fileloc, "a", encoding="utf-8", newline="\r\n") as f:
+            for row in metrofile:
+                row = str(row, "utf-8")
+                f.write(row.rstrip() + "\n")
 
 def addMetro():
     urllib.request.urlretrieve("https://mkuran.pl/feed/metro/metro-latest.zip", "input/metro.zip")
-    routesFile = open("output/routes.txt", "a", encoding="utf-8", newline="\r\n")
-    stopsFile = open("output/stops.txt", "a", encoding="utf-8", newline="\r\n")
-    tripsFile = open("output/trips.txt", "a", encoding="utf-8", newline="\r\n")
-    stopTimesFile = open("output/stop_times.txt", "a", encoding="utf-8", newline="\r\n")
-    calendarFile = open("output/calendar.txt", "w", encoding="utf-8", newline="\r\n")
-    calendarDatesFile = open("output/calendar_dates.txt", "a", encoding="utf-8", newline="\r\n")
-    freqFile = open("output/frequencies.txt", "w", encoding="utf-8", newline="\r\n")
-    shapeFile = open("output/shapes.txt", "w", encoding="utf-8", newline="\r\n")
-    with zipfile.ZipFile("input/metro.zip") as metroFeed:
-        for route in metroFeed.open("routes.txt").readlines()[1:]:
-            routesFile.write(route.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n"))
-        for stop in metroFeed.open("stops.txt").readlines()[1:]:
-            stopsFile.write(stop.decode("utf-8").replace("\r\n", "").replace("\r", "") + ",,,\n")
-        for trip in metroFeed.open("trips.txt").readlines()[1:]:
-            tripsFile.write(trip.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n"))
-        for stopTime in metroFeed.open("stop_times.txt").readlines()[1:]:
-            stopTimesFile.write(stopTime.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n"))
-        for service in metroFeed.open("calendar.txt").readlines():
-            calendarFile.write(service.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n"))
-        for exception in metroFeed.open("calendar_dates.txt").readlines()[1:]:
-            calendarDatesFile.write(exception.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n"))
-        for headway in metroFeed.open("frequencies.txt").readlines():
-            freqFile.write(headway.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n"))
-        for shapePt in metroFeed.open("shapes.txt").readlines():
-            shapeFile.write(shapePt.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n"))
-    routesFile.close()
-    stopsFile.close()
-    tripsFile.close()
-    stopTimesFile.close()
-    calendarFile.close()
-    calendarDatesFile.close()
-    freqFile.close()
-    shapeFile.close()
+    archive = zipfile.ZipFile("input/metro.zip")
+    files = ["routes.txt", "stops.txt", "trips.txt", "stop_times.txt", "calendar.txt", \
+             "calendar_dates.txt", "frequencies.txt", "shapes.txt"]
+    for filename in files:
+        with archive.open(filename) as metrofile:
+            _RewriteFile(filename, metrofile)
+    archive.close()
+
 
 def agency(config):
     file = open("output/agency.txt", 'w', encoding='utf-8', newline="\r\n")
@@ -159,7 +164,7 @@ def fare():
     rules.close()
     attribs.close()
 
-def zip():
+def compress():
     archive = zipfile.ZipFile("gtfs.zip", mode="w", compression=zipfile.ZIP_DEFLATED)
     for file in os.listdir("output"):
         if file.endswith(".txt"):

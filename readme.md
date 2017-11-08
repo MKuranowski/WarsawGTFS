@@ -42,6 +42,11 @@ After setting up `config.yaml`, run `python3 warsawgtfs.py` with desired command
 After some time (up to 1 min, or 15 mins with the nameDecap turned on) the `gtfs.zip` file should be created.
 
 
+Produced GTFS feed has two additional columns not included in standard GTFS specification:
+- `original_stop_id` in `stop_times.txt` - WarsawGTFS changes some stop_ids (especially for railway stops and xxxx8x virtual stops), so this column contains original stop_id as referenced in the ZTM file
+- `platform_code` in `stops.txt` - A platform identifier for (most) railway stops [from Google Transit exptesion]
+
+
 ## Realtime data
 
 The `warsawgtfs_realtime.py` contains three realtime functions.
@@ -56,7 +61,7 @@ A `.pb` file contains a human-readable respresentation of `.pbn` (binary) GTFS-R
 
 
 - **Brigades()**
-  - *apikey* (String) - The apikey yo https://api.um.warszawa.pl,
+  - *apikey* (String) - The apikey to https://api.um.warszawa.pl,
   - *gtfsloc* (String) - Location of GTFS feed, can be a URL or a path,
   - *export* (Boolean) - Output brigades to a json file,
   - Returns an OrderedDict with mapping of brigades to trip_ids,

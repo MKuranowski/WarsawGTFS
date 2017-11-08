@@ -1,4 +1,5 @@
 import re
+import csv
 import yaml
 import urllib.request as request
 from urllib.parse import quote_plus
@@ -177,19 +178,34 @@ def parse(fileloc, config):
 
     #Open Files
     file = open(fileloc, "r", encoding="windows-1250")
-    fileRoutes = open("output/routes.txt", "w", encoding="utf-8", newline="\r\n")
-    fileTrips = open("output/trips.txt", "w", encoding="utf-8", newline="\r\n")
-    fileTimes = open("output/stop_times.txt", "w", encoding="utf-8", newline="\r\n")
-    fileCalendars = open("output/calendar_dates.txt", "w", encoding="utf-8", newline="\r\n")
-    fileStops = open("output/stops.txt", "w", encoding="utf-8", newline="\r\n")
-    fileBadStops = open("bad-stops.txt", "w", encoding="utf-8", newline="\r\n")
 
-    #GTFS File Headers
-    fileRoutes.write("route_id,agency_id,route_short_name,route_long_name,route_type,route_color,route_text_color\n")
-    fileTrips.write("route_id,service_id,trip_id,trip_headsign,direction_id,wheelchair_accessible,bikes_allowed,shape_id\n")
-    fileTimes.write("trip_id,arrival_time,departure_time,stop_id,stop_sequence,pickup_type,drop_off_type,shape_dist_traveled\n")
-    fileCalendars.write("service_id,date,exception_type\n")
-    fileStops.write("stop_id,stop_code,stop_name,zone_id,stop_lat,stop_lon,platform_code,location_type,parent_station\n")
+    fileRoutes = open("output/routes.txt", "w", encoding="utf-8", newline="")
+    csvRoutes = csv.DictWriter(fileRoutes, fieldnames= \
+                ["route_id", "agency_id", "route_short_name", "route_long_name", "route_type", "route_color", "route_text_color"])
+    csvRoutes.writeheader()
+
+    fileTrips = open("output/trips.txt", "w", encoding="utf-8", newline="")
+    csvTrips = csv.DictWriter(fileTrips, fieldnames= \
+               ["route_id", "service_id", "trip_id", "trip_headsign", "direction_id", "wheelchair_accessible", "bikes_allowed",  "shape_id"])
+    csvTrips.writeheader()
+
+    fileTimes = open("output/stop_times.txt", "w", encoding="utf-8", newline="")
+    csvTimes = csv.DictWriter(fileTimes, fieldnames= \
+               ["trip_id", "arrival_time", "departure_time", "stop_id", "original_stop_id", "stop_sequence", "pickup_type", "drop_off_type", "shape_dist_traveled"])
+    csvTimes.writeheader()
+
+    fileCalendars = open("output/calendar_dates.txt", "w", encoding="utf-8", newline="")
+    csvCalendars = csv.DictWriter(fileCalendars, fieldnames= \
+                   ["service_id", "date", "exception_type"])
+    csvCalendars.writeheader()
+
+
+    fileStops = open("output/stops.txt", "w", encoding="utf-8", newline="")
+    csvStops = csv.DictWriter(fileStops, fieldnames= \
+               ["stop_id", "stop_code", "stop_name", "zone_id", "stop_lat", "stop_lon", "wheelchair_accessible", "platform_code", "location_type", "parent_station"])
+    csvStops.writeheader()
+
+    fileBadStops = open("bad-stops.txt", "w", encoding="utf-8", newline="\r\n")
 
     #File Section Booleans
     inLL = False
@@ -206,6 +222,7 @@ def parse(fileloc, config):
 
     #Other Variables, for use later
     namedecap = namedecapClass(config)
+    missingstops = {}
     incorrectStops = []
     notUsedMissingStops = []
     virtualStopsFixer = {}
@@ -246,7 +263,11 @@ def parse(fileloc, config):
                 tripDirectionStops["B"] = set(tripDirectionStops["B"])
                 tripDirectionStops["unique"] = tripDirectionStops["A"] ^ tripDirectionStops["B"]
                 if parsable:
-                    fileRoutes.write(",".join([route_id, agency, route_id, route_name, route_type, route_color+"\n"]))
+                    route_color_only, route_text_color = route_color.split(",")
+                    csvRoutes.writerow({\
+                        "route_id": route_id, "agency_id": agency, "route_short_name": route_id,
+                        "route_long_name": route_name, "route_type": route_type,
+                        "route_color": route_color_only, "route_text_color": route_text_color})
                 inTR = False
             elif line.startswith("*LW"): #Route Description
                 inLW = True
@@ -271,8 +292,6 @@ def parse(fileloc, config):
                 for trip_id in tripsSorted:
                     trip = trips[trip_id]
                     if len(trip) > 1:
-                        service_id = trip_id.split("/")[2]
-                        trip_headsign = tripHeadsigns(trip[-1]["stop"], namedecap.ids)
                         if trip_id in tripsLowFloor or route_type != "0": trip_low = "1"
                         else: trip_low = "2"
                         stops = set([i["original_stop"] for i in trip]) & tripDirectionStops["unique"]
@@ -290,12 +309,18 @@ def parse(fileloc, config):
                         else:
                             trip_direction = ""
                             print("Can't find trip_direction for trip {}".format(trip_id))
-                        fileTrips.write(",".join([route_id, service_id, trip_id, trip_headsign, trip_direction, trip_low, "1", "\n"]))
+
+                        csvTrips.writerow({ \
+                            "route_id": route_id, "service_id": trip_id.split("/")[2], "trip_id": trip_id,
+                            "trip_headsign": tripHeadsigns(trip[-1]["stop"], namedecap.ids),
+                            "direction_id": trip_direction, "wheelchair_accessible": trip_low, "bikes_allowed": "1"})
                         sequence = 0
                         for stopt in trip:
                             sequence += 1
-                            #trip_id,arrival_time,departure_time,stop_id,stop_sequence,pickup_type,drop_off_type,shape_dist_traveled
-                            fileTimes.write(",".join([trip_id, stopt["time"], stopt["time"], stopt["stop"], str(sequence), stopt["pickDropType"], "\n"]))
+                            csvTimes.writerow({ \
+                                "trip_id": trip_id, "arrival_time": stopt["time"], "departure_time": stopt["time"],
+                                "stop_id": stopt["stop"], "original_stop_id": stopt["original_stop"],
+                                "stop_sequence": sequence, "pickup_type": stopt["pickDropType"], "drop_off_type": stopt["pickDropType"]})
                 trips = {}
                 tripDirectionStops = {"A": [], "B": []}
                 tripsSorted = []
@@ -307,19 +332,18 @@ def parse(fileloc, config):
             elif line.startswith("#KA"):
                 inKA = False
             elif line.startswith("*ZP"): #Stop Groups
-                inZP = True
-            elif line.startswith("#ZP"):
                 #Missing Stops Import
                 if getMissingStops:
-                    missingstops = request.urlopen("https://gist.githubusercontent.com/MKuranowski/05f6e819a482ccec606caa64573c9b5b/raw").readlines()
-                    missingstops = [decode(x).rstrip() for x in missingstops[1:]]
-                    for missingstop in missingstops:
-                        stop_id = missingstop.split(",")[0]
-                        if stop_id in incorrectStops:
-                            fileStops.write(missingstop + ",,,\n")
-                            incorrectStops.remove(stop_id)
-                        else:
-                            notUsedMissingStops.append(stop_id)
+                    missingstops_raw = request.urlopen("https://gist.githubusercontent.com/MKuranowski/05f6e819a482ccec606caa64573c9b5b/raw").readlines()
+                    missingstops_raw = [str(x, "utf-8").rstrip() for x in missingstops_raw]
+                    missingstops_headers = missingstops_raw[0].split(",")
+
+                    for missingstop_raw in missingstops_raw[1:]:
+                        missingstop = dict(zip(missingstops_headers, missingstop_raw.split(",")))
+                        missingstops[missingstop["stop_id"]] = {"lat": missingstop["stop_lat"], "lon": missingstop["stop_lon"]}
+                        notUsedMissingStops.append(missingstop["stop_id"])
+                inZP = True
+            elif line.startswith("#ZP"):
                 #Railway Stops
                 for stop_num in sorted(railStops["names"]):
                     #Railway Platforms Importer
@@ -327,21 +351,41 @@ def parse(fileloc, config):
                         if stop_num in railData:
                             data = railData[stop_num]
                             stop_name = data["name"]
-                            if data["oneplatform"] == "true":
-                                fileStops.write(",".join([stop_num, "", data["name"], data["zone"], data["pos"], "", "", "\n"]))
+                            stop_lat, stop_lon = data["pos"].split(",")
+                            wheelchairs = data.get("wheelchair", "")
+                            if data.get("platforms_unavailable", "false") == "true":
+                                csvStops.writerow({"stop_id": stop_num, "stop_name": stop_name, \
+                                         "zone_id": data["zone"], "stop_lat": stop_lat, "stop_lon": stop_lon,
+                                         "wheelchair_accessible": wheelchairs})
+
+                            elif data.get("oneplatform", "false") == "true":
+                                csvStops.writerow({"stop_id": stop_num, "stop_name": stop_name, \
+                                         "zone_id": data["zone"], "stop_lat": stop_lat, "stop_lon": stop_lon,
+                                         "wheelchair_accessible": wheelchairs, "platform_code": "1"})
+
                             else:
-                                fileStops.write(",".join([stop_num, "", data["name"], data["zone"], data["pos"], "", "1", "\n"]))
+                                csvStops.writerow({"stop_id": stop_num, "stop_name": stop_name, \
+                                         "zone_id": data["zone"], "stop_lat": stop_lat, "stop_lon": stop_lon,
+                                         "wheelchair_accessible": wheelchairs, "location_type": "1"})
+
                                 for platform_id in sorted(data["platforms"]):
-                                    platform_pos = data["platforms"][platform_id]
+                                    platform_lat, platform_lon = data["platforms"][platform_id].split(",")
                                     platform_name = " peron ".join([data["name"], platform_id.split("p")[1]])
-                                    fileStops.write(",".join([platform_id, "", platform_name, data["zone"], platform_pos, platform_id.split("p")[1], "0", stop_num+"\n"]))
+                                    csvStops.writerow({"stop_id": platform_id, "stop_name": platform_name, "zone_id": data["zone"], \
+                                             "stop_lat": platform_lat, "stop_lon": platform_lon, "wheelchair_accessible": wheelchairs,
+                                             "platform_code": platform_id.split("p")[1], "location_type": "0", "parent_station": stop_num})
+
                         else:
                             stop_name = railStops["names"][stop_num]
                             stop_lat = avglist(railStops["lats"][stop_num])
                             stop_lon = avglist(railStops["lons"][stop_num])
                             stop_zone = "2" if stop_num == "1918" else stopZone(stop_lat, stop_lon)
-                            fileStops.write(",".join([stop_num, "", stop_name, stop_zone, stop_lat, stop_lon, "", "", "\n"]))
+
+                            csvStops.writerow({"stop_id": stop_num, "stop_name": stop_name, \
+                                     "zone_id": stop_zone, "stop_lat": stop_lat, "stop_lon": stop_lon})
+
                         namedecap.ids[stop_num] = stop_name
+
                 inZP = False
             elif line.startswith("*PR"): #Stops
                 inPR = True
@@ -350,10 +394,11 @@ def parse(fileloc, config):
                 for stop in stopsInGroup:
                     stop_id = stop_num + stop["ref"]
                     stop_nameref = " ".join([stop_name, stop["ref"]])
-                    stop_lat = stop["lat"]
-                    stop_lon = stop["lon"]
                     stop_zone = stopZone(stop["lat"], stop["lon"])
-                    fileStops.write(",".join([stop_id, stop_id, stop_nameref, stop_zone, stop_lat, stop_lon, "", "", "\n"]))
+
+                    csvStops.writerow({"stop_id": stop_id, "stop_name": stop_nameref, \
+                            "stop_lat": stop["lat"], "stop_lon": stop["lon"], "zone_id": stop_zone})
+
                 #Virtual Stops Fixer
                 for invalid in stopsVirtualInGroup:
                     for valid in [x["ref"] for x in stopsInGroup]:
@@ -369,7 +414,7 @@ def parse(fileloc, config):
                 splited = line.split()
                 date = splited[0].replace("-", "")
                 for service in splited[2:]:
-                    fileCalendars.write(",".join([service, date, "1\n"]))
+                    csvCalendars.writerow({"service_id": service, "date": date, "exception_type": "1"})
 
             ### STOPS ###
             elif inZP:
@@ -403,10 +448,15 @@ def parse(fileloc, config):
                             stopsVirtualInGroup.append(stop_ref)
                         else:
                             stopsInGroup.append({"ref": stop_ref, "lat": stop_lat, "lon": stop_lon})
+
                     elif prWrongMatch:
                         stop_ref = prWrongMatch.group(2)
+                        missingstops_import = missingstops.get(stop_num + stop_ref, None)
                         if stop_ref[0] == "8":
                             stopsVirtualInGroup.append(stop_ref)
+                        elif missingstops_import:
+                            stopsInGroup.append({"ref": stop_ref, "lat": missingstops_import["lat"], "lon": missingstops_import["lon"]})
+                            notUsedMissingStops.remove(stop_num + stop_ref)
                         else:
                             incorrectStops.append(stop_num + stop_ref)
 
@@ -464,24 +514,28 @@ def parse(fileloc, config):
                         trip_id = "/".join([route_id, wkMatch.group(1)])
                         time = wkMatch.group(4).replace(".",":") + ":00"
                         stop = wkMatch.group(2)
+
                         #OnDemand Stops
-                        if stop in stopsDemanded: pickDropType = "3,3"
-                        else: pickDropType = "0,0"
+                        if stop in stopsDemanded: pickDropType = "3"
+                        else: pickDropType = "0"
+
                         #Some Stop ID Changes
                         if stop[1:3] in railNumbers: #Rail Stops
                             try:
                                 stop = railData[stop[:4]]["stops"][stop]
                             except KeyError:
                                 stop = stop[:4]
+
                         elif stop in virtualStopsFixer: #Virtual Stops
                             stop = virtualStopsFixer[stop]
+
                         #Append trips
                         if stop not in incorrectStops:
                             if trip_id not in tripsSorted: tripsSorted.append(trip_id)
                             if trip_id not in trips: trips[trip_id] = []
                             trips[trip_id].append({"time": time, "stop": stop, "original_stop": wkMatch.group(2), "pickDropType": pickDropType})
 
-    #Write info on incorrect stops
+    #Write info about incorrect stops
     if incorrectStops:
         fileBadStops.write("Stops without location:\n")
         for stop in incorrectStops: fileBadStops.write(stop + "\n")
