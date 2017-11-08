@@ -186,7 +186,7 @@ def parse(fileloc, config):
 
     fileTrips = open("output/trips.txt", "w", encoding="utf-8", newline="")
     csvTrips = csv.DictWriter(fileTrips, fieldnames= \
-               ["route_id", "service_id", "trip_id", "trip_headsign", "direction_id", "wheelchair_accessible", "bikes_allowed",  "shape_id"])
+               ["route_id", "service_id", "trip_id", "exceptional", "trip_headsign", "direction_id", "wheelchair_accessible", "bikes_allowed",  "shape_id"])
     csvTrips.writeheader()
 
     fileTimes = open("output/stop_times.txt", "w", encoding="utf-8", newline="")
@@ -202,7 +202,7 @@ def parse(fileloc, config):
 
     fileStops = open("output/stops.txt", "w", encoding="utf-8", newline="")
     csvStops = csv.DictWriter(fileStops, fieldnames= \
-               ["stop_id", "stop_code", "stop_name", "zone_id", "stop_lat", "stop_lon", "wheelchair_accessible", "platform_code", "location_type", "parent_station"])
+               ["stop_id", "stop_code", "stop_name", "zone_id", "stop_lat", "stop_lon", "wheelchair_boarding", "platform_code", "location_type", "parent_station"])
     csvStops.writeheader()
 
     fileBadStops = open("bad-stops.txt", "w", encoding="utf-8", newline="\r\n")
@@ -233,6 +233,7 @@ def parse(fileloc, config):
     #Other Variables, used per one line
     trips = {}
     tripDirectionStops = {"A": [], "B": []}
+    tripCommonDirections = []
     tripsSorted = []
     tripStops = []
     tripsLowFloor = []
@@ -294,10 +295,12 @@ def parse(fileloc, config):
                     if len(trip) > 1:
                         if trip_id in tripsLowFloor or route_type != "0": trip_low = "1"
                         else: trip_low = "2"
+
                         stops = set([i["original_stop"] for i in trip]) & tripDirectionStops["unique"]
-                        # trip_direction is determined by sharing common stops with main patterns
-                        direction_a_length = len(stops & tripDirectionStops["A"])
+
+                        direction_a_length = len(stops & tripDirectionStops["A"]) # trip_direction is determined by sharing common stops with main patterns
                         direction_b_length = len(stops & tripDirectionStops["B"])
+
                         if not stops:
                             # Trips with all bi-directional stops -> a lasso/circular trip
                             # Assume trip_direction = 0
@@ -310,10 +313,13 @@ def parse(fileloc, config):
                             trip_direction = ""
                             print("Can't find trip_direction for trip {}".format(trip_id))
 
+                        unusual_trip = "0" if [i for i in tripCommonDirections if trip_id.split("/")[1].startswith(i)] else "1"
+
                         csvTrips.writerow({ \
                             "route_id": route_id, "service_id": trip_id.split("/")[2], "trip_id": trip_id,
-                            "trip_headsign": tripHeadsigns(trip[-1]["stop"], namedecap.ids),
+                            "trip_headsign": tripHeadsigns(trip[-1]["stop"], namedecap.ids), "exceptional": unusual_trip,
                             "direction_id": trip_direction, "wheelchair_accessible": trip_low, "bikes_allowed": "1"})
+
                         sequence = 0
                         for stopt in trip:
                             sequence += 1
@@ -323,6 +329,7 @@ def parse(fileloc, config):
                                 "stop_sequence": sequence, "pickup_type": stopt["pickDropType"], "drop_off_type": stopt["pickDropType"]})
                 trips = {}
                 tripDirectionStops = {"A": [], "B": []}
+                tripCommonDirections = []
                 tripsSorted = []
                 tripsLowFloor = []
                 stopsDemanded = []
@@ -356,23 +363,23 @@ def parse(fileloc, config):
                             if data.get("platforms_unavailable", "false") == "true":
                                 csvStops.writerow({"stop_id": stop_num, "stop_name": stop_name, \
                                          "zone_id": data["zone"], "stop_lat": stop_lat, "stop_lon": stop_lon,
-                                         "wheelchair_accessible": wheelchairs})
+                                         "wheelchair_boarding": wheelchairs})
 
                             elif data.get("oneplatform", "false") == "true":
                                 csvStops.writerow({"stop_id": stop_num, "stop_name": stop_name, \
                                          "zone_id": data["zone"], "stop_lat": stop_lat, "stop_lon": stop_lon,
-                                         "wheelchair_accessible": wheelchairs, "platform_code": "1"})
+                                         "wheelchair_boarding": wheelchairs, "platform_code": "1"})
 
                             else:
                                 csvStops.writerow({"stop_id": stop_num, "stop_name": stop_name, \
                                          "zone_id": data["zone"], "stop_lat": stop_lat, "stop_lon": stop_lon,
-                                         "wheelchair_accessible": wheelchairs, "location_type": "1"})
+                                         "wheelchair_boarding": wheelchairs, "location_type": "1"})
 
                                 for platform_id in sorted(data["platforms"]):
                                     platform_lat, platform_lon = data["platforms"][platform_id].split(",")
                                     platform_name = " peron ".join([data["name"], platform_id.split("p")[1]])
                                     csvStops.writerow({"stop_id": platform_id, "stop_name": platform_name, "zone_id": data["zone"], \
-                                             "stop_lat": platform_lat, "stop_lon": platform_lon, "wheelchair_accessible": wheelchairs,
+                                             "stop_lat": platform_lat, "stop_lon": platform_lon, "wheelchair_boarding": wheelchairs,
                                              "platform_code": platform_id.split("p")[1], "location_type": "0", "parent_station": stop_num})
 
                         else:
@@ -471,6 +478,7 @@ def parse(fileloc, config):
                 elif inTR and parsable: #Trip Descriptions
                     trMatch = re.match("(\w{2}-\w+).*,\s+(.*),.*==>\s*(.*),\s*[\w|-]{2}\s*Kier.\s(\w{1})\s+Poz.\s(\d).*", line)
                     if trMatch:
+                        tripCommonDirections.append(trMatch.group(1))
                         trip_origin = namedecap.fromstr(trMatch.group(2))
                         trip_dest = namedecap.fromstr(trMatch.group(3))
                         trip_direction = trMatch.group(4)

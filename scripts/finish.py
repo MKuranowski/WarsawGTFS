@@ -23,8 +23,11 @@ def _RewriteFile(filename, metrofile):
         # Append to gtfs - csv module is to keep columns aligned
         with open(gtfs_fileloc, "a", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=gtfs_fieldnames)
-            for row in metro_lines[1:]:
-                writer.writerow(dict(zip(metro_header, row.split(","))))
+            for row_raw in metro_lines[1:]:
+                row = dict(zip(metro_header, row_raw.split(",")))
+                if filename == "trips.txt" and not row.get("exceptional", ""):
+                    row["exceptional"] = "0"
+                writer.writerow(row)
 
     else:
         # If file does not exist then simply copy it, without caring about the content

@@ -42,9 +42,10 @@ After setting up `config.yaml`, run `python3 warsawgtfs.py` with desired command
 After some time (up to 1 min, or 15 mins with the nameDecap turned on) the `gtfs.zip` file should be created.
 
 
-Produced GTFS feed has two additional columns not included in standard GTFS specification:
-- `original_stop_id` in `stop_times.txt` - WarsawGTFS changes some stop_ids (especially for railway stops and xxxx8x virtual stops), so this column contains original stop_id as referenced in the ZTM file
-- `platform_code` in `stops.txt` - A platform identifier for (most) railway stops [from Google Transit exptesion]
+Produced GTFS feed has three additional columns not included in standard GTFS specification:
+- `original_stop_id` in `stop_times.txt` - WarsawGTFS changes some stop_ids (especially for railway stops and xxxx8x virtual stops), so this column contains original stop_id as referenced in the ZTM file,
+- `platform_code` in `stops.txt` - A platform identifier for (most) railway stops ([from Google Transit extensions](https://developers.google.com/transit/gtfs/reference/gtfs-extensions#station-platforms)),
+- `exceptional` in `trips.txt` - Value `1` indicates an *unusual* trip which does not follow common line's route (e.g. trips to depot) ([from Google Transit extensions](https://developers.google.com/transit/gtfs/reference/gtfs-extensions#trip-diversions)).
 
 
 ## Realtime data
