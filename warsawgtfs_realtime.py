@@ -78,7 +78,7 @@ def _TimeDifference(t1, t2):
 
 def _Distance(pos1, pos2):
     "Calculate the distance between pos1 and pos2 in kilometers"
-    lat1, lon1, lat2, lon2 = map(math.radians, [pos1[0], pos1[1], pos2[0], pos[1]])
+    lat1, lon1, lat2, lon2 = map(math.radians, [pos1[0], pos1[1], pos2[0], pos2[1]])
     lat, lon = lat2 - lat1, lon2 - lon1
     dist = 2 * 6371 * math.asin(math.sqrt(math.sin(lat * 0.5) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(lon * 0.5) ** 2))
     return dist
@@ -332,7 +332,7 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
                 # If vehicle is near (50m) the last stop => the trip has finished => assume the next trip
                 # Or if the previous trip should've finished 30min earlier (A fallback rule if the previous cause has failed)
                 if _Distance([lat, lon], prev_trip_last_latlon) <= 0.05 or \
-                    _TimeDifference(triplist[prev_trip_index]["last_stop_timepoint"], (datetime.now()-timedelta(minutes=30)).strftime("%H:%M:%S")):
+                    _TimeDifference(triplist[prev_trip_index]["last_stop_timepoint"], (datetime.now()-timedelta(minutes=30)).strftime("%H:%M:%S"))
                     trip_id = triplist[prev_trip_index + 1]["trip_id"]
                 else:
                     trip_id = copy(prev_trip)
