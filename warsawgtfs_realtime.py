@@ -332,7 +332,7 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
                 # If vehicle is near (50m) the last stop => the trip has finished => assume the next trip
                 # Or if the previous trip should've finished 30min earlier (A fallback rule if the previous cause has failed)
                 if _Distance([lat, lon], prev_trip_last_latlon) <= 0.05 or \
-                    _TimeDifference(triplist[prev_trip_index]["last_stop_timepoint"], (datetime.now()-timedelta(minutes=30)).strftime("%H:%M:%S"))
+                    _TimeDifference(triplist[prev_trip_index]["last_stop_timepoint"], (datetime.now()-timedelta(minutes=30)).strftime("%H:%M:%S")):
                     trip_id = triplist[prev_trip_index + 1]["trip_id"]
                 else:
                     trip_id = copy(prev_trip)
