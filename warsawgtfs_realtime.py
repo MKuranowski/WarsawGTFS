@@ -318,7 +318,7 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
 
         # Try to match with trip
         if id in previous:
-            prev_trip, prev_lat, prev_lon = previous[id]["trip_id"], previous["lat"], previous["lon"]
+            prev_trip, prev_lat, prev_lon = previous[id]["trip_id"], previous[id]["lat"], previous[id]["lon"]
             tripidslist = [x["trip_id"] for x in triplist]
 
             # If vehicle was doing its last trip, there's nothing more that can be calculated
