@@ -32,11 +32,12 @@ def _FilterLines(rlist):
             while x in rlist: rlist.remove(x)
             x.append("M1")
             x.append("M2")
+    return rlist
 
 def _CleanTags(html):
     "Clean text from html tags"
-    if raw_html == "None": return ""
-    else: return re.sub("<.*?>", "", raw_html)
+    if html == "None": return ""
+    else: return re.sub("<.*?>", "", html)
 
 def _AlertDesc(link):
     "Get alert description from website"
@@ -89,23 +90,34 @@ def Alerts():
     "Get ZTM Warszawa Alerts"
     # Container
     container = gtfs_rt.FeedMessage()
-    feed = feedparser.parse("http://www.ztm.waw.pl/rss.php?l=1&IDRss=6")
+    changes = feedparser.parse("http://www.ztm.waw.pl/rss.php?l=1&IDRss=3").entries
+    disruptions = feedparser.parse("http://www.ztm.waw.pl/rss.php?l=1&IDRss=6").entries
     idenum = 0
 
+    all_entries = []
+    for i in changes:
+        i.effect = 6 # Modified Service
+        all_entries.append(i)
+
+    for i in disruptions:
+        i.effect = 2 # Reduced Service
+        all_entries.append(i)
+
     # Alerts
-    for alert in feed.entries:
+    for entry in all_entries:
         idenum += 1
-        lines = _FilterLines(re.split("[^0-9a-zA-Z-]+", alert.title[33:]))
+        lines = _FilterLines(re.split("[^0-9a-zA-Z-]+", entry.title[33:]))
         if lines:
             # Gather data
-            link = _CleanTags(str(alert.link))
-            title = _CleanTags(str(alert.description))
+            link = _CleanTags(str(entry.link))
+            title = _CleanTags(str(entry.description))
             try: desc = _AlertDesc(link)
             except: desc = ""
             # Append to gtfs_rt container
             entity = container.entity.add()
             entity.id = "-".join(["a", str(idenum)])
             alert = entity.alert
+            alert.effect = entry.effect
             alert.url.translation.add().text = link
             alert.header_text.translation.add().text = title
             if desc: alert.description_text.translation.add().text = desc
@@ -115,7 +127,7 @@ def Alerts():
 
     # Header
     header = container.header
-    header.gtfs_realtime_version = "1.0"
+    header.gtfs_realtime_version = "2.0"
     header.incrementality = 0
     header.timestamp = round(datetime.today().timestamp())
 
