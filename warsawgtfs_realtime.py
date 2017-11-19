@@ -42,15 +42,17 @@ def _CleanTags(html):
 def _AlertDesc(link):
     "Get alert description from website"
     text = str(request.urlopen(link).read(), "utf-8")
-    soup = BeautifulSoup(website.text, 'html.parser')
+    soup = BeautifulSoup(text, "html.parser")
     descsoup = soup.find("div", id="PageContent")
     if descsoup != None:
-        descsoup.table.decompose()
-        descsoup.h4.decompose()
-        for tag in descsoup.find_all("div", {'id':'PageInfo'}): tag.decompose()
-        for tag in descsoup.find_all("div", {'class':'cb'}): tag.decompose()
+        for tag in descsoup.find_all("table"): tag.decompose()
+        for tag in descsoup.find_all("h4"): tag.decompose()
+        for tag in descsoup.find_all("div", id="PageInfo"): tag.decompose()
+        for tag in descsoup.find_all("div", id="InneKomunikaty"): tag.decompose()
+        for tag in descsoup.find_all("div", class_="InneKomunikatyLinia"): tag.decompose()
+        for tag in descsoup.find_all("div", class_="cb"): tag.decompose()
         descwithtags = str(descsoup)
-        descwithtags = descwithtags.replace("<br/>", "\n").replace("<br>", "\n").replace("\xa0", " ").replace("  "," ")
+        descwithtags = descwithtags.replace("</p>", "\n").replace("<br/>", "\n").replace("<br>", "\n").replace("\xa0", " ").replace("  "," ")
         return _CleanTags(descwithtags)
     else:
         return ""
