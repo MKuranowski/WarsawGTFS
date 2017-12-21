@@ -30,8 +30,8 @@ def _FilterLines(rlist):
             while x in rlist: rlist.remove(x)
         elif x.startswith("M") and x not in ["M1", "M2"]:
             while x in rlist: rlist.remove(x)
-            x.append("M1")
-            x.append("M2")
+            if "M1" not in rlist: rlist.add("M1")
+            if "M2" not in rlist: rlist.add("M2")
     return rlist
 
 def _CleanTags(html):
@@ -97,17 +97,19 @@ def Alerts():
     idenum = 0
 
     all_entries = []
-    for i in changes:
-        i.effect = 6 # Modified Service
-        all_entries.append(i)
-
     for i in disruptions:
         i.effect = 2 # Reduced Service
+        all_entries.append(i)
+
+    for i in changes:
+        i.effect = 6 # Modified Service
         all_entries.append(i)
 
     # Alerts
     for entry in all_entries:
         idenum += 1
+        try: lines = entry.title.split(":")[1]
+        except IndexError: lines = ""
         lines = _FilterLines(re.split("[^0-9a-zA-Z-]+", entry.title[33:]))
         if lines:
             # Gather data
