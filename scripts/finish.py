@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import urllib.request
 import zipfile
 import zlib
@@ -67,10 +68,11 @@ def fare():
     attribs = open("output/fare_attributes.txt", "w", encoding="utf-8", newline="\r\n")
     #Read routes
     routes = []
-    routeFile  = open("output/routes.txt", "r", encoding="utf-8", newline="\r\n")
-    for line in routeFile:
-        route_id, agency = line.split(",")[0], line.split(",")[1]
-        if route_id != "route_id" and agency == "ztm":
+    routeFile = open("output/routes.txt", "r", encoding="utf-8", newline="")
+    routesReader = csv.DictReader(routeFile)
+    for row in routesReader:
+        route_id, agency = row["route_id"], row["agency_id"]
+        if agency == "ztm":
             routes.append(route_id)
     routeFile.close()
 
@@ -87,23 +89,27 @@ def fare():
     #Rules
     rules.write("fare_id,contains_id,route_id\n")
     for route in routes: #20min
-        if not (route.startswith("L") or  route.startswith("R") or route == "WKD"):
+        if not route.startswith("L"):
             rules.write("Czasowy/20min,1," + route + "\n")
             rules.write("Czasowy/20min,2," + route + "\n")
             rules.write("Czasowy/20min,2w," + route + "\n")
+
     for route in routes: #Jednorazowy 1
-        if not (route.startswith("L") or  route.startswith("R") or route == "WKD"):
+        if not route.startswith("L"):
             rules.write("Jednorazowy-Strefa1,1," + route + "\n")
+
     for route in routes: #Jednorazowy 1&2
-        if not (route.startswith("L") or  route.startswith("R") or route == "WKD"):
+        if not route.startswith("L"):
             rules.write("Jednorazowy-Strefa1i2,1," + route + "\n")
             rules.write("Jednorazowy-Strefa1i2,2," + route + "\n")
             rules.write("Jednorazowy-Strefa1i2,2w," + route + "\n")
+
     for route in routes: #75min
-        if not (route.startswith("L") or  route.startswith("R") or route == "WKD"):
+        if not route.startswith("L"):
             rules.write("Przesiadkowy/75min-Strefa1,1," + route + "\n")
+
     for route in routes: #90min
-        if not (route.startswith("L") or  route.startswith("R") or route == "WKD"):
+        if not route.startswith("L"):
             rules.write("Przesiadkowy/90min-Strefa1i2,1," + route + "\n")
             rules.write("Przesiadkowy/90min-Strefa1i2,2," + route + "\n")
             rules.write("Przesiadkowy/90min-Strefa1i2,2w," + route + "\n")
@@ -114,56 +120,30 @@ def fare():
     rules.write("Dobowy/24h-Strefa1i2,2w,\n")
 
     # "Local" (Lxx) lines
-    l2 = True
-    l3 = True
-    l36 = True
-    l4 = True
-    l5 = True
+    localPrices = {"L-2zl": "2.00", "L-3zl": "3.00", \
+                  "L-3.6zl": "3.60", "L-4zl": "4.00", "L-5zl": "5.00"}
 
-    #Prices for local lines:
-    localPrices = {
-    "L-2zl": ["L-1", "L-3", "L-4", "L-6", "L-7", "L18", "L26", "L27", "L29", "L35", "L36", "L37", "L38"],
-    "L-3zl": ["L-8", "L-9", "L10", "L11", "L20", "L22", "L31", "L40"],
-    "L-3.6zl": ["L14", "L15", "L16", "L21", "L28", "L30"],
-    "L-4zl": ["L-2", "L-5", "L12", "L13", "L20", "L22", "L23", "L24", "L25", "L32", "L39"],
-    "L-5zl": ["L17", "L19"]}
-    for route in localPrices["L-2zl"]:
-        if route in routes:
-            if l2:
-                attribs.write("L-2zl,2.00,PLN,0,0,\n")
-                l2 = False
-            rules.write("L-2zl,," + route + "\n")
-    for route in localPrices["L-3zl"]:
-        if route in routes:
-            if l3:
-                attribs.write("L-3zl,3.00,PLN,0,0,\n")
-                l3 = False
-            if route in ["L20", "L22"]:
-                rules.write("L-3zl,2," + route + "\n")
+    # Prices for local lines:
+    localFares = OrderedDict()
+    localFares["L-2zl"] = ["L-1", "L-3", "L-4", "L-6", "L-7", "L18", "L26", "L27", "L29", "L35", "L36", "L37", "L38"]
+    localFares["L-3zl"] = ["L-8", "L-9", "L10", "L11", "L20", "L22", "L31", "L40", "L41"]
+    localFares["L-3.6zl"] = ["L14", "L15", "L16", "L21", "L28", "L30"]
+    localFares["L-4zl"] = ["L-2", "L-5", "L12", "L13", "L20", "L22", "L23", "L24", "L25", "L32", "L39"]
+    localFares["L-5zl"] = ["L17", "L19"]
+
+    for fare_id, route_names in localFares.items():
+        routesForFare = [x for x in routes if x.split("/")[0] in route_names]
+        if routesForFare:
+            attribs.write(",".join([fare_id, localPrices[fare_id], "PLN", "0", "0", ""]) + "\n")
+        for route in routesForFare:
+            if route in ["L20", "L22"] and fare_id == "L-3zl":
+                rules.write(",".join([fare_id, "2", route]) + "\n")
+            elif route in ["L20", "L22"] and fare_id == "L-4zl":
+                rules.write(",".join([fare_id, "2", route]) + "\n")
+                rules.write(",".join([fare_id, "2w", route]) + "\n")
             else:
-                rules.write("L-3zl,," + route + "\n")
-    for route in localPrices["L-3.6zl"]:
-        if route in routes:
-            if l36:
-                attribs.write("L-3.6zl,3.60,PLN,0,0,\n")
-                l36 = False
-            rules.write("L-3.6zl,," + route + "\n")
-    for route in localPrices["L-4zl"]:
-        if route in routes:
-            if l4:
-                attribs.write("L-4zl,4.00,PLN,0,0,\n")
-                l4 = False
-            if route in ["L20", "L22"]:
-                rules.write("L-4zl,2," + route + "\n")
-                rules.write("L-4zl,2w," + route + "\n")
-            else:
-                rules.write("L-4zl,," + route + "\n")
-    for route in localPrices["L-5zl"]:
-        if route in routes:
-            if l5:
-                attribs.write("L-5zl,5.00,PLN,0,0,\n")
-                l5 = False
-            rules.write("L-5zl,," + route + "\n")
+                rules.write(",".join([fare_id, "", route]) + "\n")
+
     rules.close()
     attribs.close()
 
