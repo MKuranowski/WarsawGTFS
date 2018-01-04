@@ -7,3 +7,8 @@ pylzma
 gtfs-realtime-bindings>=0.0.5
 feedparser
 requests
+
+# Shapes
+pyroutelib3>=0.6
+overpass
+rdp
