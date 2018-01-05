@@ -50,7 +50,7 @@ class namedecapClass(object):
                     if name:
                         name = name.replace(".", ". ").replace("-", " - ").replace("  "," ").rstrip()
                         name = name.replace("Praga - Płd.", "Praga-Płd.")
-                        self.ids[match[0]] = name
+                        self.ids[match.group(0)] = name
 
     def fromid(self, id, name):
         if id in self.ids:
