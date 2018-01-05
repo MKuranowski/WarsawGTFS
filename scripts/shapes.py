@@ -14,7 +14,7 @@ _RDP_EPSILON = 0.000009 #EVEN MORE COMPRESSION
 _RAIL_FILE = "https://mkuran.pl/feed/ztm/ztm-km-rail-shapes.osm"
 _TRAM_FILE = "https://mkuran.pl/feed/ztm/ztm-km-rail-shapes.osm"
 _BUS_FILE = "https://overpass-api.de/api/interpreter?data=%5Bbbox%3A51%2E921819%2C20%2E462668%2C52%2E48293%2C21%2E46385%5D%5Bout%3Axml%5D%3B%28way%5B%22highway%22%3D%22motorway%22%5D%3Bway%5B%22highway%22%3D%22motorway%5Flink%22%5D%3Bway%5B%22highway%22%3D%22trunk%22%5D%3Bway%5B%22highway%22%3D%22trunk%5Flink%22%5D%3Bway%5B%22highway%22%3D%22primary%22%5D%3Bway%5B%22highway%22%3D%22primary%5Flink%22%5D%3Bway%5B%22highway%22%3D%22secondary%22%5D%3Bway%5B%22highway%22%3D%22secondary%5Flink%22%5D%3Bway%5B%22highway%22%3D%22tertiary%22%5D%3Bway%5B%22highway%22%3D%22tertiary%5Flink%22%5D%3Bway%5B%22highway%22%3D%22motorway%22%5D%3Bway%5B%22highway%22%3D%22unclassified%22%5D%3Bway%5B%22highway%22%3D%22minor%22%5D%3Bway%5B%22highway%22%3D%22residential%22%5D%3Bway%5B%22highway%22%3D%22service%22%5D%3B%29%3B%28%2E%5F%3B%3E%3B%29%3Bout%3B%0A"
-_OVERRIDE_RATIO = {"103102-103101": 9, "103103-103101": 9, "516602-515705": 3}
+_OVERRIDE_RATIO = {"103102-103101": 9, "103103-103101": 9, "516602-515705": 3, "207902-201801": 3.5}
 
 Failed_Pairs = {}
 
