@@ -36,9 +36,25 @@ class namedecapClass(object):
         self.usewebsite = config["nameDecap"]
         self.ids = {}
         self.names = {}
+
+        if self.usewebsite:
+            # First load stop_names from list of all stops, to reduce calls to ztm website
+            website = request.urlopen("http://m.ztm.waw.pl/rozklad_nowy.php?c=183&l=1")
+            soup = BeautifulSoup(decode(website.read()), "html.parser").find("div", id="RozkladContent")
+            for t in soup.find_all("form"): t.decompose()
+            for link in soup.find_all("a"):
+                match = re.search(r"(?<=&a=)\d{4}", link.get("href"))
+                if match:
+                    for t in link.find_all(True): t.decompose()
+                    name = link.string
+                    if name:
+                        name = name.replace(".", ". ").replace("-", " - ").replace("  "," ").rstrip()
+                        name = name.replace("Praga - Płd.", "Praga-Płd.")
+                        self.ids[match[0]] = name
+
     def fromid(self, id, name):
         if id in self.ids:
-            return(self.ids[id])
+            return self.ids[id]
         elif self.usewebsite:
             website = request.urlopen("http://m.ztm.waw.pl/rozklad_nowy.php?c=183&l=1&a=" + id[:4])
             soup = BeautifulSoup(decode(website.read()), "html.parser")
@@ -56,6 +72,7 @@ class namedecapClass(object):
         self.ids[id] = text
         self.names[name] = text
         return text
+
     def fromstr(self, name):
         if name in self.names:
             return(self.names[name])
@@ -403,7 +420,8 @@ def parse(fileloc, config):
                 zpMatch = re.match(r"(\d{4})\s{3}((.+)(?:,)|(.{30}))\s+(.{2})\s{2}(.+)", line)
                 if zpMatch:
                     stop_num = zpMatch.group(1)
-                    stop_name = namedecap.fromid(stop_num, (zpMatch.group(3) or zpMatch.group(4).rstrip(",")))
+                    stop_name = namedecap.fromid(stop_num, (zpMatch.group(3) or zpMatch.group(4)).rstrip(","))
+                    namedecap.names[(zpMatch.group(3) or zpMatch.group(4)).rstrip(",")] = stop_name
                     stop_town = zpMatch.group(6).title()
                     stopsInGroup = []
                     stopsVirtualInGroup = []
