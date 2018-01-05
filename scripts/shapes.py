@@ -14,14 +14,15 @@ _RDP_EPSILON = 0.000009 #EVEN MORE COMPRESSION
 _RAIL_FILE = "https://mkuran.pl/feed/ztm/ztm-km-rail-shapes.osm"
 _TRAM_FILE = "https://mkuran.pl/feed/ztm/ztm-km-rail-shapes.osm"
 _BUS_FILE = "https://overpass-api.de/api/interpreter?data=%5Bbbox%3A51%2E921819%2C20%2E462668%2C52%2E48293%2C21%2E46385%5D%5Bout%3Axml%5D%3B%28way%5B%22highway%22%3D%22motorway%22%5D%3Bway%5B%22highway%22%3D%22motorway%5Flink%22%5D%3Bway%5B%22highway%22%3D%22trunk%22%5D%3Bway%5B%22highway%22%3D%22trunk%5Flink%22%5D%3Bway%5B%22highway%22%3D%22primary%22%5D%3Bway%5B%22highway%22%3D%22primary%5Flink%22%5D%3Bway%5B%22highway%22%3D%22secondary%22%5D%3Bway%5B%22highway%22%3D%22secondary%5Flink%22%5D%3Bway%5B%22highway%22%3D%22tertiary%22%5D%3Bway%5B%22highway%22%3D%22tertiary%5Flink%22%5D%3Bway%5B%22highway%22%3D%22motorway%22%5D%3Bway%5B%22highway%22%3D%22unclassified%22%5D%3Bway%5B%22highway%22%3D%22minor%22%5D%3Bway%5B%22highway%22%3D%22residential%22%5D%3Bway%5B%22highway%22%3D%22service%22%5D%3B%29%3B%28%2E%5F%3B%3E%3B%29%3Bout%3B%0A"
-_OVERRIDE_RATIO = {"103102-103101": 9, "103103-103101": 9, "516602-515705": 3, "207902-201801": 3.5}
-
-Failed_Pairs = {}
+_OVERRIDE_RATIO = {"103102-103101": 9, "103103-103101": 9, "207902-201801": 3.5, "700609-700614": 18.5, "102805-102811": 8.1, "205202-205203": 8.4,
+                   "102810-102811": 12.5, "410201-419902": 3.7, "600516-607505": 3.6, "120502-120501": 15.5, "607506-607501": 14.3,
+                   "600517-607505": 3.8, "205202-205204": 7.6, "100610-100609": 18.4, "201802-226002": 3.8, "325402-325401": 21.9,
+                   "400901-400806": 5.5, "600515-607505": 4, "600513-607505": 4.4,"124001-124003": 11, "124202-124201": 13.3}
 
 TYPES["bus"] = {
         "weights": {"motorway": 1.5, "trunk": 1.5, "primary": 1.4, "secondary": 1.3, "tertiary": 1.3,
             "unclassified": 1, "residential": 0.6, "track": 0.3, "service": 0.5},
-        "access": ["access", "vehicle", "motor_vehicle", "psv", "bus"]}
+        "access": ["access", "vehicle", "motor_vehicle", "psv", "bus", "routing:ztm"]}
 
 class Timeout(Exception):
     pass
@@ -60,6 +61,7 @@ class Shaper(object):
         self.stops = {}
         self.trips = {}
         self.osmStops = {}
+        self.failed = {}
         self.file = open("output/shapes.txt", "w", encoding="utf-8", newline="\r\n")
         self.file.write("shape_id,shape_pt_sequence,shape_dist_traveled,shape_pt_lat,shape_pt_lon\n")
 
@@ -151,7 +153,6 @@ class Shaper(object):
                 route_points = list(map(self.router.nodeLatLon, route))
 
                 dist_ratio = _totalDistance(route_points) / _distance([start_lat, start_lon], [end_lat, end_lon])
-                dist_modifier = 1.25 if self.transport == "bus" else 1
 
                 # SafetyCheck - route has to have at least 2 nodes
                 if status == "success" and len(route_points) <= 1:
@@ -162,7 +163,7 @@ class Shaper(object):
                 elif stops[x-1][:4] == stops[x][:4] and dist_ratio > _OVERRIDE_RATIO.get(start_stop + "-" + end_stop, 7):
                     status = "route_too_long_in_group_ratio:%s" % round(dist_ratio, 2)
 
-                elif stops[x-1][:4] != stops[x][:4] and dist_ratio * dist_modifier > _OVERRIDE_RATIO.get(start_stop + "-" + end_stop, 3.5):
+                elif stops[x-1][:4] != stops[x][:4] and dist_ratio > _OVERRIDE_RATIO.get(start_stop + "-" + end_stop, 3.5):
                     status = "route_too_long_ratio:%s" % round(dist_ratio, 2)
 
             else:
@@ -171,8 +172,8 @@ class Shaper(object):
 
             if status != "success":
                 route_points = [[start_lat, start_lon], [end_lat, end_lon]]
-                if Failed_Pairs.get(start_stop + "-" + end_stop, True):
-                    Failed_Pairs[start_stop + "-" + end_stop] = False
+                if self.failed.get(start_stop + "-" + end_stop, True):
+                    self.failed[start_stop + "-" + end_stop] = False
                     print("Shaper: Error between stops '%s' (%s) - '%s' (%s): %s " % (start_stop, start, end_stop, end, status))
 
             if x == 1:
