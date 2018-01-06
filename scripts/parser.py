@@ -417,7 +417,7 @@ def parse(fileloc, config):
 
                 #Virtual Stops Fixer
                 for invalid in stopsVirtualInGroup:
-                    if stop_num == "6059" and invalid == "88" and "28" in [x["ref"] for ref in stopsInGroup]:
+                    if stop_num == "6059" and invalid == "88" and "28" in [x["ref"] for x in stopsInGroup]:
                         virtualStopsFixer["605988"] = "605928" # Exception: Metro Młociny 88 maps to Metro Młociny 28
                         continue
                     for valid in [x["ref"] for x in stopsInGroup]:
