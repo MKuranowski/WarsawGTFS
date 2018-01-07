@@ -33,7 +33,7 @@ def warsawgtfs(getDate="", prevVer="", local=False):
 
     print("Generating feed_info and agency files")
     finish.agency(conf)
-    finish.feedinfo(filename)
+    finish.feedinfo(filename, conf["shapes"])
 
     print("Zipping to gtfs.zip")
     finish.compress()
