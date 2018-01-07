@@ -180,7 +180,7 @@ class Shaper(object):
 
             if x == 1:
                 # See below, except when it's the very first stop of a trip
-                distances[stops[0]] = str(dist)
+                distances[1] = str(dist)
                 self.file.write(",".join([pattern_id, str(pt_seq), str(dist), str(route_points[0][0]),  str(route_points[0][1])]) + "\n")
 
             for y in range(1, len(route_points)):
@@ -189,7 +189,7 @@ class Shaper(object):
                 dist += _distance(route_points[y-1], route_points[y])
                 self.file.write(",".join([pattern_id, str(pt_seq), str(dist), str(route_points[y][0]), str(route_points[y][1])]) + "\n")
 
-            distances[stops[x]] = str(dist)
+            distances[x + 1] = str(dist)
 
         self.trips[pattern_id] = distances
         return distances

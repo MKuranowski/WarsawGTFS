@@ -331,7 +331,7 @@ def parse(fileloc, config):
                                 "trip_id": trip_id, "arrival_time": stopt["time"], "departure_time": stopt["time"],
                                 "stop_id": stopt["stop"], "original_stop_id": stopt["original_stop"],
                                 "stop_sequence": sequence, "pickup_type": stopt["pickDropType"],
-                                "drop_off_type": stopt["pickDropType"], "shape_dist_traveled": shape_distances.get(stopt["stop"], "")})
+                                "drop_off_type": stopt["pickDropType"], "shape_dist_traveled": shape_distances.get(sequence, "")})
 
                 trips = {}
                 tripDirectionStops = {"A": [], "B": []}
