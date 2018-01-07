@@ -8,7 +8,7 @@ nameDecap: false""", "getMissingStops": """
 getMissingStops: true""", "parseWKD": """
 # Should the script parse WKD schedules?
 # The data does not include all stops.
-# I recommend using GTFS feed avilable at http://otp-pl.tk
+# I recommend using GTFS feed avilable at https://mkuran.pl/feed/
 parseWKD: false""", "parseSKM": """
 # Should the script parse SKM schedules?
 # This data is fine.
@@ -17,12 +17,17 @@ parseSKM: true""", "parseKM": """
 # The data does not include all stops and lines.
 # To get full data you have to contact Koleje Mazowieckie.
 parseKM: true""", "addMetro": """
-# Should the script add Metro schedules from http://otp-pl.tk ?
+# Should the script add Metro schedules from https://mkuran.pl/feed/metro ?
 # This data has to be included in the same feed as ZTM schedules in order for fares to work.
 addMetro: false""", "getRailwayPlatforms": """
 # Should railway platforms be downloaded from gist available at https://gist.github.com/MKuranowski/4ab75be96a5f136e0f907500e8b8a31c ?
 # Otherwise every railway station/halt will have only one entry in stops.txt
-getRailwayPlatforms: true"""}
+getRailwayPlatforms: true""", "shapes": """
+# Should the script generate shapes from data avilable at https://mkuran.pl/feed/ztm/ztm-km-rail-shapes.osm (for Tram and Rail) and OSM (for buses)?
+# Routing on OSM graphs will be done via pyroutelib3
+# This will have large influence on parse time
+shapes: false
+"""}
 
 def create(missingParams):
     if not os.path.exists("config.yaml"):

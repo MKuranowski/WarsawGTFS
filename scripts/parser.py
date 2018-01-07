@@ -1,6 +1,7 @@
 import re
 import csv
 import yaml
+from .shapes import Shaper
 import urllib.request as request
 from urllib.parse import quote_plus
 from codecs import decode
@@ -128,6 +129,8 @@ def tramColor(stoplist):
     elif [x for x in ["708505", "708506", "500203", "500204"] if x in stoplist]: return "AAFE00,000000" #Al. Solidarności
     else: return "800080,FFFFFF" #Neither of above
 
+#routeParsable = lambda x, y: True if len(x) < 3 else False
+
 def routeParsable(rid, config):
     "Check if route should be parsed based on config and route_id"
     if (not config["parseKM"]) and (rid.startswith("R") or rid in ["ZB", "ZM", "ZG"]): return False
@@ -221,10 +224,14 @@ def parse(fileloc, config):
     railStopWrite = railStopWriteClass(config)
     railStops = {"names": {}, "lats": {}, "lons": {}}
 
+    if config["shapes"]: shaper = Shaper(True)
+
     #Other Variables, used per one line
     trips = {}
     tripDirectionStops = {"A": [], "B": []}
     tripCommonDirections = []
+    trip_direction = ""
+    trip_position = ""
     tripsSorted = []
     tripStops = []
     tripsLowFloor = []
@@ -287,6 +294,12 @@ def parse(fileloc, config):
                         if trip_id in tripsLowFloor or route_type != "0": trip_low = "1"
                         else: trip_low = "2"
 
+                        if config["shapes"]:
+                            shape_distances = shaper.get(trip_id, [i["stop"] for i in trip])
+                            shape_id = trip_id.split("/")[0] + "/" + trip_id.split("/")[1] if shape_distances else ""
+                        else:
+                            shape_distances, shape_id = {}, ""
+
                         stops = set([i["original_stop"] for i in trip]) & tripDirectionStops["unique"]
 
                         direction_a_length = len(stops & tripDirectionStops["A"]) # trip_direction is determined by sharing common stops with main patterns
@@ -309,7 +322,7 @@ def parse(fileloc, config):
                         csvTrips.writerow({ \
                             "route_id": route_id, "service_id": trip_id.split("/")[2], "trip_id": trip_id,
                             "trip_headsign": tripHeadsigns(trip[-1]["stop"], namedecap.ids), "exceptional": unusual_trip,
-                            "direction_id": trip_direction, "wheelchair_accessible": trip_low, "bikes_allowed": "1"})
+                            "direction_id": trip_direction, "wheelchair_accessible": trip_low, "bikes_allowed": "1", "shape_id": shape_id})
 
                         sequence = 0
                         for stopt in trip:
@@ -317,7 +330,8 @@ def parse(fileloc, config):
                             csvTimes.writerow({ \
                                 "trip_id": trip_id, "arrival_time": stopt["time"], "departure_time": stopt["time"],
                                 "stop_id": stopt["stop"], "original_stop_id": stopt["original_stop"],
-                                "stop_sequence": sequence, "pickup_type": stopt["pickDropType"], "drop_off_type": stopt["pickDropType"]})
+                                "stop_sequence": sequence, "pickup_type": stopt["pickDropType"],
+                                "drop_off_type": stopt["pickDropType"], "shape_dist_traveled": shape_distances.get(sequence, "")})
 
                 trips = {}
                 tripDirectionStops = {"A": [], "B": []}
@@ -352,6 +366,7 @@ def parse(fileloc, config):
                             stop_name = data["name"]
                             stop_lat, stop_lon = data["pos"].split(",")
                             wheelchairs = data.get("wheelchair", "")
+                            if config["shapes"]: shaper.stops[stop_num] = [stop_lat, stop_lon]
                             if data.get("platforms_unavailable", "false") == "true":
                                 csvStops.writerow({"stop_id": stop_num, "stop_name": stop_name, \
                                          "zone_id": data["zone"], "stop_lat": stop_lat, "stop_lon": stop_lon,
@@ -370,6 +385,7 @@ def parse(fileloc, config):
                                 for platform_id in sorted(data["platforms"]):
                                     platform_lat, platform_lon = data["platforms"][platform_id].split(",")
                                     platform_name = " peron ".join([data["name"], platform_id.split("p")[1]])
+                                    if config["shapes"]: shaper.stops[platform_id] = [platform_lat, platform_lon]
                                     csvStops.writerow({"stop_id": platform_id, "stop_name": platform_name, "zone_id": data["zone"], \
                                              "stop_lat": platform_lat, "stop_lon": platform_lon, "wheelchair_boarding": wheelchairs,
                                              "platform_code": platform_id.split("p")[1], "location_type": "0", "parent_station": stop_num})
@@ -380,6 +396,7 @@ def parse(fileloc, config):
                             stop_lon = avglist(railStops["lons"][stop_num])
                             stop_zone = "2" if stop_num == "1918" else stopZone(stop_lat, stop_lon)
 
+                            if config["shapes"]: shaper.stops[stop_num] = [stop_lat, stop_lon]
                             csvStops.writerow({"stop_id": stop_num, "stop_name": stop_name, \
                                      "zone_id": stop_zone, "stop_lat": stop_lat, "stop_lon": stop_lon})
 
@@ -394,12 +411,15 @@ def parse(fileloc, config):
                     stop_id = stop_num + stop["ref"]
                     stop_nameref = " ".join([stop_name, stop["ref"]])
                     stop_zone = stopZone(stop["lat"], stop["lon"])
-
+                    if config["shapes"]: shaper.stops[stop_id] = [stop["lat"], stop["lon"]]
                     csvStops.writerow({"stop_id": stop_id, "stop_name": stop_nameref, \
                             "stop_lat": stop["lat"], "stop_lon": stop["lon"], "zone_id": stop_zone})
 
                 #Virtual Stops Fixer
                 for invalid in stopsVirtualInGroup:
+                    if stop_num == "6059" and invalid == "88" and "28" in [x["ref"] for x in stopsInGroup]:
+                        virtualStopsFixer["605988"] = "605928" # Exception: Metro Młociny 88 maps to Metro Młociny 28
+                        continue
                     for valid in [x["ref"] for x in stopsInGroup]:
                         if valid[1] == invalid[1]:
                             virtualStopsFixer[stop_num+invalid] = stop_num+valid
@@ -464,6 +484,7 @@ def parse(fileloc, config):
                     route_desc = llMatch.group(2)
                     route_type, route_color, agency = routeTypeColor(route_id, route_desc)
                     parsable = routeParsable(route_id, config)
+                    if parsable and config["shapes"]: shaper.nextRoute(route_id, route_type)
                 elif inTR and parsable: #Trip Descriptions
                     trMatch = re.match(r"(\w{2}-\w+).*,\s+(.*),.*==>\s*(.*),\s*[\w|-]{2}\s*Kier.\s(\w{1})\s+Poz.\s(\d).*", line)
                     if trMatch:

@@ -56,11 +56,12 @@ def agency(config):
     if config["parseWKD"]: file.write("wkd,Warszawska Kolej Dojazdowa,http://wkd.com.pl,Europe/Warsaw,pl,+48227557082,http://www.wkd.com.pl/bilety/ceny-biletow.html\n")
     file.close()
 
-def feedinfo(ztm_path):
+def feedinfo(ztm_path, shapes):
     version = ztm_path.lstrip("input/").rstrip(".TXT")
     file = open("output/feed_info.txt", 'w', encoding="utf-8", newline="\r\n")
     file.write("feed_publisher_name,feed_publisher_url,feed_lang,feed_version\n")
-    file.write("ZTM Warszawa; MKuranowski,https://github.com/MKuranowski/WarsawGTFS,pl,%s\n" % version)
+    if shapes: file.write("Data: ZTM Warszawa; GTFS Convert: MKuranowski; Bus Shapes (under ODbL License): © OpenStreetMap Contributors,https://github.com/MKuranowski/WarsawGTFS,pl,%s\n" % version)
+    else: file.write("Data: ZTM Warszawa; GTFS Convert: MKuranowski,https://github.com/MKuranowski/WarsawGTFS,pl,%s\n" % version)
     file.close()
 
 def fare():

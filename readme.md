@@ -13,9 +13,10 @@ Data comes from [ZTM Warszawa FTP server](ftp://rozklady.ztm.waw.pl/) and option
 5. Merging railway stops into one
 6. Geting railway platforms from [external gist](https://gist.github.com/MKuranowski/4ab75be96a5f136e0f907500e8b8a31c)
 7. Geting missing stop positions from [external gist](https://gist.github.com/MKuranowski/05f6e819a482ccec606caa64573c9b5b)
-8. Inserting metro schedules from [mkuran.pl](https://mkuran.pl)
+8. Inserting metro schedules from [mkuran.pl](https://mkuran.pl/feed/metro)
 9. Fares (ZTM Warszawa only)
 10. Realtime data
+11. Shapes generator: Buses based on [OSM Data](https://www.openstreetmap.org/), Rail/Tram based on [my own graph](https://mkuran.pl/feed/ztm/ztm-km-rail-shapes.osm).
 
 
 ## Running
