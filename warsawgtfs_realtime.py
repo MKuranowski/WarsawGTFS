@@ -110,7 +110,7 @@ def Alerts():
         idenum += 1
         try: lines = entry.title.split(":")[1]
         except IndexError: lines = ""
-        lines = _FilterLines(re.split("[^0-9a-zA-Z-]+", entry.title[33:]))
+        lines = _FilterLines(re.split(r"[^0-9a-zA-Z-]{1,3}", lines))
         if lines:
             # Gather data
             link = _CleanTags(str(entry.link))
@@ -169,7 +169,7 @@ def Brigades(apikey, gtfsloc="https://mkuran.pl/feed/ztm/ztm-latest.zip", export
 
     # Read GTFS
     print("Creating database")
-    with zipfile.ZipFile("gtfs.zip") as gtfs:
+    with zipfile.ZipFile(gtfsloc) as gtfs:
 
         # Routes suitable for matching brigades
         with gtfs.open("routes.txt") as routes:
