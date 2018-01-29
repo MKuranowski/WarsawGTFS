@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from datetime import date, datetime, timedelta
 import urllib.request
 import zipfile
 import zlib
@@ -8,6 +9,48 @@ import os
 def _FieldNames(f):
     r = csv.DictReader(f)
     return r.fieldnames
+
+def _RewriteCalendar(filename, metrofile):
+    gtfs_fileloc = os.path.join("output", filename)
+    dates_ztm = []
+    dates_metro = []
+
+    calendars = {}
+
+    # Load ZTM Calendars
+    with open(gtfs_fileloc, "r", encoding="utf-8", newline="") as f:
+        gtfs_reader = csv.DictReader(f)
+        gtfs_fieldnames = gtfs_reader.fieldnames
+        for row in gtfs_reader:
+            dates_ztm.append(datetime.strptime(row["date"], "%Y%m%d").date())
+
+            if row["date"] not in calendars: calendars[row["date"]] = []
+            calendars[row["date"]].append(row["service_id"])
+
+
+    # Load Metro Calendars
+    metro_lines = [str(x, "utf-8").rstrip() for x in metrofile.readlines()]
+    metro_header = metro_lines[0].split(",")
+    for row_raw in metro_lines[1:]:
+        row = dict(zip(metro_header, row_raw.split(",")))
+
+        dates_metro.append(datetime.strptime(row["date"], "%Y%m%d").date())
+        if row["date"] not in calendars: calendars[row["date"]] = []
+        calendars[row["date"]].append(row["service_id"])
+
+    # Find date range
+    start_date = max(min(dates_ztm), min(dates_metro))
+    end_date = min(max(dates_ztm), max(dates_metro))
+
+    # Create new file
+    with open(gtfs_fileloc, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["date", "service_id", "exception_type"])
+        writer.writeheader()
+        while start_date <= end_date:
+            date_str = start_date.strftime("%Y%m%d")
+            for service in calendars[date_str]:
+                writer.writerow({"date": date_str, "service_id": service, "exception_type": "1"})
+            start_date += timedelta(1)
 
 def _RewriteFile(filename, metrofile):
     gtfs_fileloc = os.path.join("output", filename)
@@ -40,11 +83,12 @@ def _RewriteFile(filename, metrofile):
 def addMetro():
     urllib.request.urlretrieve("https://mkuran.pl/feed/metro/metro-latest.zip", "input/metro.zip")
     archive = zipfile.ZipFile("input/metro.zip")
-    files = ["routes.txt", "stops.txt", "trips.txt", "stop_times.txt", "calendar.txt", \
+    files = ["routes.txt", "stops.txt", "trips.txt", "stop_times.txt", \
              "calendar_dates.txt", "frequencies.txt", "shapes.txt"]
     for filename in files:
         with archive.open(filename) as metrofile:
-            _RewriteFile(filename, metrofile)
+            if filename == "calendar_dates.txt": _RewriteCalendar(filename, metrofile)
+            else: _RewriteFile(filename, metrofile)
     archive.close()
 
 
