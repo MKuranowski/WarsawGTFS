@@ -26,7 +26,7 @@ def _DictFactory(cursor, row):
 def _FilterLines(rlist):
     "Filter lines in ZTM alerts to match ids in GTFS"
     for x in rlist:
-        if x.startswith("R") or x.startswith("KM") or x in ["Z", "", "KM", "WKD", "POP", "INFO"]:
+        if x.startswith("KM") or x in ["Z", "", "KM", "WKD", "POP", "INFO"]:
             while x in rlist: rlist.remove(x)
         elif x.startswith("M") and x not in ["M1", "M2"]:
             while x in rlist: rlist.remove(x)
@@ -182,8 +182,8 @@ def Brigades(apikey, gtfsloc="https://mkuran.pl/feed/ztm/ztm-latest.zip", export
         with gtfs.open("calendar_dates.txt") as calendars:
             for line in calendars.readlines():
                 line = str(line, "utf-8")
-                if line.split(",")[1] == today:
-                    gtfsServices.append(line.split(",")[0])
+                if line.split(",")[0] == today:
+                    gtfsServices.append(line.split(",")[1])
 
         # Stops for additional information used in parsing vehicles locations
         with gtfs.open("stops.txt") as stops:
@@ -210,8 +210,8 @@ def Brigades(apikey, gtfsloc="https://mkuran.pl/feed/ztm/ztm-latest.zip", export
                     except IndexError: service_id = ""
                     # Save only if route is suitable for matching and is active today
                     if route_id in gtfsRoutes and service_id in gtfsServices:
-                            db.execute("INSERT INTO stoptimes VALUES (?,?,?,?)", (route_id, trip_id, stop_id, timepoint))
-                            dbc.commit()
+                        db.execute("INSERT INTO stoptimes VALUES (?,?,?,?)", (route_id, trip_id, stop_id, timepoint))
+                        dbc.commit()
 
             # Save the last trip:
             tripLastTime[trip_id] = timepoint
