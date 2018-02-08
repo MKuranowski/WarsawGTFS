@@ -332,6 +332,9 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
         try: triplist = brigades[route][brigade]
         except KeyError: continue
 
+        # Do not care about obsolete data
+        if (datetime.today() - tstamp) > timedelta(minutes=10): continue
+
         # Try to match with trip
         if id in previous:
             prev_trip, prev_lat, prev_lon = previous[id]["trip_id"], previous[id]["lat"], previous[id]["lon"]
