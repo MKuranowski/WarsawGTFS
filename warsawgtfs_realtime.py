@@ -86,6 +86,17 @@ def _Distance(pos1, pos2):
     dist = 2 * 6371 * math.asin(math.sqrt(math.sin(lat * 0.5) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(lon * 0.5) ** 2))
     return dist
 
+def _Bearing(pos1, pos2):
+    "Calculate initial bearing of vehicle, only if the vehicle has moved 200m"
+    if _Distance(pos1, pos2) < 0.02: return None
+    lat1 = math.radians(pos1[1])
+    lon1 = math.radians(pos1[0])
+    lat2 = math.radians(pos2[1])
+    lon2 = math.radians(pos2[0])
+    y = math.sin(lon2 - lon1) * math.cos(lat2)
+    x = math.cos(lat1)*math.sin(lat2) - math.sin(lat1)*math.cos(lat2)*math.cos(lon2-lon1)
+    return math.degrees(math.atan2(y,x))
+
 # Main Functions
 
 def Alerts():
@@ -328,6 +339,7 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
         lat, lon, route, brigade = v["Lat"], v["Lon"], v["Lines"], v["Brigade"].lstrip("0")
         tstamp = datetime.strptime(v["Time"], "%Y-%m-%d %H:%M:%S")
         trip_id = ""
+        bearing = None
         id = "-".join([route, brigade])
         try: triplist = brigades[route][brigade]
         except KeyError: continue
@@ -337,8 +349,12 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
 
         # Try to match with trip
         if id in previous:
-            prev_trip, prev_lat, prev_lon = previous[id]["trip_id"], previous[id]["lat"], previous[id]["lon"]
+            prev_trip, prev_lat, prev_lon, prev_bearing = previous[id]["trip_id"], previous[id]["lat"], previous[id]["lon"], previous[id].get("bearing", None)
             tripidslist = [x["trip_id"] for x in triplist]
+
+            # Get vehicle bearing
+            bearing = _Bearing([prev_lat, prev_lon], [lat, lon])
+            if (not bearing) and prev_bearing: bearing = prev_bearing
 
             # If vehicle was doing its last trip, there's nothing more that can be calculated
             if prev_trip == triplist[-1]["trip_id"]:
@@ -372,6 +388,7 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
         data["id"] = copy(id)
         data["lat"] = copy(lat)
         data["lon"] = copy(lon)
+        if bearing: data["bearing"] = copy(bearing)
         positions[id] = copy(data)
 
         # Save to gtfs_rt container
@@ -382,6 +399,7 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
         vehicle.vehicle.id = id
         vehicle.position.latitude = float(lat)
         vehicle.position.longitude = float(lon)
+        if bearing: vehicle.position.bearing = float(bearing)
         vehicle.timestamp = round(tstamp.timestamp())
 
     # Add gtfs-rt header
