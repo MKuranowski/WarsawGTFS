@@ -89,13 +89,10 @@ def _Distance(pos1, pos2):
 def _Bearing(pos1, pos2):
     "Calculate initial bearing of vehicle, only if the vehicle has moved more than 30m"
     if _Distance(pos1, pos2) < 0.003: return None
-    lat1 = math.radians(pos1[1])
-    lon1 = math.radians(pos1[0])
-    lat2 = math.radians(pos2[1])
-    lon2 = math.radians(pos2[0])
-    y = math.sin(lon2 - lon1) * math.cos(lat2)
-    x = math.cos(lat1)*math.sin(lat2) - math.sin(lat1)*math.cos(lat2)*math.cos(lon2-lon1)
-    return math.degrees(math.atan2(y,x))
+    lat1, lat2, lon = map(math.radians, [pos1[0], pos2[0], pos2[1] - pos1[1]])
+    x = math.sin(lon) * math.cos(lat2)
+    y = math.cos(lat1) * math.sin(lat2) - (math.sin(lat1) * math.cos(lat2) * math.cos(lon))
+    return math.degrees(math.atan2(x, y))
 
 # Main Functions
 
