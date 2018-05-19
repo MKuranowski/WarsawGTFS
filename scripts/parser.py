@@ -35,9 +35,7 @@ class railStopWriteClass(object):
 class namedecapClass(object):
     def __init__(self, config):
         self.usewebsite = config["nameDecap"]
-        self.ids = {}
-        self.names = {}
-
+        self.ids = {"4040": "Lotnisko Chopina", "1484": "Dom Samotnej Matki"}
         if self.usewebsite:
             # First load stop_names from list of all stops, to reduce calls to ztm website
             website = request.urlopen("http://m.ztm.waw.pl/rozklad_nowy.php?c=183&l=1")
@@ -71,27 +69,6 @@ class namedecapClass(object):
         text = text.rstrip()
         text = text.replace("Praga - Płd.", "Praga-Płd.").replace("PRAGA - PŁD.", "PRAGA-PŁD.")
         self.ids[id] = text
-        self.names[name] = text
-        return text
-
-    def fromstr(self, name):
-        if name in self.names:
-            return(self.names[name])
-        elif self.usewebsite:
-            website = request.urlopen("http://m.ztm.waw.pl/rozklad_nowy.php?c=183&l=1&t=1&p=" + quote_plus(name))
-            soup = BeautifulSoup(decode(website.read()), "html.parser")
-            tag = str(soup.find("div", id="RozkladHeader"))
-            tagsearch = re.search(r"<h4>(.+)\s{1}\(", tag)
-            if tagsearch:
-                text = tagsearch.group(1)
-            else:
-                text = name.title()
-        else:
-            text = name
-        text = text.replace(".", ". ").replace("-", " - ").replace("  "," ")
-        text = text.rstrip()
-        text = text.replace("Praga - Płd.", "Praga-Płd.").replace("PRAGA - PŁD.", "PRAGA-PŁD.")
-        self.names[name] = text
         return text
 
 def pointInPath(lat, lon, path):
@@ -129,7 +106,16 @@ def tramColor(stoplist):
     elif [x for x in ["708505", "708506", "500203", "500204"] if x in stoplist]: return "AAFE00,000000" #Al. Solidarności
     else: return "800080,FFFFFF" #Neither of above
 
-#routeParsable = lambda x, y: True if len(x) < 3 else False
+def townNotInName(stop_name, town_name):
+    stop_name, town_name = map(str.upper, (stop_name, town_name))
+    if "PKP" in stop_name:
+        return False
+    elif town_name in stop_name:
+        return False
+    for town_part_name in town_name.split(" "):
+        if town_part_name in stop_name:
+            return False
+    return True
 
 def routeParsable(rid, config):
     "Check if route should be parsed based on config and route_id"
@@ -228,6 +214,9 @@ def parse(fileloc, config):
 
     #Other Variables, used per one line
     trips = {}
+    routeFirstTrip = ""
+    route_name = ""
+    route_origin, route_dest = "", ""
     tripDirectionStops = {"A": [], "B": []}
     tripCommonDirections = []
     trip_direction = ""
@@ -258,6 +247,13 @@ def parse(fileloc, config):
             elif line.startswith("*TR"): #Line Description
                 inTR = True
             elif line.startswith("#TR"):
+                # Route Name
+                if route_origin and route_dest:
+                    route_name = " — ".join((route_origin, route_dest))
+                else:
+                    route_name = ""
+                    print("No route name: R%s from %s to %s" % (route_id, route_origin, route_dest))
+                # Trip per-direction stops
                 tripDirectionStops["A"] = set(tripDirectionStops["A"])
                 tripDirectionStops["B"] = set(tripDirectionStops["B"])
                 tripDirectionStops["unique"] = tripDirectionStops["A"] ^ tripDirectionStops["B"]
@@ -334,6 +330,9 @@ def parse(fileloc, config):
                                 "drop_off_type": stopt["pickDropType"], "shape_dist_traveled": shape_distances.get(sequence, "")})
 
                 trips = {}
+                routeFirstTrip = ""
+                route_name = ""
+                route_origin, route_dest = "", ""
                 tripDirectionStops = {"A": [], "B": []}
                 tripCommonDirections = []
                 tripsSorted = []
@@ -441,8 +440,13 @@ def parse(fileloc, config):
                 if zpMatch:
                     stop_num = zpMatch.group(1)
                     stop_name = namedecap.fromid(stop_num, (zpMatch.group(3) or zpMatch.group(4)).rstrip(","))
-                    namedecap.names[(zpMatch.group(3) or zpMatch.group(4)).rstrip(",")] = stop_name
                     stop_town = zpMatch.group(6).title()
+                    # Add town name before stop_name, only stop isn't rail stop, located in Warsaw, or if town name is lready part of stop_name
+                    if stop_num[1:3] not in railNumbers and zpMatch.group(5) != "--" and townNotInName((zpMatch.group(3) or zpMatch.group(4)).rstrip(","), stop_town):
+                        stop_name = stop_town + " " + stop_name
+
+                    namedecap.ids[stop_num] = stop_name
+
                     stopsInGroup = []
                     stopsVirtualInGroup = []
 
@@ -489,18 +493,29 @@ def parse(fileloc, config):
                     trMatch = re.match(r"(\w{2}-\w+).*,\s+(.*),.*==>\s*(.*),\s*[\w|-]{2}\s*Kier.\s(\w{1})\s+Poz.\s(\d).*", line)
                     if trMatch:
                         tripCommonDirections.append(trMatch.group(1))
-                        trip_origin = namedecap.fromstr(trMatch.group(2))
-                        trip_dest = namedecap.fromstr(trMatch.group(3))
                         trip_direction = trMatch.group(4)
                         trip_position = trMatch.group(5)
-                        if trip_direction == "A" and trip_position == "0": #Route Long Name
-                            route_name = " — ".join([trip_origin, trip_dest])
+                        if routeFirstTrip == "":
+                            routeFirstTrip = trip_direction + trip_position
                     elif inLW: #OnDemand stops + stoplist for trams to get line color
-                        lwMatch = re.match(r".*(\d{6})\s*.+,\s*[\w|-]{2}\s+\d{2}\s+(NŻ|)", line)
+                        lwMatch = re.match(r".*(\d{6})\s*.+\s*[\w|-]{2}\s+\d{2}\s+(NŻ|)", line)
                         if lwMatch:
                             if lwMatch.group(2) == "NŻ": stopsDemanded.append(lwMatch.group(1))
                             if lwMatch.group(1) not in tripStops: tripStops.append(lwMatch.group(1))
                             if lwMatch.group(1) not in tripDirectionStops[trip_direction]: tripDirectionStops[trip_direction].append(lwMatch.group(1))
+
+                            if routeFirstTrip == trip_direction + trip_position and not route_origin:
+                                if namedecap.fromid(lwMatch.group(1)[:4], ""):
+                                    route_origin = namedecap.fromid(lwMatch.group(1)[:4], "")
+                                else:
+                                    print("No stop_name for", lwMatch.group(1)[:4])
+
+                            if routeFirstTrip == trip_direction + trip_position:
+                                if namedecap.fromid(lwMatch.group(1)[:4], ""):
+                                    route_dest = namedecap.fromid(lwMatch.group(1)[:4], "")
+                                else:
+                                    print("No stop_name for", lwMatch.group(1)[:4])
+
                     elif inWG and route_type == "0": #Low Floor tram trips catcher - read timetable
                         wgMatch = re.match(r"G\s+\d+\s+(\d+):\s+(.+)", line)
                         if wgMatch:
