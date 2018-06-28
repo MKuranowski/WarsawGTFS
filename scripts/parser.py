@@ -182,7 +182,7 @@ def parse(fileloc, config):
 
     fileStops = open("output/stops.txt", "w", encoding="utf-8", newline="")
     csvStops = csv.DictWriter(fileStops, fieldnames= \
-               ["stop_id", "stop_code", "stop_name", "zone_id", "stop_lat", "stop_lon", "wheelchair_boarding", "platform_code", "location_type", "parent_station"])
+               ["stop_id", "stop_code", "stop_name", "zone_id", "stop_lat", "stop_lon", "wheelchair_boarding", "railway_uic_ref", "platform_code", "location_type", "parent_station"])
     csvStops.writeheader()
 
     fileBadStops = open("bad-stops.txt", "w", encoding="utf-8", newline="\r\n")
@@ -364,29 +364,30 @@ def parse(fileloc, config):
                             data = railData[stop_num]
                             stop_name = data["name"]
                             stop_lat, stop_lon = data["pos"].split(",")
+                            uic = data.get("uic", "")
                             wheelchairs = data.get("wheelchair", "")
                             if config["shapes"]: shaper.stops[stop_num] = [stop_lat, stop_lon]
                             if data.get("platforms_unavailable", "false") == "true":
                                 csvStops.writerow({"stop_id": stop_num, "stop_name": stop_name, \
                                          "zone_id": data["zone"], "stop_lat": stop_lat, "stop_lon": stop_lon,
-                                         "wheelchair_boarding": wheelchairs})
+                                         "wheelchair_boarding": wheelchairs, "railway_uic_ref": uic})
 
                             elif data.get("oneplatform", "false") == "true":
                                 csvStops.writerow({"stop_id": stop_num, "stop_name": stop_name, \
                                          "zone_id": data["zone"], "stop_lat": stop_lat, "stop_lon": stop_lon,
-                                         "wheelchair_boarding": wheelchairs, "platform_code": "1"})
+                                         "wheelchair_boarding": wheelchairs, "railway_uic_ref": uic, "platform_code": "1"})
 
                             else:
                                 csvStops.writerow({"stop_id": stop_num, "stop_name": stop_name, \
                                          "zone_id": data["zone"], "stop_lat": stop_lat, "stop_lon": stop_lon,
-                                         "wheelchair_boarding": wheelchairs, "location_type": "1"})
+                                         "wheelchair_boarding": wheelchairs, "railway_uic_ref": uic, "location_type": "1"})
 
                                 for platform_id in sorted(data["platforms"]):
                                     platform_lat, platform_lon = data["platforms"][platform_id].split(",")
                                     platform_name = " peron ".join([data["name"], platform_id.split("p")[1]])
                                     if config["shapes"]: shaper.stops[platform_id] = [platform_lat, platform_lon]
                                     csvStops.writerow({"stop_id": platform_id, "stop_name": platform_name, "zone_id": data["zone"], \
-                                             "stop_lat": platform_lat, "stop_lon": platform_lon, "wheelchair_boarding": wheelchairs,
+                                             "stop_lat": platform_lat, "stop_lon": platform_lon, "wheelchair_boarding": wheelchairs, "railway_uic_ref": uic,
                                              "platform_code": platform_id.split("p")[1], "location_type": "0", "parent_station": stop_num})
 
                         else:
