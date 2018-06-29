@@ -26,12 +26,25 @@ def _DictFactory(cursor, row):
 def _FilterLines(rlist):
     "Filter lines in ZTM alerts to match ids in GTFS"
     for x in rlist:
-        if x.startswith("KM") or x in ["Z", "", "KM", "WKD", "POP", "INFO"]:
+        if x in ["", "Z", "WKD", "POP", "INFO", "WLT"]:
             while x in rlist: rlist.remove(x)
+
         elif x.startswith("M") and x not in ["M1", "M2"]:
             while x in rlist: rlist.remove(x)
             if "M1" not in rlist: rlist.add("M1")
             if "M2" not in rlist: rlist.add("M2")
+
+        elif x.startswith("S") and x not in ["S1", "S2", "S3", "S9"]:
+            while x in rlist: rlist.remove(x)
+            if "S1" not in rlist: rlist.add("S1")
+            if "S2" not in rlist: rlist.add("S2")
+            if "S3" not in rlist: rlist.add("S3")
+            if "S9" not in rlist: rlist.add("S9")
+
+
+        elif x.startswith("KM") or x.startswith("R"):
+            while x in rlist: rlist.remove(x)
+
     return rlist
 
 def _CleanTags(html):
@@ -96,14 +109,24 @@ def _Bearing(pos1, pos2):
 
 # Main Functions
 
-def Alerts():
+def Alerts(out_proto=True, out_json=False):
     "Get ZTM Warszawa Alerts"
-    # Container
-    container = gtfs_rt.FeedMessage()
+    # Grab Entries
     changes = feedparser.parse("http://www.ztm.waw.pl/rss.php?l=1&IDRss=3").entries
     disruptions = feedparser.parse("http://www.ztm.waw.pl/rss.php?l=1&IDRss=6").entries
     idenum = 0
 
+    # Containers
+    if out_proto:
+        container = gtfs_rt.FeedMessage()
+        header = container.header
+        header.gtfs_realtime_version = "2.0"
+        header.incrementality = 0
+        header.timestamp = round(datetime.today().timestamp())
+    if out_json:
+        json_container = {"time": datetime.today().strftime("%Y-%m-%d %H:%M:%S"), "alerts": []}
+
+    # Sort Entries
     all_entries = []
     for i in disruptions:
         i.effect = 2 # Reduced Service
@@ -121,33 +144,40 @@ def Alerts():
         lines = _FilterLines(re.split(r"[^0-9a-zA-Z-]{1,3}", lines))
         if lines:
             # Gather data
+            alert_id = "-".join(["a", str(idenum)])
             link = _CleanTags(str(entry.link))
             title = _CleanTags(str(entry.description))
             try: desc = _AlertDesc(link)
             except: desc = ""
-            # Append to gtfs_rt container
-            entity = container.entity.add()
-            entity.id = "-".join(["a", str(idenum)])
-            alert = entity.alert
-            alert.effect = entry.effect
-            alert.url.translation.add().text = link
-            alert.header_text.translation.add().text = title
-            if desc: alert.description_text.translation.add().text = desc
-            for line in lines:
-                selector = alert.informed_entity.add()
-                selector.route_id = line
 
-    # Header
-    header = container.header
-    header.gtfs_realtime_version = "2.0"
-    header.incrementality = 0
-    header.timestamp = round(datetime.today().timestamp())
+            # Append to gtfs_rt container
+            if out_proto:
+                entity = container.entity.add()
+                entity.id = alert_id
+                alert = entity.alert
+                alert.effect = entry.effect
+                alert.url.translation.add().text = link
+                alert.header_text.translation.add().text = title
+                if desc: alert.description_text.translation.add().text = desc
+                for line in lines:
+                    selector = alert.informed_entity.add()
+                    selector.route_id = line
+
+            # Append to JSON container
+            if out_json:
+                json_container["alerts"].append(OrderedDict((
+                    ("id", alert_id), ("routes", sorted(lines)),
+                    ("effect", "REDUCED_SERVICE" if entry.effect == 2 else "OTHER_EFFECT"),
+                    ("link", link), ("title", title), ("body", desc)
+                )))
 
     # Export
-    with open("output-rt/alerts.pb", "w") as f:
-        f.write(str(container))
-    with open("output-rt/alerts.pbn", "wb") as f:
-        f.write(container.SerializeToString())
+    if out_proto:
+        with open("output-rt/alerts.pb", "w") as f: f.write(str(container))
+        with open("output-rt/alerts.pbn", "wb") as f: f.write(container.SerializeToString())
+
+    if out_json:
+        with open("output-rt/alerts.json", "w", encoding="utf8") as f: json.dump(json_container, f, indent=2)
 
 def Brigades(apikey, gtfsloc="https://mkuran.pl/feed/ztm/ztm-latest.zip", export=False):
     "Create a brigades table to match positions to gtfs"
@@ -294,12 +324,25 @@ def Brigades(apikey, gtfsloc="https://mkuran.pl/feed/ztm/ztm-latest.zip", export
             jsonfile.write(json.dumps(brigades, indent=2))
     return brigades
 
-def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", previous={}):
+def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", previous={}, out_proto=True, out_json=False):
     "Get ZTM Warszawa positions"
     # Variables
-    container = gtfs_rt.FeedMessage()
     positions = OrderedDict()
     source = []
+
+    # GTFS-RT Container
+    if out_proto:
+        container = gtfs_rt.FeedMessage()
+        header = container.header
+        header.gtfs_realtime_version = "2.0"
+        header.incrementality = 0
+        header.timestamp = round(datetime.today().timestamp())
+
+    # JSON Container
+    if out_json:
+        json_container = OrderedDict()
+        json_container["time"] = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+        json_container["positions"] = []
 
     # Get brigades, if brigades is not already a dict or OrderedDict
     if type(brigades) is str:
@@ -337,7 +380,7 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
         tstamp = datetime.strptime(v["Time"], "%Y-%m-%d %H:%M:%S")
         trip_id = ""
         bearing = None
-        id = "-".join([route, brigade])
+        id = "-".join(["v", route, brigade])
         try: triplist = brigades[route][brigade]
         except KeyError: continue
 
@@ -379,37 +422,37 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
             if not trip_id: trip_id = triplist[-1]["trip_id"] # If the trips still couldn't be found - assume it's doing the last trip
 
         # Save to dict
-        data = {}
+        data = OrderedDict()
+        data["id"] = copy(id)
         data["trip_id"] = copy(trip_id)
         data["timestamp"] = copy(tstamp)
-        data["id"] = copy(id)
         data["lat"] = copy(lat)
         data["lon"] = copy(lon)
         if bearing: data["bearing"] = copy(bearing)
         positions[id] = copy(data)
 
         # Save to gtfs_rt container
-        entity = container.entity.add()
-        entity.id = "-".join(["v", id])
-        vehicle = entity.vehicle
-        vehicle.trip.trip_id = trip_id
-        vehicle.vehicle.id = id
-        vehicle.position.latitude = float(lat)
-        vehicle.position.longitude = float(lon)
-        if bearing: vehicle.position.bearing = float(bearing)
-        vehicle.timestamp = round(tstamp.timestamp())
-
-    # Add gtfs-rt header
-    header = container.header
-    header.gtfs_realtime_version = "1.0"
-    header.incrementality = 0
-    header.timestamp = round(datetime.today().timestamp())
+        if out_proto:
+            entity = container.entity.add()
+            entity.id = id
+            vehicle = entity.vehicle
+            vehicle.trip.trip_id = trip_id
+            vehicle.vehicle.id = id
+            vehicle.position.latitude = float(lat)
+            vehicle.position.longitude = float(lon)
+            if bearing: vehicle.position.bearing = float(bearing)
+            vehicle.timestamp = round(tstamp.timestamp())
 
     # Export results
-    with open("output-rt/vehicles.pb", "w") as f:
-        f.write(str(container))
-    with open("output-rt/vehicles.pbn", "wb") as f:
-        f.write(container.SerializeToString())
+    if out_proto:
+        with open("output-rt/vehicles.pb", "w") as f: f.write(str(container))
+        with open("output-rt/vehicles.pbn", "wb") as f: f.write(container.SerializeToString())
+
+    if out_json:
+        for i in list(positions.values()):
+            i["timestamp"] = i["timestamp"].isoformat()
+            json_container["positions"].append(i)
+        with open("output-rt/vehicles.json", "w", encoding="utf8") as f: json.dump(json_container, f, indent=2)
 
     return positions
 
@@ -421,18 +464,26 @@ if __name__ == "__main__":
     argprs.add_argument("-b", "--brigades", action="store_true", required=False, dest="brigades", help="parse brigades into output-rt/")
     argprs.add_argument("-p", "--positions", action="store_true", required=False, dest="positions", help="parse positions into output-rt/")
     argprs.add_argument("-k", "--key", default="", required=False, metavar="(apikey)", dest="key", help="apikey from api.um.warszawa.pl")
-    args = vars(argprs.parse_args())
-    if (args["brigades"] or args["positions"]) and (not args["key"]):
-        print("Apikey is required for brigades/positions")
 
-    if args["alerts"]:
+    argprs.add_argument("--json", action="store_true", default=False, required=False, dest="json", help="output additionally rt data to .json format")
+    argprs.add_argument("--no_protobuf", action="store_false", default=True, required=False, dest="proto", help="do not output rt data to GTFS-Realtime format")
+
+    args = argprs.parse_args()
+
+    if (args.brigades or args.positions) and (not args.key):
+        raise ValueError("Apikey is required for brigades/positions")
+
+    if not (args.json or args.proto):
+        raise ValueError("No output filetype specified")
+
+    if args.alerts:
         print("Parsing Alerts")
-        Alerts()
+        Alerts(out_proto=args.proto, out_json=args.json)
 
-    if args["brigades"] and args["key"]:
+    if args.brigades and args.key:
         print("Parsing brigades")
-        Brigades(apikey=args["key"])
+        Brigades(apikey=args.key, export=True)
 
-    if args["positions"] and args["key"]:
+    if args.positions and args.key:
         print("Parsing positions")
-        Positions(apikey=args["key"])
+        Positions(apikey=args.key, out_proto=args.proto, out_json=args.json)
