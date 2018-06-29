@@ -449,7 +449,7 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
         with open("output-rt/vehicles.pbn", "wb") as f: f.write(container.SerializeToString())
 
     if out_json:
-        for i in copy(list(positions.values())):
+        for i in map(copy, positions.values()):
             i["timestamp"] = i["timestamp"].isoformat()
             json_container["positions"].append(i)
         with open("output-rt/vehicles.json", "w", encoding="utf8") as f: json.dump(json_container, f, indent=2)
