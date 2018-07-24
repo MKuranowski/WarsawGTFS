@@ -98,14 +98,6 @@ def stopZone(lat, lon):
     elif pointInPath(lat, lon, zone2w): return "2w"
     else: return "2"
 
-def tramColor(stoplist):
-    "Returns a colour for a tram route."
-    if [x for x in ["701105", "701106", "701307", "701308", "701607", "701608"] if x in stoplist]: return "C90000,FFFFFF" #Marszałkowska
-    elif [x for x in ["700207", "700208", "701309", "701310", "700303", "700304"] if x in stoplist]: return "FFA200,000000" #Al. Jerozolimskie
-    elif [x for x in ["700209", "700210", "708509", "708510", "708903", "708904"] if x in stoplist]: return "3D3DAE,FFFFFF" #Al. Jana Pawła II
-    elif [x for x in ["708505", "708506", "500203", "500204"] if x in stoplist]: return "AAFE00,000000" #Al. Solidarności
-    else: return "800080,FFFFFF" #Neither of above
-
 def townNotInName(stop_name, town_name):
     stop_name, town_name = map(str.upper, (stop_name, town_name))
     if "PKP" in stop_name:
@@ -127,7 +119,7 @@ def routeParsable(rid, config):
 def routeTypeColor(rid, desc):
     "Get route_type, route_color and agency_id based on route description"
     desc = desc.lower()
-    if "tram" in desc: return ("0", "000080,FFFFFF", "ztm")
+    if "tram" in desc: return ("0", "B60000,FFFFFF", "ztm")
     elif "kolei" in desc:
         if "dojazdowej" in desc: return ("2", "990099,FFFFFF", "wkd")
         elif "mazowieckich" in desc: return ("2", "008000,FFFFFF", "km")
@@ -136,7 +128,7 @@ def routeTypeColor(rid, desc):
     elif "nocna" in desc: return ("3", "000000,FFFFFF", "ztm")
     elif "ekspresowa" in desc or "przyspieszona" in desc: return ("3", "B60000,FFFFFF", "ztm")
     elif "strefowa" in desc: return ("3", "006600,FFFFFF", "ztm")
-    else: return ("3", ",", "ztm")
+    else: return ("3", "880077,FFFFFF", "ztm")
 
 def tripHeadsigns(stop, stopNames):
     "Get trip_headsign based on last stop_id and its stop_name"
@@ -222,7 +214,6 @@ def parse(fileloc, config):
     trip_direction = ""
     trip_position = ""
     tripsSorted = []
-    tripStops = []
     tripsLowFloor = []
     stopsDemanded = []
     lowFloorTimes = []
@@ -267,9 +258,6 @@ def parse(fileloc, config):
             elif line.startswith("*LW"): #Pattern Description
                 inLW = True
             elif line.startswith("#LW"):
-                if route_type == "0" and trip_direction == "A" and trip_position == "0":
-                    route_color = tramColor(tripStops)
-                tripStops = []
                 inLW = False
             elif line.startswith("*WG"): #Timetables
                 inWG = True
@@ -498,11 +486,10 @@ def parse(fileloc, config):
                         trip_position = trMatch.group(5)
                         if routeFirstTrip == "":
                             routeFirstTrip = trip_direction + trip_position
-                    elif inLW: #OnDemand stops + stoplist for trams to get line color
+                    elif inLW: #OnDemand stops
                         lwMatch = re.match(r".*(\d{6})\s*.+\s*[\w|-]{2}\s+\d{2}\s+(NŻ|)", line)
                         if lwMatch:
                             if lwMatch.group(2) == "NŻ": stopsDemanded.append(lwMatch.group(1))
-                            if lwMatch.group(1) not in tripStops: tripStops.append(lwMatch.group(1))
                             if lwMatch.group(1) not in tripDirectionStops[trip_direction]: tripDirectionStops[trip_direction].append(lwMatch.group(1))
 
                             if routeFirstTrip == trip_direction + trip_position and not route_origin:
@@ -525,6 +512,7 @@ def parse(fileloc, config):
                             wgMinutes = re.findall(r"\[(\d{2})", wgMinutesString)
                             for x in wgMinutes:
                                 lowFloorTimes.append(wgHour + "." + x)
+
                     elif inOD and route_type == "0": #Low Floor tram trips catcher - assign to trip_id
                         odMatch = re.match(r"(\d{1,2}.\d{2})\s+(.{17})", line)
                         if odMatch:
