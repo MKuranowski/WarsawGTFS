@@ -25,7 +25,7 @@ def _DictFactory(cursor, row):
 
 def _FilterLines(rlist):
     "Filter lines in ZTM alerts to match ids in GTFS"
-    for x in rlist:
+    for x in copy(rlist):
         if x in ["", "Z", "WKD", "POP", "INFO", "WLT"]:
             while x in rlist: rlist.remove(x)
 
@@ -41,8 +41,7 @@ def _FilterLines(rlist):
             if "S3" not in rlist: rlist.add("S3")
             if "S9" not in rlist: rlist.add("S9")
 
-
-        elif x.startswith("KM") or x.startswith("R"):
+        elif x.startswith("KM") or x.startswith("R") or (x.startswith("9") and len(x) == 3):
             while x in rlist: rlist.remove(x)
 
     return rlist
@@ -65,10 +64,10 @@ def _AlertDesc(link):
         for tag in descsoup.find_all("div", class_="InneKomunikatyLinia"): tag.decompose()
         for tag in descsoup.find_all("div", class_="cb"): tag.decompose()
         descwithtags = str(descsoup)
-        descwithtags = descwithtags.replace("</p>", "\n").replace("<br/>", "\n").replace("<br>", "\n").replace("\xa0", " ").replace("  "," ")
-        return _CleanTags(descwithtags)
+        clean_desc = _CleanTags(descwithtags.replace("</p>", "\n").replace("<br/>", "\n").replace("<br>", "\n").replace("\xa0", " ").replace("  "," "))
+        return clean_desc, descwithtags
     else:
-        return ""
+        return "", ""
 
 def _FindTrip(timepoint, route, stop, times):
     "Try find trip_id in times for given timepoint route and stop"
@@ -139,16 +138,17 @@ def Alerts(out_proto=True, out_json=False):
     # Alerts
     for entry in all_entries:
         idenum += 1
-        try: lines = entry.title.split(":")[1]
-        except IndexError: lines = ""
-        lines = _FilterLines(re.split(r"[^0-9a-zA-Z-]{1,3}", lines))
+        try: lines_raw = entry.title.split(":")[1].strip()
+        except IndexError: lines_raw = ""
+        lines = _FilterLines(re.findall(r"[0-9a-zA-Z-]{1,3}", lines_raw))
+        print("-".join(["a", str(idenum)]), lines_raw, lines)
         if lines:
             # Gather data
             alert_id = "-".join(["a", str(idenum)])
             link = _CleanTags(str(entry.link))
             title = _CleanTags(str(entry.description))
-            try: desc = _AlertDesc(link)
-            except: desc = ""
+            try: desc, desc_html = _AlertDesc(link)
+            except: desc, desc_html = "", ""
 
             # Append to gtfs_rt container
             if out_proto:
@@ -168,7 +168,7 @@ def Alerts(out_proto=True, out_json=False):
                 json_container["alerts"].append(OrderedDict((
                     ("id", alert_id), ("routes", sorted(lines)),
                     ("effect", "REDUCED_SERVICE" if entry.effect == 2 else "OTHER_EFFECT"),
-                    ("link", link), ("title", title), ("body", desc)
+                    ("link", link), ("title", title), ("body", desc), ("htmlbody", desc_html)
                 )))
 
     # Export
