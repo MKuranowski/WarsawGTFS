@@ -141,7 +141,6 @@ def Alerts(out_proto=True, out_json=False):
         try: lines_raw = entry.title.split(":")[1].strip()
         except IndexError: lines_raw = ""
         lines = _FilterLines(re.findall(r"[0-9a-zA-Z-]{1,3}", lines_raw))
-        print("-".join(["a", str(idenum)]), lines_raw, lines)
         if lines:
             # Gather data
             alert_id = "-".join(["a", str(idenum)])
