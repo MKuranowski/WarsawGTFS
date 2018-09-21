@@ -140,7 +140,7 @@ def Alerts(out_proto=True, out_json=False):
         idenum += 1
         try: lines_raw = entry.title.split(":")[1].strip()
         except IndexError: lines_raw = ""
-        lines = _FilterLines(re.findall(r"[0-9a-zA-Z-]{1,3}", lines_raw))
+        lines = _FilterLines(set(re.findall(r"[0-9a-zA-Z-]{1,3}", lines_raw)))
         if lines:
             # Gather data
             alert_id = "-".join(["a", str(idenum)])
@@ -158,7 +158,7 @@ def Alerts(out_proto=True, out_json=False):
                 alert.url.translation.add().text = link
                 alert.header_text.translation.add().text = title
                 if desc: alert.description_text.translation.add().text = desc
-                for line in lines:
+                for line in sorted(lines):
                     selector = alert.informed_entity.add()
                     selector.route_id = line
 
