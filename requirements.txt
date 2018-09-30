@@ -4,11 +4,11 @@ pyyaml
 pylzma
 
 # Realtime
-gtfs-realtime-bindings>=0.0.5
+gtfs-realtime-bindings >= 0.0.5
 feedparser
 requests
 
 # Shapes
-pyroutelib3>=0.6
+pyroutelib3 >= 1.1
 overpass
 rdp

@@ -1,13 +1,10 @@
 __pycache__/
-output/*
+gtfs/*
 output-rt/*
-input/*
 ignore*
 *.json
 *.zip
 *.html
-bad-stops.txt
-config.yaml
 ._.DS_Store
 .DS_Store
 *.pdf
