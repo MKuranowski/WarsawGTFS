@@ -13,6 +13,7 @@ import json
 import csv
 import re
 import os
+import io
 
 
 # Some random Functions
@@ -201,8 +202,8 @@ def Brigades(apikey, gtfsloc="https://mkuran.pl/feed/ztm/ztm-latest.zip", export
     # Download GTFS
     if gtfsloc.startswith("https://") or gtfsloc.startswith("ftp://") or gtfsloc.startswith("http://"):
         print("Downloading GTFS")
-        request.urlretrieve(gtfsloc, "input/gtfs-rt.zip")
-        gtfsloc = "input/gtfs-rt.zip"
+        request.urlretrieve(gtfsloc, "gtfs.zip")
+        gtfsloc = "gtfs.zip"
 
     # Read GTFS
     print("Creating database")
@@ -210,49 +211,48 @@ def Brigades(apikey, gtfsloc="https://mkuran.pl/feed/ztm/ztm-latest.zip", export
 
         # Routes suitable for matching brigades
         with gtfs.open("routes.txt") as routes:
-            for line in routes.readlines():
-                line = str(line, "utf-8")
-                if line.split(",")[4] in ["0", "3"]:
-                    gtfsRoutes.append(line.split(",")[0])
+            reader = csv.DictReader(io.TextIOWrapper(routes, encoding="utf-8", newline=""))
+            for line in reader:
+                if line["route_type"] in ["0", "3"]:
+                    gtfsRoutes.append(line["route_id"])
 
         # Service_ids active today
         with gtfs.open("calendar_dates.txt") as calendars:
-            for line in calendars.readlines():
-                line = str(line, "utf-8")
-                if line.split(",")[0] == today:
-                    gtfsServices.append(line.split(",")[1])
+            reader = csv.DictReader(io.TextIOWrapper(calendars, encoding="utf-8", newline=""))
+            for line in reader:
+                if line["date"] == today:
+                    gtfsServices.append(line["service_id"])
 
         # Stops for additional information used in parsing vehicles locations
         with gtfs.open("stops.txt") as stops:
-            for line in stops.readlines():
-                line = str(line, "utf-8")
-                if not line.startswith("stop_id"):
-                    gtfsStops[line.split(",")[0]] = (line.split(",")[4], line.split(",")[5])
+            reader = csv.DictReader(io.TextIOWrapper(stops, encoding="utf-8", newline=""))
+            for line in reader:
+                gtfsStops[line["stop_id"]] = (line["stop_lat"], line["stop_lon"])
 
         with gtfs.open("stop_times.txt") as stoptimes:
-            for line in stoptimes.readlines():
-                line = str(line, "utf-8")
-                if not line.startswith("trip_id"):
-                    trip_id = line.split(",")[0]
+            reader = csv.DictReader(io.TextIOWrapper(stoptimes, encoding="utf-8", newline=""))
+            for line in reader:
+                trip_id = line["trip_id"]
 
-                    # \/ This means previous trip has ended, and we can save additoanl information about that trip
-                    if previousTrip and previousTrip != trip_id:
-                        tripLastTime[previousTrip] = timepoint
-                        tripLastStop[previousTrip] = gtfsStops[stop_id]
-                    previousTrip = copy(trip_id)
-                    timepoint = line.split(",")[2]
-                    stop_id = line.split(",")[3]
-                    route_id = trip_id.split("/")[0]
-                    try: service_id = trip_id.split("/")[2]
-                    except IndexError: service_id = ""
-                    # Save only if route is suitable for matching and is active today
-                    if route_id in gtfsRoutes and service_id in gtfsServices:
-                        db.execute("INSERT INTO stoptimes VALUES (?,?,?,?)", (route_id, trip_id, stop_id, timepoint))
-                        dbc.commit()
+                # \/ This means previous trip has ended, and we can save additoanl information about that trip
+                if previousTrip and previousTrip != trip_id:
+                    tripLastTime[previousTrip] = timepoint
+                    tripLastStop[previousTrip] = gtfsStops[stop_id]
+                previousTrip = copy(trip_id)
+                timepoint = line["departure_time"]
+                stop_id = line["stop_id"]
+                route_id = trip_id.split("/")[0]
+                try: service_id = trip_id.split("/")[2]
+                except IndexError: service_id = ""
+                # Save only if route is suitable for matching and is active today
+                if route_id in gtfsRoutes and service_id in gtfsServices:
+                    db.execute("INSERT INTO stoptimes VALUES (?,?,?,?)", (route_id, trip_id, stop_id, timepoint))
+                    dbc.commit()
 
-            # Save the last trip:
-            tripLastTime[trip_id] = timepoint
-            tripLastStop[trip_id] = stop_id
+            # Save the last trip:,
+            if route_id in gtfsRoutes and service_id in gtfsServices:
+                tripLastTime[trip_id] = timepoint
+                tripLastStop[trip_id] = stop_id
 
     dbc.commit()
 
