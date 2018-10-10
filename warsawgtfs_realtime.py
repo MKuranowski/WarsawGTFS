@@ -1,6 +1,7 @@
 from google.transit import gtfs_realtime_pb2 as gtfs_rt
 from collections import OrderedDict
 from datetime import datetime, timedelta
+from tempfile import TemporaryFile
 from bs4 import BeautifulSoup
 from urllib import request
 from copy import copy
@@ -107,6 +108,18 @@ def _Bearing(pos1, pos2):
     y = math.cos(lat1) * math.sin(lat2) - (math.sin(lat1) * math.cos(lat2) * math.cos(lon))
     return math.degrees(math.atan2(x, y))
 
+def _SimplifyResponse(api_response):
+    result = []
+    for item in api_response["result"]:
+        item_dict = {}
+        for kv_pair in item["values"]:
+            if "key" not in kv_pair or "value" not in kv_pair: continue
+            if kv_pair["value"] == "null": kv_pair["value"] = None
+            item_dict[kv_pair["key"]] = kv_pair["value"]
+        result.append(item_dict)
+
+    return result
+
 # Main Functions
 
 def Alerts(out_proto=True, out_json=False):
@@ -182,139 +195,148 @@ def Alerts(out_proto=True, out_json=False):
 def Brigades(apikey, gtfsloc="https://mkuran.pl/feed/ztm/ztm-latest.zip", export=False):
     "Create a brigades table to match positions to gtfs"
     # Variables
-    gtfsServices = []
-    gtfsRoutes = []
-    brigades = OrderedDict()
-    gtfsStops = {}
-    tripLastTime = {}
-    tripLastStop = {}
-    previousTrip = ""
-    apiCalls = 0
-    today = datetime.today().strftime("%Y%m%d")
+    active_services = set()
+    active_routes = set()
+    stop_positions = {}
+    brigades = {}
 
-    # Initialize DataBase
-    dbc = sqlite3.connect(":memory:")
-    dbc.row_factory = _DictFactory
-    db = dbc.cursor()
-    db.execute("CREATE TABLE stoptimes (route_id varchar(255), trip_id varchar(255), stop_id varchar(255), timepoint varchar(255))")
-    dbc.commit()
+    trip_last_points = {}
+    api_responses = {}
+    parsed_stops = set()
+    matched_trips = set()
+
+    today = datetime.today().strftime("%Y%m%d")
 
     # Download GTFS
     if gtfsloc.startswith("https://") or gtfsloc.startswith("ftp://") or gtfsloc.startswith("http://"):
-        print("Downloading GTFS")
-        request.urlretrieve(gtfsloc, "gtfs.zip")
-        gtfsloc = "gtfs.zip"
+        gtfs_request = requests.get(gtfsloc)
+        gtfs_file = TemporaryFile()
+        gtfs_file.write(gtfs_request.content)
+        gtfs_file.seek(0)
+
+    else:
+        gtfs_file = open(gtfsloc, mode="rb")
 
     # Read GTFS
-    print("Creating database")
-    with zipfile.ZipFile(gtfsloc) as gtfs:
+    print("Reading routes, services and stops from GTFS")
+    gtfs_zip = zipfile.ZipFile(gtfs_file)
 
-        # Routes suitable for matching brigades
-        with gtfs.open("routes.txt") as routes:
-            reader = csv.DictReader(io.TextIOWrapper(routes, encoding="utf-8", newline=""))
-            for line in reader:
-                if line["route_type"] in ["0", "3"]:
-                    gtfsRoutes.append(line["route_id"])
+    # Routes suitable for matching brigades
+    with gtfs_zip.open("routes.txt") as routes:
+        reader = csv.DictReader(io.TextIOWrapper(routes, encoding="utf-8", newline=""))
+        for line in reader:
+            if line["route_type"] in ["0", "3"]:
+                brigades[line["route_id"]] = {}
+                active_routes.add(line["route_id"])
 
-        # Service_ids active today
-        with gtfs.open("calendar_dates.txt") as calendars:
-            reader = csv.DictReader(io.TextIOWrapper(calendars, encoding="utf-8", newline=""))
-            for line in reader:
-                if line["date"] == today:
-                    gtfsServices.append(line["service_id"])
+    # Service_ids active today
+    with gtfs_zip.open("calendar_dates.txt") as calendars:
+        reader = csv.DictReader(io.TextIOWrapper(calendars, encoding="utf-8", newline=""))
+        for line in reader:
+            if line["date"] == today:
+                active_services.add(line["service_id"])
 
-        # Stops for additional information used in parsing vehicles locations
-        with gtfs.open("stops.txt") as stops:
-            reader = csv.DictReader(io.TextIOWrapper(stops, encoding="utf-8", newline=""))
-            for line in reader:
-                gtfsStops[line["stop_id"]] = (line["stop_lat"], line["stop_lon"])
+    # Stops for additional information used in parsing vehicles locations
+    with gtfs_zip.open("stops.txt") as stops:
+        reader = csv.DictReader(io.TextIOWrapper(stops, encoding="utf-8", newline=""))
+        for line in reader:
+            stop_positions[line["stop_id"]] = [line["stop_lat"], line["stop_lon"]]
 
-        with gtfs.open("stop_times.txt") as stoptimes:
-            reader = csv.DictReader(io.TextIOWrapper(stoptimes, encoding="utf-8", newline=""))
-            for line in reader:
-                trip_id = line["trip_id"]
+    print("Matching stop_times.txt to brigades", end="\n\n")
+    # And now open stop_times and match trip_id with brigade, by matching route_id+stop_id+departure_time
+    with gtfs_zip.open("stop_times.txt") as stoptimes:
+        reader = csv.DictReader(io.TextIOWrapper(stoptimes, encoding="utf-8", newline=""))
+        for line in reader:
+            trip_id = line["trip_id"]
+            route_id = trip_id.split("/")[0]
 
-                # \/ This means previous trip has ended, and we can save additoanl information about that trip
-                if previousTrip and previousTrip != trip_id:
-                    tripLastTime[previousTrip] = timepoint
-                    tripLastStop[previousTrip] = gtfsStops[stop_id]
-                previousTrip = copy(trip_id)
-                timepoint = line["departure_time"]
-                stop_id = line["stop_id"]
-                route_id = trip_id.split("/")[0]
-                try: service_id = trip_id.split("/")[2]
-                except IndexError: service_id = ""
-                # Save only if route is suitable for matching and is active today
-                if route_id in gtfsRoutes and service_id in gtfsServices:
-                    db.execute("INSERT INTO stoptimes VALUES (?,?,?,?)", (route_id, trip_id, stop_id, timepoint))
-                    dbc.commit()
+            try: service_id = trip_id.split("/")[2]
+            except IndexError: continue
 
-            # Save the last trip:,
-            if route_id in gtfsRoutes and service_id in gtfsServices:
-                tripLastTime[trip_id] = timepoint
-                tripLastStop[trip_id] = stop_id
+            # Ignore nonactive routes&services
+            if route_id not in active_routes or service_id not in active_services:
+                continue
 
-    dbc.commit()
+            stop_id = line["stop_id"]
+            stop_index = int(line["stop_sequence"])
+            timepoint = line["departure_time"]
 
-    # Match trips to brigades
-    print("Matching trips to brigades")
-    while True:
-        print("Geting next stop route pair   ", end="\r")
-        db.execute("SELECT * FROM stoptimes")
-        randomDbEntry = db.fetchone()
-        if not randomDbEntry: break #If there's no more stop-route pairs
-        else:
-            # Get some basic data
-            route_id = randomDbEntry["route_id"]
-            stop_id = randomDbEntry["stop_id"]
-            if route_id not in brigades: brigades[route_id] = {}
+            print("\033[1A\033[KNext stop_time row: T:", trip_id, "I:", stop_index, "({})".format(timepoint))
 
-            # Call API UM
-            print("Downloading R: %s S: %s       " % (route_id, stop_id), end="\r")
-            apiCallValues = (apikey, stop_id[:4], stop_id[4:], route_id)
-            apiCall = requests.get("https://api.um.warszawa.pl/api/action/dbtimetable_get/?id=e923fa0e-d96c-43f9-ae6e-60518c9f3238&apikey=%s&busstopId=%s&busstopNr=%s&line=%s" % apiCallValues).text
-            apiCalls += 1
-            result = json.loads(apiCall)["result"]
-            if type(result) is not list: incorrect_resopnse_from_um()
+            # If considered timepoint of a trip happens »later« then what's stored in trip_last_points
+            # Then write current stoptime info as »last_stop of a trip«
+            if trip_last_points.get(trip_id, {}).get("index", -1) < stop_index:
+                trip_last_points[trip_id] = {"stop": stop_id, "index": stop_index, "timepoint": timepoint}
 
-            # Iterate over result's departures
-            print("Matching R: %s S: %s          " % (route_id, stop_id), end="\r")
-            for value in result:
-                # Get API timepoint and brigade
-                for key in value["values"]:
-                    if key["key"] == "brygada":
-                        brigade = key["value"].lstrip("0")
-                        if brigade not in brigades[route_id]:
-                            brigades[route_id][brigade] = []
-                    elif key["key"] == "czas":
-                        timepoint = key["value"].lstrip("0")
 
-                # Try to find timepoint in GTFS
-                db.execute("SELECT * FROM stoptimes WHERE route_id=? AND stop_id=? AND timepoint=?", (route_id, stop_id, timepoint))
-                valueTrip = db.fetchone()
+            # If there's no brigade for this trip, try to match it
+            if trip_id not in matched_trips:
+                if (route_id, stop_id) not in api_responses:
 
-                if not valueTrip: # If not found, try to add 24 to hours - this should catch after midnight timepoints
-                    timepointAM = ":".join([str(int(timepoint.split(":")[0]) + 24), timepoint.split(":")[1], timepoint.split(":")[2]])
-                    db.execute("SELECT * FROM stoptimes WHERE route_id=? AND stop_id=? AND timepoint=?", (route_id, stop_id, timepointAM))
-                    valueTrip = db.fetchone()
+                    try:
+                        print("\033[1A\033[KMaking new API call: R:", route_id, "S:", stop_id)
+                        api_response = requests.get(
+                            "https://api.um.warszawa.pl/api/action/dbtimetable_get/",
+                            timeout = 5,
+                            params = {
+                                "id": "e923fa0e-d96c-43f9-ae6e-60518c9f3238",
+                                "apikey": apikey,
+                                "busstopId": stop_id[:4],
+                                "busstopNr": stop_id[4:6],
+                                "line": route_id
+                        })
+                        api_response.raise_for_status()
 
-                if valueTrip:
-                    trip_id = valueTrip["trip_id"]
-                    trip_data = OrderedDict([("trip_id", trip_id), ("last_stop_latlon", tripLastStop[trip_id]), ("last_stop_timepoint", tripLastTime[trip_id])])
-                    brigades[route_id][brigade].append(trip_data)
-                    db.execute("DELETE FROM stoptimes WHERE trip_id=?", (trip_id, ))
-                    dbc.commit()
+                        print("\033[1A\033[KReading recived API response for: R:", route_id, "S:", stop_id)
 
-            # Remove all remaining times of current stop route pair
-            db.execute("DELETE FROM stoptimes WHERE route_id=? AND stop_id=?", (route_id, stop_id))
-            dbc.commit()
+                        api_response = api_response.json()
+                        assert api_response["result"] != "false"
+                        result = _SimplifyResponse(api_response)
+
+                    except (json.decoder.JSONDecodeError,
+                            requests.exceptions.HTTPError,
+                            requests.exceptions.ConnectTimeout,
+                            requests.exceptions.ReadTimeout,
+                            AssertionError
+                    ):
+                        print("\033[1A\033[K\033[1mIncorrent API response for R: {} S: {}\033[0m".format(route_id, stop_id), end="\n\n")
+                        continue
+
+                    api_responses[(route_id, stop_id)] = result
+
+                else:
+                    result = api_responses[(route_id, stop_id)]
+
+                    for departure in result:
+                        if departure.get("czas") == timepoint:
+                            brigade_id = departure.get("brygada", "").lstrip("0")
+                            break
+                    else:
+                        brigade_id = ""
+
+                    if not brigade_id: continue
+
+                    matched_trips.add(trip_id)
+                    if brigade_id not in brigades[route_id]: brigades[route_id][brigade_id] = []
+                    brigades[route_id][brigade_id].append({"trip_id": trip_id})
+
+    gtfs_zip.close()
+    gtfs_file.close()
+
+    print("\033[1A\033[KMatching stop_times.txt to brigades: done")
 
     # Sort everything
-    print("\nSorting")
+    print("Appending info about last timepoint to brigade")
     for route in brigades:
         for brigade in brigades[route]:
-            brigades[route][brigade] = sorted(brigades[route][brigade], key= \
-                lambda x: x["trip_id"].split("/")[-1])
+            brigades[route][brigade] = sorted(brigades[route][brigade], key=lambda i: i["trip_id"].split("/")[-1])
+
+            for trip in brigades[route][brigade]:
+                trip_last_point = trip_last_points[trip["trip_id"]]
+                trip["last_stop_id"] = trip_last_point["stop"]
+                trip["last_stop_latlon"] = stop_positions[trip_last_point["stop"]]
+                trip["last_stop_timepoint"] = trip_last_point["timepoint"]
+
         brigades[route] = OrderedDict(sorted(brigades[route].items()))
 
     if export:
