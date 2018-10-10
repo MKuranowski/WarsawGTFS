@@ -380,8 +380,8 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
         trip_id = ""
         bearing = None
         id = "-".join(["v", route, brigade])
-        try: triplist = brigades[route][brigade]
-        except KeyError: continue
+        triplist = brigades.get(route, {}).get(brigade, [])
+        if not triplist: continue
 
         # Do not care about obsolete data
         if (datetime.today() - tstamp) > timedelta(minutes=10): continue
