@@ -496,7 +496,8 @@ class Parser:
             "2909", "2908", "2907", "2906", "2905", "2904", "2903", "2902", "4902", "4903", "4923",
             "4904", "4905", "2914", "2913", "2912", "2911", "2910", "4919", "3901", "4918", "4917",
             "4913", "1910", "1909", "1908", "1907", "1906", "1905", "1904", "1903", "1902", "1901",
-            "7903" # List of rail stops used by S× lines. Other rail stops are ignored.
+            "7903", "5907", "5904", "5903", "5902"
+            # List of rail stops used by S× lines. Other rail stops are ignored.
         }
 
     def parse_KA(self):
@@ -589,7 +590,8 @@ class Parser:
 
                 # Case: unused rail stops
                 if group_ref[1:3] in {"90", "91", "92"} and group_ref not in self.active_rail_stops:
-                    pass
+                    for stop_ref in list(stops_in_group.keys()) + list(virtual_stops_in_group.keys()):
+                        self.stops_map[group_ref+stop_ref] = None
 
                 # Case: used rail stops with platform data
                 elif group_ref[1:3] in {"90", "91", "92"} and group_ref in rail_platforms.keys():
