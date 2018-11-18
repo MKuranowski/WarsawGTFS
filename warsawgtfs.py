@@ -83,6 +83,7 @@ def _RouteColorType(number, desc):
     elif "tram" in desc: return "0", "B60000", "FFFFFF"
     elif "specjalna" in desc and number in {"W", "M"}: return "0", "B60000", "FFFFFF"
     elif "nocna" in desc: return "3", "000000", "FFFFFF"
+    elif "strefowa" in desc: return "3", "006800", "FFFFFF"
     elif "ekspresowa" in desc or "przyspieszona" in desc: return "3", "B60000", "FFFFFF"
     else: return "3", "880077", "FFFFFF"
 
