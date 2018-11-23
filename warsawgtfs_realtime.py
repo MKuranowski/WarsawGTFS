@@ -16,6 +16,7 @@ import re
 import os
 import io
 
+ALERT_FLAGS = {"autobusy", "tramwaje", "skm", "kolej", "metro"}
 
 # Some random Functions
 
@@ -24,6 +25,34 @@ def _DictFactory(cursor, row):
     d = {}
     for idx, col in enumerate(cursor.description): d[col[0]] = row[idx]
     return d
+
+def _ListRoutes():
+    "Give a list of active, routes. Returns a dict {ROUTE_TYPE: [ROUTE_1, ROUTE_2]}"
+    routes = {0: [], 1: ["M1", "M2"], 2: [], 3: []}
+
+    website = requests.get("http://m.ztm.waw.pl/rozklad_nowy.php?c=182&l=1")
+    website.raise_for_status()
+    website.encoding = "utf-8"
+
+    soup = BeautifulSoup(website.text, "html.parser")
+
+    for div in soup.find_all("div", class_="LineList"):
+        for link in div.find_all("a"):
+            route_num = link.get_text().strip()
+            route_desc = link.get("title", "").lower()
+
+            # Trams
+            if "tram" in route_desc: routes[0].append(route_num)
+
+            # Ignore KM and WKD routes, add only SKM
+            elif "mazowieckich" in route_desc: continue
+            elif "dojazdowej" in route_desc: continue
+            elif "miejskiej" in route_desc: routes[2].append(route_num)
+
+            # Buses
+            else: routes[3].append(route_num)
+
+    return routes
 
 def _FilterLines(rlist):
     "Filter lines in ZTM alerts to match ids in GTFS"
@@ -53,23 +82,30 @@ def _CleanTags(html):
     if html == "None": return ""
     else: return re.sub("<.*?>", "", html)
 
-def _AlertDesc(link):
-    "Get alert description from website"
-    text = str(request.urlopen(link).read(), "utf-8")
-    soup = BeautifulSoup(text, "html.parser")
-    descsoup = soup.find("div", id="PageContent")
-    if descsoup != None:
-        for tag in descsoup.find_all("table"): tag.decompose()
-        for tag in descsoup.find_all("h4"): tag.decompose()
-        for tag in descsoup.find_all("div", id="PageInfo"): tag.decompose()
-        for tag in descsoup.find_all("div", id="InneKomunikaty"): tag.decompose()
-        for tag in descsoup.find_all("div", class_="InneKomunikatyLinia"): tag.decompose()
-        for tag in descsoup.find_all("div", class_="cb"): tag.decompose()
-        descwithtags = str(descsoup)
-        clean_desc = _CleanTags(descwithtags.replace("</p>", "\n").replace("<br/>", "\n").replace("<br>", "\n").replace("\xa0", " ").replace("  "," "))
-        return clean_desc, descwithtags
-    else:
-        return "", ""
+def _AlertFlags(descsoup):
+    "Get additional flags about the alert from icons, passed as BS4's soup"
+    flags = set()
+    for icon in descsoup.find_all("td", class_="ico"):
+        flags |= {i.get("title") for i in icon.find_all("img")}
+    return flags.intersection(ALERT_FLAGS)
+
+def _AlertDesc(descsoup):
+    "Get alert description from BS4's soup"
+    # Remove unnecessary text
+    for tag in descsoup.find_all("table"): tag.decompose()
+    for tag in descsoup.find_all("h4"): tag.decompose()
+    for tag in descsoup.find_all("div", id="PageInfo"): tag.decompose()
+    for tag in descsoup.find_all("div", id="InneKomunikaty"): tag.decompose()
+    for tag in descsoup.find_all("div", class_="InneKomunikatyLinia"): tag.decompose()
+    for tag in descsoup.find_all("div", class_="cb"): tag.decompose()
+
+    # Get what's left overr
+    desc_with_tags = str(descsoup)
+
+    # Clean text from HTML tags
+    clean_desc = _CleanTags(desc_with_tags.replace("</p>", "\n").replace("<br/>", "\n").replace("<br>", "\n").replace("\xa0", " ").replace("  "," "))
+
+    return clean_desc, desc_with_tags
 
 def _FindTrip(timepoint, route, stop, times):
     "Try find trip_id in times for given timepoint route and stop"
@@ -127,6 +163,7 @@ def Alerts(out_proto=True, out_json=False):
     # Grab Entries
     changes = feedparser.parse("http://www.ztm.waw.pl/rss.php?l=1&IDRss=3").entries
     disruptions = feedparser.parse("http://www.ztm.waw.pl/rss.php?l=1&IDRss=6").entries
+    gtfs_routes = _ListRoutes()
     idenum = 0
 
     # Containers
@@ -136,6 +173,7 @@ def Alerts(out_proto=True, out_json=False):
         header.gtfs_realtime_version = "2.0"
         header.incrementality = 0
         header.timestamp = round(datetime.today().timestamp())
+
     if out_json:
         json_container = {"time": datetime.today().strftime("%Y-%m-%d %H:%M:%S"), "alerts": []}
 
@@ -146,7 +184,7 @@ def Alerts(out_proto=True, out_json=False):
         all_entries.append(i)
 
     for i in changes:
-        i.effect = 6 # Modified Service
+        i.effect = 7 # Other Effect
         all_entries.append(i)
 
     # Alerts
@@ -155,13 +193,36 @@ def Alerts(out_proto=True, out_json=False):
         try: lines_raw = entry.title.split(":")[1].strip()
         except IndexError: lines_raw = ""
         lines = _FilterLines(set(re.findall(r"[0-9a-zA-Z-]{1,3}", lines_raw)))
+
+        # Gather data
+        alert_id = "-".join(["a", str(idenum)])
+        link = _CleanTags(str(entry.link))
+        title = _CleanTags(str(entry.description))
+
+        try:
+            # Additional info from website provided by RSS
+            alert_website = requests.get(link)
+            alert_website.raise_for_status()
+            alert_website.encoding = "utf-8"
+
+            soup = BeautifulSoup(alert_website.text, "html.parser")
+            descsoup = soup.find("div", id="PageContent")
+
+            # Add routes if those are not specified
+            if not lines:
+                flags = _AlertFlags(descsoup)
+
+                if "metro" in flags: lines |= set(gtfs_routes[1])
+                elif "tramwaje" in flags: lines |= set(gtfs_routes[0])
+                elif flags.intersection("kolej", "skm"): lines |= set(gtfs_routes[2])
+                elif "autobusy" in flags: lines |= set(gtfs_routes[3])
+
+            desc, desc_html = _AlertDesc(descsoup)
+
+        except:
+            desc, desc_html = "", ""
+
         if lines:
-            # Gather data
-            alert_id = "-".join(["a", str(idenum)])
-            link = _CleanTags(str(entry.link))
-            title = _CleanTags(str(entry.description))
-            try: desc, desc_html = _AlertDesc(link)
-            except: desc, desc_html = "", ""
 
             # Append to gtfs_rt container
             if out_proto:
