@@ -855,12 +855,12 @@ class Parser:
                         for sequence, stop_time in enumerate(trip_stops):
                             # Pickup type
                             if sequence == len(trip_stops)-1: pickup = "1"
+                            elif "P" in stop_time["flags"]: pickup = "1"
                             elif stop_time["original_stop"] in on_demand_stops: pickup = "3"
                             else: pickup = "0"
 
                             # Drop-off type
                             if sequence == 0: dropoff = "1"
-                            elif "P" in stop_time["flags"]: dropoff = "1"
                             elif stop_time["original_stop"] in on_demand_stops: dropoff = "3"
                             else: dropoff = "0"
 
