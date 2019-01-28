@@ -8,3 +8,5 @@ ignore*
 ._.DS_Store
 .DS_Store
 *.pdf
+*.sh
+*.bat
