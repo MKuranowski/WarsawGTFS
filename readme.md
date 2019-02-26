@@ -11,36 +11,30 @@ Data comes from [ZTM Warszawa FTP server](ftp://rozklady.ztm.waw.pl/) and option
 3. Trip headsigns and On-Request stops
 4. Stop names and trip headsigns proper casing downloader (from ZTM's website)
 5. Merging railway stops into one
-6. Geting railway platforms from [external gist](https://gist.github.com/MKuranowski/4ab75be96a5f136e0f907500e8b8a31c)
-7. Geting missing stop positions from [external gist](https://gist.github.com/MKuranowski/05f6e819a482ccec606caa64573c9b5b)
+6. Geting railway platforms from [external gist](https://gist.github.com/MKuranowski/0ca97a012d541899cb1f859cd0bab2e7#file-rail_platforms-json)
+7. Geting missing stop positions from [external gist](https://gist.github.com/MKuranowski/0ca97a012d541899cb1f859cd0bab2e7#file-missing_stops-json)
 8. Inserting metro schedules from [mkuran.pl](https://mkuran.pl/feed/metro)
-9. Fares (ZTM Warszawa only)
 10. Realtime data
 11. Shapes generator: Buses based on [OSM Data](https://www.openstreetmap.org/), Rail/Tram based on [my own graph](https://mkuran.pl/feed/ztm/ztm-km-rail-shapes.osm).
 
 
-## Running
+## Static GTFS script
 
 ### First Launch
 
 First of all you need [Python3](https://www.python.org) and several modules, included in `requirements.txt`, so run `pip3 intall -r requirements.txt`.
 
-Then start the script with `python3 warsawgtfs.py` - this will create the default `config.yaml` file
+Then start the script with `python3 warsawgtfs.py`
 
 ### Configuration
 
-**config.yaml**:
-This file has serveral settings for data processing.
-Each option comes with its own description in the file.
-
-**Command line options**:
 Run `python3 warsawgts.py -h` to see all possible options with their descriptions.
 All of those are optional.
 
 ### Creating GTFS
 
-After setting up `config.yaml`, run `python3 warsawgtfs.py` with desired command line options.
-After some time (up to 1 min, or 15 mins with the nameDecap turned on) the `gtfs.zip` file should be created.
+Run `python3 warsawgtfs.py` with desired command line options.
+After some time (up to 1 min, or 25 mins with the `--shapes` option turned on) the `gtfs.zip` file should be created.
 
 
 Produced GTFS feed has three additional columns not included in standard GTFS specification:
@@ -49,7 +43,7 @@ Produced GTFS feed has three additional columns not included in standard GTFS sp
 - `exceptional` in `trips.txt` - Value `1` indicates an *unusual* trip which does not follow common line's route (e.g. trips to depot) ([from Google Transit extensions](https://developers.google.com/transit/gtfs/reference/gtfs-extensions#trip-diversions)).
 
 
-## Realtime data
+## Realtime GTFS script
 
 The `warsawgtfs_realtime.py` contains three realtime functions.
 
