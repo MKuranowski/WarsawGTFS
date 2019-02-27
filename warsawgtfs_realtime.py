@@ -429,11 +429,11 @@ def Positions(apikey, brigades="https://mkuran.pl/feed/ztm/ztm-brigades.json", p
     # Get brigades, if brigades is not already a dict or OrderedDict
     if type(brigades) is str:
         if brigades.startswith("ftp://") or brigades.startswith("http://") or brigades.startswith("https://"):
-            brigades = request.urlopen(brigades).read()
-            brigades = json.loads(brigades)
+            brigades_request = requests.get(brigades)
+            brigades = brigades_request.json()
         else:
             with open(brigades) as f:
-                brigades = json.loads(f.read())
+                brigades = json.load(f)
 
     # Sort times in brigades, if they're not sorted
     if type(brigades) is not OrderedDict:
