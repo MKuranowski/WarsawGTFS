@@ -547,6 +547,9 @@ if __name__ == "__main__":
     argprs.add_argument("-p", "--positions", action="store_true", required=False, dest="positions", help="parse positions into output-rt/")
     argprs.add_argument("-k", "--key", default="", required=False, metavar="(apikey)", dest="key", help="apikey from api.um.warszawa.pl")
 
+    argprs.add_argument("--gtfs-file", default="https://mkuran.pl/feed/ztm/ztm-latest.zip", required=False, dest="gtfs_path", help="path/URL to the GTFS file")
+    argprs.add_argument("--brigades-file", default="https://mkuran.pl/feed/ztm/ztm-brigades.json", required=False, dest="brigades_path", help="path/URL to brigades JSON file (created by option -b)")
+
     argprs.add_argument("--json", action="store_true", default=False, required=False, dest="json", help="output additionally rt data to .json format")
     argprs.add_argument("--no_protobuf", action="store_false", default=True, required=False, dest="proto", help="do not output rt data to GTFS-Realtime format")
 
@@ -564,8 +567,8 @@ if __name__ == "__main__":
 
     if args.brigades and args.key:
         print("Parsing brigades")
-        Brigades(apikey=args.key, export=True)
+        Brigades(apikey=args.key, gtfsloc=args.gtfs_path, export=True)
 
     if args.positions and args.key:
         print("Parsing positions")
-        Positions(apikey=args.key, out_proto=args.proto, out_json=args.json)
+        Positions(apikey=args.key, brigades=args.brigades_path, out_proto=args.proto, out_json=args.json)
