@@ -351,7 +351,7 @@ def Brigades(apikey, gtfsloc="https://mkuran.pl/feed/ztm/ztm-latest.zip", export
                         print("\033[1A\033[KReading recived API response for: R:", route_id, "S:", stop_id)
 
                         api_response = api_response.json()
-                        assert api_response["result"] != "false"
+                        assert type(api_response["result"]) is list
                         result = _SimplifyResponse(api_response)
 
                     except (json.decoder.JSONDecodeError,
