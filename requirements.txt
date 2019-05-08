@@ -8,6 +8,5 @@ feedparser
 requests
 
 # Shapes
-pyroutelib3 >= 1.1
-overpass
+pyroutelib3 >= 1.3
 rdp

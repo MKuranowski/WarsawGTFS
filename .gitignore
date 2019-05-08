@@ -1,6 +1,8 @@
 __pycache__/
+shape-errors/*
+gtfs-rt/*
+feeds/*
 gtfs/*
-output-rt/*
 ignore*
 *.json
 *.zip
