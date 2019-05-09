@@ -60,7 +60,7 @@ class Realtime:
             title = no_html(str(entry.description))
 
             # Alert ID is hidden in the alert link
-            alert_id = "A/" + re.search(r"(?<=&i=)\d{5}", link)[0]
+            alert_id = "A/" + re.search(r"(?<=&i=)\d+", link)[0]
 
             try: lines_raw = re.findall(r"[A-Za-z0-9-]{1,3}", entry.title.split(":")[1])
             except IndexError: lines_raw = ""
@@ -73,28 +73,28 @@ class Realtime:
             ]
 
 
-            try:
-                # Additional info from website provided by RSS
-                alert_website = requests.get(link)
-                alert_website.raise_for_status()
-                alert_website.encoding = "utf-8"
+            #try:
+            # Additional info from website provided by RSS
+            alert_website = requests.get(link)
+            alert_website.raise_for_status()
+            alert_website.encoding = "utf-8"
 
-                soup = BeautifulSoup(alert_website.text, "html.parser")
-                descsoup = soup.find("div", id="PageContent")
+            soup = BeautifulSoup(alert_website.text, "html.parser")
+            descsoup = soup.find("div", id="PageContent")
 
-                # Add routes if those are not specified
-                if not lines:
-                    flags = alert_flags(descsoup)
+            # Add routes if those are not specified
+            if not lines:
+                flags = alert_flags(descsoup)
 
-                    if "metro" in flags: lines.extend(gtfs_routes["1"])
-                    elif "tramwaje" in flags: lines.extend(gtfs_routes["0"])
-                    elif flags.intersection("kolej", "skm"): lines.extend(gtfs_routes["2"])
-                    elif "autobusy" in flags: lines.extend(gtfs_routes["3"])
+                if "metro" in flags: lines.extend(gtfs_routes["1"])
+                elif "tramwaje" in flags: lines.extend(gtfs_routes["0"])
+                elif flags.intersection("kolej", "skm"): lines.extend(gtfs_routes["2"])
+                elif "autobusy" in flags: lines.extend(gtfs_routes["3"])
 
-                desc, desc_html = alert_description(descsoup)
+            desc, desc_html = alert_description(descsoup)
 
-            except:
-                desc, desc_html = "", ""
+            #except:
+            #    desc, desc_html = "", ""
 
             if lines:
 
@@ -127,7 +127,7 @@ class Realtime:
             with open("gtfs-rt/alerts.pb", "w") as f: f.write(str(container))
 
         if out_json:
-            with open("gtfs-rt/alerts.json", "w", encoding="utf8") as f: json.dump(json_container, f, indent=2)
+            with open("gtfs-rt/alerts.json", "w", encoding="utf8") as f: json.dump(json_container, f, indent=2, ensure_ascii=False)
 
     @staticmethod
     def brigades(apikey, gtfs_location="https://mkuran.pl/feed/ztm/ztm-latest.zip", export=False):
@@ -404,6 +404,6 @@ class Realtime:
             for i in map(copy, positions.values()):
                 i["timestamp"] = i["timestamp"].isoformat()
                 json_container["positions"].append(i)
-            with open("gtfs-rt/vehicles.json", "w", encoding="utf8") as f: json.dump(json_container, f, indent=2)
+            with open("gtfs-rt/vehicles.json", "w", encoding="utf8") as f: json.dump(json_container, f, indent=2, ensure_ascii=False)
 
         return positions

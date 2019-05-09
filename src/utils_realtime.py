@@ -23,15 +23,15 @@ def alert_flags(alert_soup):
 def alert_description(alert_soup):
     "Get alert description from BS4's soup. Returns a (plain_text, html) for every alert soup"
     # Remove unnecessary text
-    for tag in descsoup.find_all("table"): tag.decompose()
-    for tag in descsoup.find_all("h4"): tag.decompose()
-    for tag in descsoup.find_all("div", id="PageInfo"): tag.decompose()
-    for tag in descsoup.find_all("div", id="InneKomunikaty"): tag.decompose()
-    for tag in descsoup.find_all("div", class_="InneKomunikatyLinia"): tag.decompose()
-    for tag in descsoup.find_all("div", class_="cb"): tag.decompose()
+    for tag in alert_soup.find_all("table"): tag.decompose()
+    for tag in alert_soup.find_all("h4"): tag.decompose()
+    for tag in alert_soup.find_all("div", id="PageInfo"): tag.decompose()
+    for tag in alert_soup.find_all("div", id="InneKomunikaty"): tag.decompose()
+    for tag in alert_soup.find_all("div", class_="InneKomunikatyLinia"): tag.decompose()
+    for tag in alert_soup.find_all("div", class_="cb"): tag.decompose()
 
     # Get what's left overr
-    desc_with_tags = str(descsoup)
+    desc_with_tags = str(alert_soup)
 
     # Clean text from HTML tags
     clean_desc = no_html(desc_with_tags.replace("</p>", "\n").replace("<br/>", "\n").replace("<br>", "\n").replace("\xa0", " ").replace("  "," "))
@@ -114,7 +114,6 @@ def load_api_positions(apikey, request_type):
         print("WarsawGTFS-RT: Incorrect trams positions response")
         print(api_response)
 
-
 class WarsawGtfs:
     def __init__(self, gtfs_location):
         self.routes = {"0": set(), "1": set(), "2": set(), "3": set()}
@@ -122,7 +121,7 @@ class WarsawGtfs:
         self.services = set()
 
         if gtfs_location.startswith("https://") or gtfs_location.startswith("ftp://") or gtfs_location.startswith("http://"):
-            gtfs_request = requests.get(gtfsloc)
+            gtfs_request = requests.get(gtfs_location)
             self.gtfs = TemporaryFile()
             self.gtfs.write(gtfs_request.content)
             self.gtfs.seek(0)
