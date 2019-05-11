@@ -498,7 +498,9 @@ class Parser:
             json.dump({"missing": list(map(int, self.incorrect_stops)), "unused": sorted(map(int, self.unused_stops))}, f, indent=0)
 
     @staticmethod
-    def static_files(shapes, version):
+    def static_files(shapes, version, download_time):
+        feed_version = "Version {}; downloaded at: {}".format(version, download_time)
+
         "Create files that don't depend of ZTM file content"
         file = open("gtfs/agency.txt", mode="w", encoding="utf8", newline="\r\n")
         file.write('agency_id,agency_name,agency_url,agency_timezone,agency_lang,agency_phone,agency_fare_url\n')
@@ -507,8 +509,8 @@ class Parser:
 
         file = open("gtfs/feed_info.txt", mode="w", encoding="utf8", newline="\r\n")
         file.write('feed_publisher_name,feed_publisher_url,feed_lang,feed_version\n')
-        if shapes: file.write('"GTFS Convert: MKuranowski; Data: ZTM Warszawa; Bus Shapes (under ODbL License): © OpenStreetMap contributors","https://github.com/MKuranowski/WarsawGTFS",pl,{}\n'.format(version))
-        else: file.write('"GTFS Convert: MKuranowski; Data: ZTM Warszawa","https://github.com/MKuranowski/WarsawGTFS",pl,{}\n'.format(version))
+        if shapes: file.write('"GTFS Convert: MKuranowski; Data: ZTM Warszawa; Bus Shapes (under ODbL License): © OpenStreetMap contributors","https://github.com/MKuranowski/WarsawGTFS",pl,{}\n'.format(feed_version))
+        else: file.write('"GTFS Convert: MKuranowski; Data: ZTM Warszawa","https://github.com/MKuranowski/WarsawGTFS",pl,{}\n'.format(feed_version))
         file.close()
 
     @staticmethod
@@ -522,6 +524,7 @@ class Parser:
     @classmethod
     def create(cls, version="", shapes=False, stop_names=None, metro=False, prevver="", targetfile="gtfs.zip", clear_shape_errors=True):
         print("\033[1A\033[K" + "Downloading file")
+        download_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         self = cls(version, shapes, stop_names)
 
         if prevver == self.version:
@@ -537,7 +540,7 @@ class Parser:
         self.missing_stops()
 
         print("\033[1A\033[K" + "Creating static files")
-        self.static_files(bool(self.shapes), self.version)
+        self.static_files(bool(self.shapes), self.version, download_time)
 
         if metro:
             print("\033[1A\033[K" + "Adding metro")

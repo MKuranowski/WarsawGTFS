@@ -357,6 +357,7 @@ class MultiDay:
             clear_directory("feeds")
 
         print("\033[1A\033[K" + "Updating local files")
+        download_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         self.sync_feeds(shapes)
 
         if self.updated == True or remerge:
@@ -370,10 +371,8 @@ class MultiDay:
             self.create_stops()
 
             print("\033[1A\033[K" + "Creating static files")
-            if len(self.files) > 1: version = self.files[0]["ver"] + "÷" + self.files[-1]["ver"]
-            else: version = self.files[0]["ver"]
-
-            Parser.static_files(shapes, version)
+            version = "/".join([i["ver"] for i in self.files])
+            Parser.static_files(shapes, version, download_time)
 
             if metro:
                 print("\033[1A\033[K" + "Adding metro")
