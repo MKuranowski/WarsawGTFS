@@ -1,13 +1,14 @@
 from collections import OrderedDict
-from tempfile import TemporaryFile
+from tempfile import NamedTemporaryFile
 from warnings import warn
 from datetime import date
 from ftplib import FTP
+import libarchive.public
 import requests
-import py7zlib
 import json
 import csv
 import re
+import os
 
 from .utils_static import *
 from .utils import *
@@ -69,22 +70,42 @@ class Parser:
                 else: fdate -= timedelta(days=1)
 
         # Create temporary files for storing th 7z archive and the compressed TXT file
-        temp_arch = TemporaryFile(mode="w+b")
-        self.reader = TemporaryFile(mode="w+t")
+        temp_arch = NamedTemporaryFile(mode="w+b", delete=False)
+        self.reader = NamedTemporaryFile(mode="w+t", delete=True)
 
-        # Download the file
-        server.retrbinary("RETR " + fname, temp_arch.write)
-        server.quit()
+        try:
+            # Download the file
+            server.retrbinary("RETR " + fname, temp_arch.write)
+            server.quit()
+            temp_arch.close()
 
-        # Decompress the file and close the archive
-        temp_arch.seek(0)
-        arch = py7zlib.Archive7z(temp_arch)
-        arch_file = arch.filenames[0]
-        self.reader.write(str(arch.getmember(arch_file).read(), "cp1250"))
-        self.reader.seek(0)
-        temp_arch.close()
+            # Open the temporary archive inside
+            with libarchive.public.file_reader(temp_arch.name) as arch:
 
-        self.version = re.match(r"RA\d{6}", arch_file.upper())[0]
+                # Iterate over each file inside the archive
+                for arch_file in arch:
+
+                    # Assert the file inside the archive is the TXT file we're looking for
+                    name_match = re.fullmatch(r"(RA\d{6})\.TXT", arch_file.pathname, flags=re.IGNORECASE)
+                    if not name_match:
+                        continue
+
+                    # Save the feed version
+                    self.version = name_match[1].upper()
+
+                    # Decompress the TXT file block by block and save it to the reader
+                    for block in arch_file.get_blocks():
+                        self.reader.write(str(block, "cp1250"))
+
+                    # only one TXT file should be inside the archive
+                    break
+
+                else:
+                    raise FileNotFoundError("no schedule file found inside archive {}".format(fname))
+
+        # Remove the temp arch file at the end
+        finally:
+            os.remove(temp_arch.name)
 
     def parse_KA(self):
         file = open("gtfs/calendar_dates.txt", mode="w", encoding="utf8", newline="")

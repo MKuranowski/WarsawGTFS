@@ -1,6 +1,6 @@
 # Static
 beautifulsoup4
-pylzma
+libarchive
 
 # Realtime
 gtfs-realtime-bindings >= 0.0.5
