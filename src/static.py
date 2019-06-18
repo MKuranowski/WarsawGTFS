@@ -96,7 +96,8 @@ class Parser:
                     # Decompress the TXT file block by block and save it to the reader
                     for block in arch_file.get_blocks():
                         self.reader.write(str(block, "cp1250"))
-
+                    self.reader.seek(0)
+                    
                     # only one TXT file should be inside the archive
                     break
 
