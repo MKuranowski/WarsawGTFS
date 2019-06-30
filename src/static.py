@@ -97,7 +97,7 @@ class Parser:
                     for block in arch_file.get_blocks():
                         self.reader.write(str(block, "cp1250"))
                     self.reader.seek(0)
-                    
+
                     # only one TXT file should be inside the archive
                     break
 
@@ -134,7 +134,7 @@ class Parser:
     def parse_ZP(self):
         file = open("gtfs/stops.txt", mode="w", encoding="utf8", newline="")
         writer = csv.writer(file)
-        writer.writerow(["stop_id", "stop_name", "stop_lat", "stop_lon", "location_type", "parent_station", "railway_pkpplk_id", "platform_code", "wheelchair_boarding"])
+        writer.writerow(["stop_id", "stop_name", "stop_lat", "stop_lon", "location_type", "parent_station", "stop_IBNR", "platform_code", "wheelchair_boarding"])
 
         inside_group = False
 
@@ -214,7 +214,7 @@ class Parser:
                         if self.shapes: self.shapes.stops[group_ref] = station_lat, station_lon
                         writer.writerow([
                             group_ref, station_info["name"], station_lat, station_lon, "",
-                            "", station_info["pkpplk_code"], "1", station_info["wheelchair"]
+                            "", station_info["ibnr_code"], "1", station_info["wheelchair"]
                         ])
 
                         # Add info to stop_map table
@@ -226,7 +226,7 @@ class Parser:
                         # Hub entry
                         writer.writerow([
                             group_ref, station_info["name"], station_lat, station_lon, "1",
-                            "", station_info["pkpplk_code"], "", station_info["wheelchair"]
+                            "", station_info["ibnr_code"], "", station_info["wheelchair"]
                         ])
 
                         # Platform entries
@@ -236,7 +236,7 @@ class Parser:
                             if self.shapes: self.shapes.stops[platform_ref] = platform_lat, platform_lon
                             writer.writerow([
                                 platform_ref, station_info["name"] + " peron " + platform_code, platform_lat, platform_lon, "0",
-                                group_ref, station_info["pkpplk_code"], platform_code, station_info["wheelchair"]
+                                group_ref, station_info["ibnr_code"], platform_code, station_info["wheelchair"]
                             ])
 
                         # Add info to stop_map table

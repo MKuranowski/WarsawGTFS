@@ -335,7 +335,7 @@ class MultiDay:
     def create_stops(self):
         # Open file
         file = open("gtfs/stops.txt", mode="w", encoding="utf8", newline="")
-        writer = csv.DictWriter(file, ["stop_id", "stop_name", "stop_lat", "stop_lon", "location_type", "parent_station", "railway_pkpplk_id", "platform_code", "wheelchair_boarding"], extrasaction="ignore")
+        writer = csv.DictWriter(file, ["stop_id", "stop_name", "stop_lat", "stop_lon", "location_type", "parent_station", "stop_IBNR", "platform_code", "wheelchair_boarding"], extrasaction="ignore")
         writer.writeheader()
 
         # Export stops to GTFS
