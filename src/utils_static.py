@@ -238,7 +238,7 @@ class Shaper:
         return router
 
     def rotue_between_stops(self, start_stop, end_stop, route_type):
-        # print("\033[1A\033[K" + "Getting shape between {} and {}".format(start_stop, end_stop)) # DEBUG
+        #print("\033[1A\033[K" + "Getting shape between {} and {}".format(start_stop, end_stop)) # DEBUG
         # Find nodes
         start_lat, start_lon = map(float, self.stops[start_stop])
         end_lat, end_lon = map(float, self.stops[end_stop])
@@ -318,8 +318,6 @@ class Shaper:
                             }]}, f, indent=2
                         )
 
-                route_points = [[start_lat, start_lon], [end_lat, end_lon]]
-
             else:
                 if not os.path.exists("shape-errors/{}-{}.json".format(start_stop, end_stop)):
                     with open("shape-errors/{}-{}.json".format(start_stop, end_stop), "w") as f:
@@ -329,7 +327,8 @@ class Shaper:
                              "error": status
                             }, f, indent=2
                         )
-                route_points = [[start_lat, start_lon], [end_lat, end_lon]]
+
+            route_points = [[start_lat, start_lon], [end_lat, end_lon]]
 
         # Add distances to route points
         dist = 0.0
@@ -381,6 +380,10 @@ class Shaper:
         self.file = open("gtfs/shapes.txt", "w", encoding="utf-8", newline="")
         self.writer = csv.writer(self.file)
         self.writer.writerow(["shape_id", "shape_pt_sequence", "shape_dist_traveled", "shape_pt_lat", "shape_pt_lon"])
+
+        self.stops = {}
+        self.trips = {}
+        self.failed = set()
 
     def close(self):
         self.file.close()
