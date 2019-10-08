@@ -18,28 +18,6 @@ from .utils import haversine, iter_haversine, time_limit
 Random shit that is used by static data parser
 """
 
-def proper_stop_names():
-    """Get table with properly-cased stop names — ZTM data useally writes stop names in UPPER CASE"""
-    names_table = {"4040": "Lotnisko Chopina", "1484": "Dom Samotnej Matki"}
-    website = requests.get("http://m.ztm.waw.pl/rozklad_nowy.php?c=183&l=1")
-    website.encoding = "utf8"
-    soup = BeautifulSoup(website.text, "html.parser").find("div", id="RozkladContent")
-
-    for t in soup.find_all("form"):
-        t.decompose()
-
-    for link in soup.find_all("a"):
-        match = re.search(r"(?<=&a=)\d{4}", link.get("href"))
-        if match:
-            for t in link.find_all(True): t.decompose()
-            name = link.string
-            if name:
-                name = name.replace(".", ". ").replace("-", " - ").replace("  "," ").rstrip()
-                name = name.replace("Praga - Płd.", "Praga-Płd.")
-                names_table[match.group(0)] = name
-
-    return names_table
-
 def route_color_type(number, desc):
     "Return route_type, route_color and route_text_color based on route number and description"
     desc = desc.lower()
@@ -52,7 +30,21 @@ def route_color_type(number, desc):
     else: return "3", "880077", "FFFFFF"
 
 def normal_stop_name(name):
-    return name.title().replace(".", ". ").replace("-", " - ").replace("  "," ").rstrip()
+    # add .title() if ZTM provides names in ALL-UPPER CASE again
+    name = name.replace(".", ". ")      \
+               .replace("-", " - ")     \
+               .replace("  ", " ")      \
+               .replace("al.", "Al.")   \
+               .replace("pl.", "Pl.")   \
+               .replace("os.", "Os.")   \
+               .replace("ks.", "Ks.")   \
+               .replace("Ak ", "AK ")   \
+               .replace("Ch ", "CH ")   \
+               .replace("gen.", "Gen.") \
+               .replace("rondo ", "Rondo ") \
+               .rstrip()
+
+    return name
 
 def stops_unaccessible():
     """Return a set of stop_ids which are not wheelchair_accessible"""

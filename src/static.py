@@ -22,6 +22,13 @@ ACTIVE_RAIL_STATIONS = {
     "7903", "5907", "5904", "5903", "5902"
 }
 
+PROPER_STOP_NAMES = {
+    "4040": "Lotnisko Chopina",         "1484": "Dom Samotnej Matki",
+    "2005": "Praga-Płd. - Ratusz",      "1541": "Marki Bandurskiego I",
+    "5001": "Połczyńska - Parking P+R", "2296": "Szosa Lubelska",
+    "6201": "Lipków Paschalisa-Jakubowicza"
+}
+
 class Parser:
     def __init__(self, version="", shapes=False, stop_names=None, clear_shape_errors=True):
         self.get_file(version)
@@ -33,8 +40,7 @@ class Parser:
         self.unused_stops = set()
         self.incorrect_stops = []
 
-        if stop_names == None: self.stop_names = proper_stop_names()
-        else: self.stop_names = stop_names
+        self.stop_names = PROPER_STOP_NAMES.copy()
 
         # Get shape generator instance
         if isinstance(shapes, Shaper):
@@ -160,8 +166,19 @@ class Parser:
                 stops_in_group = OrderedDict()
                 virtual_stops_in_group = OrderedDict()
                 group_ref = zp_match[1]
-                group_name = self.stop_names.get(group_ref, normal_stop_name(zp_match[2]))
                 group_town = zp_match[4].title()
+
+                # Fix group_town for Kampinoski PN
+                if group_town == "Kampinoski Pn":
+                    group_town = "Kampinoski PN"
+
+                # Add name to self.stop_names if it's missing
+                if group_ref not in self.stop_names:
+                    group_name = normal_stop_name(zp_match[2])
+                    self.stop_names[group_ref] = group_name
+
+                else:
+                    group_name = self.stop_names[group_ref]
 
                 if should_town_be_added_to_name(group_ref, group_name, group_town, zp_match[3]):
                     group_name = group_town + " " + group_name
