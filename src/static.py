@@ -30,7 +30,7 @@ PROPER_STOP_NAMES = {
 }
 
 class Parser:
-    def __init__(self, version="", shapes=False, stop_names=None, clear_shape_errors=True):
+    def __init__(self, version="", shapes=False, clear_shape_errors=True):
         self.get_file(version)
 
         clear_directory("gtfs")
@@ -567,10 +567,10 @@ class Parser:
                     archive.write(os.path.join("gtfs", file), arcname=file)
 
     @classmethod
-    def create(cls, version="", shapes=False, stop_names=None, metro=False, prevver="", targetfile="gtfs.zip", clear_shape_errors=True):
+    def create(cls, version="", shapes=False, metro=False, prevver="", targetfile="gtfs.zip", clear_shape_errors=True):
         print("\033[1A\033[K" + "Downloading file")
         download_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        self = cls(version, shapes, stop_names)
+        self = cls(version, shapes)
 
         if prevver == self.version:
             self.reader.close()

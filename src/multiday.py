@@ -120,9 +120,6 @@ class MultiDay:
 
             print("\n" + "\033[2A\033[K" + "Found {} missing files - those files will be created".format(len(missing_versions)), end="\n\n")
 
-            print("\033[1A\033[K" + "Creating stop_name conversion table")
-            parser_stop_names = proper_stop_names()
-
             print("\033[1A\033[K" + "Creating shape generator")
             parser_shapes = Shaper() if shapes else False
 
@@ -133,7 +130,6 @@ class MultiDay:
                 Parser.create(
                     version=version,
                     shapes=parser_shapes,
-                    stop_names=parser_stop_names,
                     metro=False,
                     targetfile=os.path.join("feeds", version+".zip"),
                     clear_shape_errors=False
