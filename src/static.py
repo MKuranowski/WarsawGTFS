@@ -141,6 +141,7 @@ class Parser:
         # Load info about missing stops
         missing_stops = requests.get("https://gist.githubusercontent.com/MKuranowski/0ca97a012d541899cb1f859cd0bab2e7/raw/missing_stops.json").json()
         rail_platforms = requests.get("https://gist.githubusercontent.com/MKuranowski/0ca97a012d541899cb1f859cd0bab2e7/raw/rail_platforms.json").json()
+        unaccessible_stops = stops_unaccessible()
 
         self.unused_stops = set(missing_stops.keys())
 
@@ -262,7 +263,12 @@ class Parser:
                     # Well-defined stops
                     for stop_ref, stop_pos in stops_in_group.items():
                         if self.shapes: self.shapes.stops[group_ref+stop_ref] = stop_pos[0], stop_pos[1]
-                        writer.writerow([group_ref+stop_ref, group_name + " " + stop_ref, stop_pos[0], stop_pos[1], "", "", "", "", ""])
+
+                        # Accessibility of this stop
+                        wheelchair_boarding = "2" if (group_ref+stop_ref) in unaccessible_stops else "1"
+
+                        # Write to stops.txt
+                        writer.writerow([group_ref+stop_ref, group_name + " " + stop_ref, stop_pos[0], stop_pos[1], "", "", "", "", wheelchair_boarding])
 
                     # Virtual stops
                     for stop_ref, stop_pos in virtual_stops_in_group.items():

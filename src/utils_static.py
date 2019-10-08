@@ -54,6 +54,24 @@ def route_color_type(number, desc):
 def normal_stop_name(name):
     return name.title().replace(".", ". ").replace("-", " - ").replace("  "," ").rstrip()
 
+def stops_unaccessible():
+    """Return a set of stop_ids which are not wheelchair_accessible"""
+    r = requests.get(
+        "https://services.arcgis.com/VU1dOESuQS3Z8oTW/arcgis/rest/services/baza_przystankow_WTP_widok/FeatureServer/3//query",
+        params={
+            "where": "dostepnosc>5",
+            "outFields": "nazwa, Kod_przystanku, dostepnosc, Dzielnica_gmina, Funkcjonowanie, techniczny",
+            "returnGeometry": False,
+            "f": "pjson"
+        }
+    )
+
+    data = r.json()
+    unaccess_stops = {i["attributes"]["Kod_przystanku"] for i in data["features"]}
+    unaccess_stops.discard(None)
+
+    return unaccess_stops
+
 def normal_time(time):
     return ":".join(["0" + i if len(i) == 1 else i for i in (time.split(".") + ["00"])])
 
