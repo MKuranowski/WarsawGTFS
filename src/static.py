@@ -26,7 +26,7 @@ PROPER_STOP_NAMES = {
     "4040": "Lotnisko Chopina",         "1484": "Dom Samotnej Matki",
     "2005": "Praga-Płd. - Ratusz",      "1541": "Marki Bandurskiego I",
     "5001": "Połczyńska - Parking P+R", "2296": "Szosa Lubelska",
-    "6201": "Lipków Paschalisa-Jakubowicza"
+    "6201": "Lipków Paschalisa-Jakubowicza", "1226": "Mańki-Wojody",
 }
 
 class Parser:
@@ -147,7 +147,6 @@ class Parser:
         # Load info about missing stops
         missing_stops = requests.get("https://gist.githubusercontent.com/MKuranowski/0ca97a012d541899cb1f859cd0bab2e7/raw/missing_stops.json").json()
         rail_platforms = requests.get("https://gist.githubusercontent.com/MKuranowski/0ca97a012d541899cb1f859cd0bab2e7/raw/rail_platforms.json").json()
-        unaccessible_stops = stops_unaccessible()
 
         self.unused_stops = set(missing_stops.keys())
 
@@ -155,7 +154,7 @@ class Parser:
             line = line.strip()
 
             zp_match = re.match(r"(\d{4})\s+([^,]{,30})[\s,]+([\w-]{2})\s+(.*)", line)
-            pr_match = re.match(r"(\d{4})(\d{2}).+Y=\s?([0-9.]+|[Yy.]+)\s+X=\s?([0-9.]+|[Xx.]+)", line)
+            pr_match = re.match(r"(\d{4})(\d{2}).+Y=\s?([0-9.]+|[Yy.]+)\s+X=\s?([0-9.]+|[Xx.]+)\s+Pu=([0-9?])", line)
 
             # End of section
             if line.startswith("#ZP"):
@@ -188,16 +187,22 @@ class Parser:
                 stop_ref = pr_match[2]
                 lat, lon = pr_match[3], pr_match[4]
 
+                # Parse accessibility info
+                if not pr_match[5].isdigit(): accessibility = "0"
+                elif int(pr_match[5]) > 5: accessibility = "2"
+                else: accessibility = "1"
+
                 # Case: virtual stop
                 if stop_ref[0] == "8":
-                    virtual_stops_in_group[stop_ref] = [lat, lon]
+                    virtual_stops_in_group[stop_ref] = [lat, lon, accessibility]
 
                 # Case: No location
                 elif re.match(r"[Yy.]+", lat) or re.match(r"[Xx.]+", lon):
                     # Sub-case: data in missing_stops
                     if group_ref+stop_ref in missing_stops.keys():
                         self.unused_stops.remove(group_ref+stop_ref)
-                        stops_in_group[stop_ref] = missing_stops[group_ref+stop_ref]
+                        lat, lon = missing_stops[group_ref+stop_ref]
+                        stops_in_group[stop_ref] = [lat, lon, accessibility]
 
                     # Sub-case: no data available
                     else:
@@ -206,7 +211,7 @@ class Parser:
 
                 # Case: position defined
                 else:
-                    stops_in_group[stop_ref] = lat, lon
+                    stops_in_group[stop_ref] = [lat, lon, accessibility]
 
             # Section changes
             elif line.startswith("*PR"):
@@ -268,7 +273,7 @@ class Parser:
 
                 # Case: used rail stop with no platform data
                 elif group_ref[1:3] in {"90", "91", "92"}:
-                    station_lat, station_lon = avg_position(stops_in_group)
+                    station_lat, station_lon = avg_position([(i[0], i[1]) for i in stops_in_group.values()])
                     if self.shapes: self.shapes.stops[group_ref] = station_lat, station_lon
                     writer.writerow([group_ref, group_name, station_lat, station_lon, "", "", "", "", ""])
 
@@ -278,18 +283,20 @@ class Parser:
                 # Case: normal stop group
                 else:
                     # Well-defined stops
-                    for stop_ref, stop_pos in stops_in_group.items():
-                        if self.shapes: self.shapes.stops[group_ref+stop_ref] = stop_pos[0], stop_pos[1]
+                    for stop_ref, stop_data in stops_in_group.items():
 
-                        # Accessibility of this stop
-                        wheelchair_boarding = "2" if (group_ref+stop_ref) in unaccessible_stops else "1"
+                        stop_lat, stop_lon, wheelchair_boarding = stop_data
+
+                        if self.shapes: self.shapes.stops[group_ref+stop_ref] = stop_lat, stop_lon
 
                         # Write to stops.txt
-                        writer.writerow([group_ref+stop_ref, group_name + " " + stop_ref, stop_pos[0], stop_pos[1], "", "", "", "", wheelchair_boarding])
+                        writer.writerow([group_ref+stop_ref, group_name + " " + stop_ref, stop_lat, stop_lon, "", "", "", "", wheelchair_boarding])
 
                     # Virtual stops
-                    for stop_ref, stop_pos in virtual_stops_in_group.items():
-                        refs_by_pos = [k for k, v in stops_in_group.items() if v == stop_pos]
+                    for stop_ref, stop_data in virtual_stops_in_group.items():
+                        stop_lat, stop_lon, wheelchair_boarding = stop_data
+
+                        refs_by_pos = [k for k, v in stops_in_group.items() if (v[0], v[1]) == (stop_lat, stop_lon)]
                         refs_by_digit = [k for k in stops_in_group.keys() if k[1] == stop_ref[1]]
 
                         # There exists a stop with the same location
