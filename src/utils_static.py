@@ -21,10 +21,11 @@ Random shit that is used by static data parser
 def route_color_type(number, desc):
     "Return route_type, route_color and route_text_color based on route number and description"
     desc = desc.lower()
-    if "kolei" in desc: return "2", "000088", "FFFFFF"
+    if "kolei" in desc: return "2", "009955", "FFFFFF"
     elif "tram" in desc: return "0", "B60000", "FFFFFF"
     elif "specjalna" in desc and number in {"W", "M"}: return "0", "B60000", "FFFFFF"
     elif "nocna" in desc: return "3", "000000", "FFFFFF"
+    elif "uzupełniająca" in desc: return "3", "000088", "FFFFFF"
     elif "strefowa" in desc: return "3", "006800", "FFFFFF"
     elif "ekspresowa" in desc or "przyspieszona" in desc: return "3", "B60000", "FFFFFF"
     else: return "3", "880077", "FFFFFF"
