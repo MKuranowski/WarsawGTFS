@@ -47,17 +47,23 @@ def normal_stop_name(name):
 
     return name
 
-def normal_time(time):
-    return ":".join(["0" + i if len(i) == 1 else i for i in (time.split(".") + ["00"])])
+def normal_time(time, lessthen24=False):
+    h, m = map(int, time.split("."))
+    if lessthen24:
+        while h >= 24: h -= 24
+    return f"{h:0>2}:{m:0>2}:00"
 
-def should_town_be_added_to_name(stop_ref, stop_name, town_name, town_code):
-    stop_name, town_name = map(str.upper, (stop_name, town_name))
-    if town_code == "--": return False # Warsaw
-    elif stop_ref[1:3] in {"90", "91", "92"}: return False # Rail Stops
-    elif "PKP" in stop_name: return False
-    elif town_name in stop_name: return False
-    for town_part_name in town_name.split(" "):
-        if town_part_name in stop_name:
+def should_town_be_added_to_name(group):
+    group_name = group["name"].upper(),
+    group_town = group["town"].upper()
+    group_code = group["town_code"].upper()
+
+    if group_code == "--": return False # Warsaw
+    elif group["id"][1:3] in {"90", "91", "92"}: return False # Rail Stops
+    elif "PKP" in group_name: return False
+    elif group_town in group_name: return False
+    for town_part_name in group_town.split(" "):
+        if town_part_name in group_name:
             return False
     return True
 
@@ -69,6 +75,36 @@ def proper_headsign(stop_id, stop_name):
     elif stop_id in ["606107", "606108"]: return "Zjazd do zajezdni Żoliborz"
     elif stop_id.startswith("4202"): return "Lotnisko Chopina"
     else: return stop_name
+
+def trip_direction(trip_original_stops, direction_stops):
+    """
+    Guess the trip direction_id based on trip_original_stops, and
+    a direction_stops which should be a dictionary with 2 keys: "0" and "1" -
+    corresponding values should be sets of stops encountered in given dir
+    """
+    # Stops for each direction have to be unique
+    dir_stops_0 = direction_stops["0"].difference(direction_stops["1"])
+    dir_stops_1 = direction_stops["1"].difference(direction_stops["0"])
+
+    # Trip stops in direction 0 and direction 1
+    trip_stops_0 = trip_original_stops.intersection(dir_stops_0)
+    trip_stops_1 = trip_original_stops.intersection(dir_stops_1)
+
+    # Amount of stops of trip in each direction
+    trip_stops_0_len = len(trip_stops_0)
+    trip_stops_1_len = len(trip_stops_1)
+
+    # More or equal stops belonging to dir_0 then dir_1 => "0"
+    if trip_stops_0_len >= trip_stops_1_len:
+        return "0"
+
+    # More stops belonging to dir_1
+    elif trip_stops_0_len < trip_stops_1_len:
+        return "1"
+
+    # How did we get here
+    else:
+        raise RuntimeError(f"{trip_stops_0_len} is not bigger, equal or less then {trip_stops_1_len}")
 
 class Metro:
     @staticmethod

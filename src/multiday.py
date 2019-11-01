@@ -125,9 +125,9 @@ class MultiDay:
 
             for idx, version in enumerate(missing_versions):
                 print("\033[2A\033[K" + "Creating GTFS for missing version: {} (file {}/{})".format(version, idx+1, len(missing_versions)), end="\n\n")
-                print("\033[1A\033[K" + "Calling Parser.create()")
+                print("\033[1A\033[K" + "Calling Converter.create()")
 
-                Parser.create(
+                Converter.create(
                     version=version,
                     shapes=parser_shapes,
                     metro=False,
@@ -368,14 +368,14 @@ class MultiDay:
 
             print("\033[1A\033[K" + "Creating static files")
             version = "/".join([i["ver"] for i in self.files])
-            Parser.static_files(shapes, version, download_time)
+            Converter.static_files(shapes, version, download_time)
 
             if metro:
                 print("\033[1A\033[K" + "Adding metro")
                 Metro.add()
 
             print("\033[1A\033[K" + "Compressing")
-            Parser.compress(targetfile)
+            Converter.compress(targetfile)
 
         else:
             print("\033[1A\033[K" + "No new files found, no GTFS was created!")

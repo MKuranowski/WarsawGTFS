@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     else:
         print("=== Creating a GTFS file for the current schedule ===")
-        version = Parser.create(version=args.version, shapes=args.shapes, metro=args.metro, prevver=args.prevver)
+        version = Converter.create(version=args.version, shapes=args.shapes, metro=args.metro, prevver=args.prevver)
 
     print("=== Finished making GTFS (ver {}) ===".format(version))
     print("Time elapsed: {:.3f} s".format(time.time() - st))
