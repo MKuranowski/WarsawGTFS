@@ -248,17 +248,24 @@ class Shaper:
             raise ValueError("Invalid transport type {} for Shaper".format(transport))
 
         if transport in {"train", "tram"}:
-            request = requests.get("https://mkuran.pl/feed/ztm/ztm-km-rail-shapes.osm")
+            request = requests.get("https://mkuran.pl/feed/ztm/ztm-km-rail-shapes.osm", stream=True)
 
         else:
             # That's an overpass query for roads around Warsaw metro area
             #request = requests.get(r"https://overpass-api.de/api/interpreter/?data=%5Bbbox%3A51.92%2C20.46%2C52.49%2C21.465%5D%5Bout%3Axml%5D%3B%0A(%0A%20way%5B%22highway%22%3D%22motorway%22%5D%3B%0A%20way%5B%22highway%22%3D%22motorway_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22trunk%22%5D%3B%0A%20way%5B%22highway%22%3D%22trunk_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22primary%22%5D%3B%0A%20way%5B%22highway%22%3D%22primary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22secondary%22%5D%3B%0A%20way%5B%22highway%22%3D%22secondary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22tertiary%22%5D%3B%0A%20way%5B%22highway%22%3D%22tertiary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22unclassified%22%5D%3B%0A%20way%5B%22highway%22%3D%22minor%22%5D%3B%0A%20way%5B%22highway%22%3D%22residential%22%5D%3B%0A%20way%5B%22highway%22%3D%22living_street%22%5D%3B%0A%20way%5B%22highway%22%3D%22service%22%5D%3B%0A)%3B%0A(._%3B%3E%3B)%3B%0Aout%3B")
 
             # And this one also contains turn restrictions
-            request = requests.get(r"https://overpass-api.de/api/interpreter/?data=%5Bbbox%3A51.92%2C20.46%2C52.49%2C21.465%5D%5Bout%3Axml%5D%3B%0A(%0A%20way%5B%22highway%22%3D%22motorway%22%5D%3B%0A%20way%5B%22highway%22%3D%22motorway_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22trunk%22%5D%3B%0A%20way%5B%22highway%22%3D%22trunk_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22primary%22%5D%3B%0A%20way%5B%22highway%22%3D%22primary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22secondary%22%5D%3B%0A%20way%5B%22highway%22%3D%22secondary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22tertiary%22%5D%3B%0A%20way%5B%22highway%22%3D%22tertiary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22unclassified%22%5D%3B%0A%20way%5B%22highway%22%3D%22minor%22%5D%3B%0A%20way%5B%22highway%22%3D%22residential%22%5D%3B%0A%20way%5B%22highway%22%3D%22living_street%22%5D%3B%0A%20way%5B%22highway%22%3D%22service%22%5D%3B%0A)%3B%0A%3E-%3E.n%3B%0A%3C-%3E.r%3B%0A(._%3B.n%3B.r%3B)%3B%0Aout%3B%0A")
+            request = requests.get(
+                r"https://overpass-api.de/api/interpreter/?data=%5Bbbox%3A51.92%2C20.46%2C52.49%2C21.465%5D%5Bout%3Axml%5D%3B%0A(%0A%20way%5B%22highway%22%3D%22motorway%22%5D%3B%0A%20way%5B%22highway%22%3D%22motorway_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22trunk%22%5D%3B%0A%20way%5B%22highway%22%3D%22trunk_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22primary%22%5D%3B%0A%20way%5B%22highway%22%3D%22primary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22secondary%22%5D%3B%0A%20way%5B%22highway%22%3D%22secondary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22tertiary%22%5D%3B%0A%20way%5B%22highway%22%3D%22tertiary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22unclassified%22%5D%3B%0A%20way%5B%22highway%22%3D%22minor%22%5D%3B%0A%20way%5B%22highway%22%3D%22residential%22%5D%3B%0A%20way%5B%22highway%22%3D%22living_street%22%5D%3B%0A%20way%5B%22highway%22%3D%22service%22%5D%3B%0A)%3B%0A%3E-%3E.n%3B%0A%3C-%3E.r%3B%0A(._%3B.n%3B.r%3B)%3B%0Aout%3B%0A",
+                stream=True,
+            )
 
         temp_xml = NamedTemporaryFile(delete=False)
-        temp_xml.write(request.content)
+
+        for chunk in request.iter_content(chunk_size=1024):
+            temp_xml.write(chunk)
+
+        request.close()
         temp_xml.seek(0)
 
         router = pyroutelib3.Router(routing_type, temp_xml.name)
@@ -281,7 +288,7 @@ class Shaper:
             if route_type == "3": start = self.bus_router.findNode(start_lat, start_lon)
             elif route_type == "2": start = self.train_router.findNode(start_lat, start_lon)
             elif route_type == "0": start = self.tram_router.findNode(start_lat, start_lon)
-            else: raise ValuError("invalid type: {}".format(route_type))
+            else: raise ValueError("invalid type: {}".format(route_type))
 
         # End node
         if route_type == "3" and self.osm_stops.get(end_stop, None) in self.bus_router.rnodes:
