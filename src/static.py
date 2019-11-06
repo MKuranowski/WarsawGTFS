@@ -445,7 +445,7 @@ class Converter:
                 # Shapes
                 if self.shapes:
                     shape_id, shape_distances = self.shapes.get(
-                        route_id, trip_id, [i["stop"] for i in trip["stops"]])
+                        route_type, trip_id, [i["stop"] for i in trip["stops"]])
 
                 else:
                     shape_id, shape_distances = "", {}
