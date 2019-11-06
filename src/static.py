@@ -20,7 +20,7 @@ ACTIVE_RAIL_STATIONS = {
     "2909", "2908", "2907", "2906", "2905", "2904", "2903", "2902", "4902", "4903", "4923",
     "4904", "4905", "2914", "2913", "2912", "2911", "2910", "4919", "3901", "4918", "4917",
     "4913", "1910", "1909", "1908", "1907", "1906", "1905", "1904", "1903", "1902", "1901",
-    "7903", "5907", "5904", "5903", "5902"
+    "7903", "5908", "5907", "5904", "5903", "5902"
 }
 
 PROPER_STOP_NAMES = {
@@ -400,7 +400,7 @@ class Converter:
 
                 # now parse ODWG sections - for inaccesible trips (only tram)
                 if route_type == "0":
-                    print("\033[1A\033[K" + f"Parsing routes & schedules (WG/OD) - {route_id}")
+                    print("\033[1A\033[K" + f"Parsing routes & schedules (TD) - {route_id}")
 
                     for trip in self.parser.parse_wgod(route_type, route_id):
                         if not trip["accessible"]:
@@ -538,7 +538,7 @@ class Converter:
         "Create files that don't depend of ZTM file content"
         file = open("gtfs/agency.txt", mode="w", encoding="utf8", newline="\r\n")
         file.write('agency_id,agency_name,agency_url,agency_timezone,agency_lang,agency_phone,agency_fare_url\n')
-        file.write('0,"Warszawski Transport Publiczny","http://nowa.wtp.waw.pl",Europe/Warsaw,pl,19 115,"https://www.nowa.wtp.waw.pl/ceny-i-rodzaje-biletow/"\n')
+        file.write('0,"Warszawski Transport Publiczny","https://wtp.waw.pl",Europe/Warsaw,pl,19 115,"https://www.nowa.wtp.waw.pl/ceny-i-rodzaje-biletow/"\n')
         file.close()
 
         file = open("gtfs/feed_info.txt", mode="w", encoding="utf8", newline="\r\n")
