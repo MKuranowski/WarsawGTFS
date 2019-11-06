@@ -251,12 +251,36 @@ class Shaper:
             request = requests.get("https://mkuran.pl/feed/ztm/ztm-km-rail-shapes.osm", stream=True)
 
         else:
-            # That's an overpass query for roads around Warsaw metro area
-            #request = requests.get(r"https://overpass-api.de/api/interpreter/?data=%5Bbbox%3A51.92%2C20.46%2C52.49%2C21.465%5D%5Bout%3Axml%5D%3B%0A(%0A%20way%5B%22highway%22%3D%22motorway%22%5D%3B%0A%20way%5B%22highway%22%3D%22motorway_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22trunk%22%5D%3B%0A%20way%5B%22highway%22%3D%22trunk_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22primary%22%5D%3B%0A%20way%5B%22highway%22%3D%22primary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22secondary%22%5D%3B%0A%20way%5B%22highway%22%3D%22secondary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22tertiary%22%5D%3B%0A%20way%5B%22highway%22%3D%22tertiary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22unclassified%22%5D%3B%0A%20way%5B%22highway%22%3D%22minor%22%5D%3B%0A%20way%5B%22highway%22%3D%22residential%22%5D%3B%0A%20way%5B%22highway%22%3D%22living_street%22%5D%3B%0A%20way%5B%22highway%22%3D%22service%22%5D%3B%0A)%3B%0A(._%3B%3E%3B)%3B%0Aout%3B")
+            # Overpass Query:
+            query = "\n".join([
+                "[bbox:51.9144,20.4438,52.5007,21.4844][out:xml];"
+                "("
+                ' way["highway"="motorway"];'
+                ' way["highway"="motorway_link"];'
+                ' way["highway"="trunk"];'
+                ' way["highway"="trunk_link"];'
+                ' way["highway"="primary"];'
+                ' way["highway"="primary_link"];'
+                ' way["highway"="secondary"];'
+                ' way["highway"="secondary_link"];'
+                ' way["highway"="tertiary"];'
+                ' way["highway"="tertiary_link"];'
+                ' way["highway"="unclassified"];'
+                ' way["highway"="minor"];'
+                ' way["highway"="residential"];'
+                ' way["highway"="living_street"];'
+                ' way["highway"="service"];'
+                ');'
+                'way._(poly:"52.4455 20.6858 52.376 20.6872 52.3533 20.7868 52.2929 20.726 52.2694 20.6724 52.2740 20.4465 52.2599 20.4438 52.2481 20.5832 52.2538 20.681 52.1865 20.6786 52.1859 20.7129 52.1465 20.7895 52.0966 20.783 52.0632 20.7222 52.0151 20.7617 51.9873 20.9351 51.9269 20.9509 51.9144 21.0226 51.9322 21.1987 51.9569 21.2472 52.0463 21.2368 52.1316 21.4844 52.1429 21.4404 52.2130 21.3814 52.2622 21.3141 52.2652 21.1977 52.3038 21.173 52.3063 21.2925 52.3659 21.3515 52.3829 21.3001 52.4221 21.1929 52.4898 21.1421");'
+                '>->.n;'
+                '<->.r;'
+                '(._;.n;.r;);'
+                'out;'
+            ])
 
-            # And this one also contains turn restrictions
             request = requests.get(
-                r"https://overpass-api.de/api/interpreter/?data=%5Bbbox%3A51.92%2C20.46%2C52.49%2C21.465%5D%5Bout%3Axml%5D%3B%0A(%0A%20way%5B%22highway%22%3D%22motorway%22%5D%3B%0A%20way%5B%22highway%22%3D%22motorway_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22trunk%22%5D%3B%0A%20way%5B%22highway%22%3D%22trunk_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22primary%22%5D%3B%0A%20way%5B%22highway%22%3D%22primary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22secondary%22%5D%3B%0A%20way%5B%22highway%22%3D%22secondary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22tertiary%22%5D%3B%0A%20way%5B%22highway%22%3D%22tertiary_link%22%5D%3B%0A%20way%5B%22highway%22%3D%22unclassified%22%5D%3B%0A%20way%5B%22highway%22%3D%22minor%22%5D%3B%0A%20way%5B%22highway%22%3D%22residential%22%5D%3B%0A%20way%5B%22highway%22%3D%22living_street%22%5D%3B%0A%20way%5B%22highway%22%3D%22service%22%5D%3B%0A)%3B%0A%3E-%3E.n%3B%0A%3C-%3E.r%3B%0A(._%3B.n%3B.r%3B)%3B%0Aout%3B%0A",
+                "https://overpass-api.de/api/interpreter/",
+                params={"data": query},
                 stream=True,
             )
 
