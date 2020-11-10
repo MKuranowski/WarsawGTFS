@@ -1,0 +1,15 @@
+__pycache__/
+.vscode/
+shape-errors/*
+gtfs-rt/*
+feeds/*
+gtfs/*
+ignore*
+*.json
+*.zip
+*.html
+._.DS_Store
+.DS_Store
+*.pdf
+*.sh
+*.bat
