@@ -1,0 +1,4 @@
+coloredlogs
+libarchive
+pytz
+requests
