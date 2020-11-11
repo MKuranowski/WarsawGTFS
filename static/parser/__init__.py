@@ -4,7 +4,10 @@ from typing import Iterator, Dict, Literal, Protocol
 import re
 
 from ..util import normal_time
-from .dataobj import *
+from .dataobj import (
+    ZTMCalendar, ZTMStopGroup, ZTMStop, ZTMStopTime, ZTMTrip,
+    ZTMRouteVariant, ZTMVariantStop, ZTMTTableDep, ZTMRoute
+)
 
 """
 A set of generators which return nice data from ZTM File.
