@@ -11,7 +11,7 @@ from ..fares import add_fare_info
 from ..metro import append_metro_schedule
 from ..util import clear_directory, compress, ensure_dir_exists, prepare_tempdir
 from ..parser import Parser
-from ..parser.dataobj import ZTMStopTime, ZTMTrip, ZTMVariantStop
+from ..parser.dataobj import ZTMTrip, ZTMVariantStop
 from ..shapes import Shaper
 
 from .helpers import DirStopsType, FileNamespace, get_proper_headsign, get_route_color_type, \

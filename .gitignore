@@ -2,6 +2,7 @@ __pycache__/
 .vscode/
 data_*
 ignore*
+err_shapes
 *.json
 *.zip
 *.html

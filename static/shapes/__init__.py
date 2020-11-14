@@ -1,6 +1,6 @@
-from tempfile import TemporaryFile
+from pyroutelib3 import Router, distHaversine
+from contextlib import closing
 from typing import Any, Dict, IO, List, Literal, Mapping, Sequence, Tuple
-from pyroutelib3 import Router, distEuclidian, distHaversine
 from logging import getLogger
 import requests
 import json
@@ -15,7 +15,7 @@ from .const import (
     BUS_ROUTER_SETTINGS, OVERPASS_BUS_GRAPH, OVERPASS_STOPS_JSON, OVERRIDE_SHAPE_RATIOS,
     URL_OVERPASS, URL_TRAM_TRAIN_GRAPH
 )
-from .helpers import _Pt, time_limit, simplify_line, total_length
+from .helpers import _Pt, cache_retr, cache_save, time_limit, simplify_line, total_length
 from .kdtree import KDTree
 
 
@@ -75,6 +75,45 @@ class Shaper:
 
     # External data loading
 
+    def _get_bus_graph(self) -> IO[bytes]:
+        """Retrieves the OSM graph for busses. First checks cache, then asks Overpass."""
+        cached_name = "bus_graph.osm"
+        cached_file = cache_retr(cached_name)
+
+        if cached_file is not None:
+            # Return the graph if it's cached
+            self.logger.debug("OSM Bus Graph is loaded from cache")
+            return cached_file
+
+        else:
+            self.logger.debug("OSM Bus Graph is loaded from Overpass API")
+            buffer = io.BytesIO()
+
+            # Make query to Overpass
+            with requests.get(URL_OVERPASS, params={"data": OVERPASS_BUS_GRAPH}) as resp:
+                resp.raise_for_status()
+                for chunk in resp.iter_content(1024 * 16):
+                    buffer.write(chunk)
+
+            # Write to cache
+            buffer.seek(0)
+            cache_save(cached_name, buffer)
+            buffer.seek(0)
+
+            return buffer
+
+    @staticmethod
+    def _get_tramrail_graph() -> IO[bytes]:
+        """Retrievies URL_TRAM_TRAIN_GRAPH"""
+        temp_buffer = io.BytesIO()
+
+        with requests.get(URL_TRAM_TRAIN_GRAPH, stream=True) as resp:
+            resp.raise_for_status()
+            for chunk in resp.iter_content(1024 * 128):
+                temp_buffer.write(chunk)
+
+        return temp_buffer
+
     def _make_router(self, transport: Literal["bus", "tram", "train"]) -> Router:
         """Creates (and returns) a router for a specific transport type"""
         self.logger.info(f"Making router for {transport}")
@@ -82,33 +121,23 @@ class Shaper:
         # Set per-type variables
         if transport == "bus":
             router_type = BUS_ROUTER_SETTINGS
-            temp_buffer = TemporaryFile("r+b")
-            request_url = URL_OVERPASS
-            request_params = {"data": OVERPASS_BUS_GRAPH}
+            temp_buffer = self._get_bus_graph()
 
         else:
             router_type = transport
-            temp_buffer = io.BytesIO()
-            request_url = URL_TRAM_TRAIN_GRAPH
-            request_params = {}
-
-        # Read the request
-        with requests.get(request_url, request_params, stream=True) as resp:
-            resp.raise_for_status()
-            for chunk in resp.iter_content(1024 * 8):
-                temp_buffer.write(chunk)
-
-        temp_buffer.seek(0)
+            temp_buffer = self._get_tramrail_graph()
 
         # Create the router
-        router = Router(
-            transport=router_type,
-            localfile=temp_buffer,  # type: ignore
-            localfileType="xml"
-        )
+        try:
+            router = Router(
+                transport=router_type,
+                localfile=temp_buffer,  # type: ignore
+                localfileType="xml"
+            )
 
         # Close the temporary buffer
-        temp_buffer.close()
+        finally:
+            temp_buffer.close()
 
         return router
 
@@ -119,16 +148,29 @@ class Shaper:
 
     def _load_osm_stops(self) -> None:
         """Saves to `self` a mapping from ZTM stop ids to OSM element ids."""
-        # Make query to Overpass
-        with requests.get(URL_OVERPASS, params={"data": OVERPASS_STOPS_JSON}) as resp:
-            resp.raise_for_status()
+        cached_name = "stop_lookups.json"
+        cached_file = cache_retr(cached_name)
 
-            # Iterate over every stop_position
-            for element in resp.json()["elements"]:
-                stop_ref = element.get("tags", {}).get("ref")
+        if cached_file is not None:
+            # Try to read osm stop mapping from a chaced file
+            cahced_content = cached_file.read().decode("ascii")
+            self.cached_stop_lookups = json.loads(cahced_content)
 
-                if stop_ref:
-                    self.cached_stop_lookups[stop_ref] = element["id"]
+        else:
+            # Make query to Overpass
+            with requests.get(URL_OVERPASS, params={"data": OVERPASS_STOPS_JSON}) as resp:
+                resp.raise_for_status()
+
+                # Iterate over every stop_position
+                for element in resp.json()["elements"]:
+                    stop_ref = element.get("tags", {}).get("ref")
+
+                    if stop_ref:
+                        self.cached_stop_lookups[stop_ref] = element["id"]
+
+            # Cache stop_lookup
+            stop_lookups_json = json.dumps(self.cached_stop_lookups, indent=2).encode("ascii")
+            cache_save(cached_name, stop_lookups_json)
 
     @staticmethod
     def _dump_shape_err(from_stop: str, to_stop: str, from_node: int, to_node: int,

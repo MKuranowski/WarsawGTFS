@@ -1,7 +1,13 @@
+from pyroutelib3 import distHaversine
 from contextlib import contextmanager
-from typing import List, Tuple
+from typing import IO, Optional, List, Union, Tuple
+from time import time
 import signal
 import math
+import os
+
+from ..const import DIR_SHAPE_CACHE, SHAPE_CACHE_TTL
+from ..util import ensure_dir_exists
 
 _Pt = Tuple[float, float]
 
@@ -17,28 +23,6 @@ def time_limit(sec):
         yield
     finally:
         signal.alarm(0)
-
-
-def distHaversine(n1: _Pt, n2: _Pt) -> float:
-    """Calculate distance in km between two nodes using haversine forumla"""
-    lat1, lon1 = map(math.radians, n1)
-    lat2, lon2 = map(math.radians, n2)
-    dlathalf = (lat2 - lat1) * 0.5
-    dlonhalf = (lon2 - lon1) * 0.5
-
-    sqrth = math.sqrt(
-        (math.sin(dlathalf) ** 2)
-        + (math.cos(lat1) * math.cos(lat2) * (math.sin(dlonhalf) ** 2))
-    )
-
-    return math.asin(sqrth) * 2 * 6371
-
-
-def distEuclidian(n1: _Pt, n2: _Pt) -> float:
-    """Calculates the distance in units between two nodes as an Euclidian 2D distance"""
-    dx = n1[0] - n2[0]
-    dy = n1[1] - n2[1]
-    return dx ** 2 + dy ** 2
 
 
 def total_length(x: List[_Pt]) -> float:
@@ -92,3 +76,39 @@ def simplify_line(x: List[_Pt], threshold: float) -> List[_Pt]:
     # segment from start & end of x.
     else:
         return [x[0], x[-1]]
+
+
+def cache_retr(file: str, ttl_minutes: int = SHAPE_CACHE_TTL) -> Optional[IO[bytes]]:
+    """
+    Tries to read specified from cahce.
+    If file is older then specified time-to-live,
+    or cahced files doesn't exist at all, returns None.
+    Otherwise, returns a file-like object.
+    """
+    file_path = os.path.join(DIR_SHAPE_CACHE, file)
+
+    # Check if cahced file exists
+    if not os.path.exists(file_path):
+        return
+
+    # Try to get file's last-modified attribute
+    file_stat = os.stat(file_path)
+    file_timediff = (time() - file_stat.st_mtime) / 60
+
+    # File was modified earlier then specified time-to-live, return a IO object to that file
+    if file_timediff < ttl_minutes:
+        return open(file_path, "rb")
+
+
+def cache_save(file: str, reader: Union[IO[bytes], bytes]):
+    """Caches contents of `reader` in DIR_SHAPE_CACHE/{file}."""
+    ensure_dir_exists(DIR_SHAPE_CACHE, clear=False)
+    file_path = os.path.join(DIR_SHAPE_CACHE, file)
+
+    # Check if cahced file exists
+    with open(file_path, "wb") as writer:
+        if isinstance(reader, bytes):
+            writer.write(reader)
+        else:
+            while (chunk := reader.read(1024 * 16)):
+                writer.write(chunk)
