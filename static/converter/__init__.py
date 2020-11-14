@@ -400,6 +400,8 @@ class Converter:
                 self.convert()
             finally:
                 self.close_files()
+                if shapes:
+                    shapes.close()
 
             self.logger.info("Parsing finished")
 
