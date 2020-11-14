@@ -23,6 +23,13 @@ if __name__ == "__main__":
     )
 
     argprs.add_argument(
+        "-s",
+        "--shapes",
+        action="store_true",
+        help="wheteher to generate shapes.txt for all trips"
+    )
+
+    argprs.add_argument(
         "-d",
         "--date",
         default=None,
@@ -82,6 +89,7 @@ if __name__ == "__main__":
     setup_logging(args.verbose)
 
     print("=== Creating a GTFS file for the current schedule ===")
-    make_single(args.date, args.target, args.publisher_name, args.publisher_url, args.metro)
+    make_single(args.date, args.target, args.publisher_name, args.publisher_url, args.metro,
+                args.shapes)
 
     print(f"Time elapsed: {time() - st:.3f} s")

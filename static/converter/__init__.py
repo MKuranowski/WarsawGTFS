@@ -1,5 +1,5 @@
 
-from typing import Dict, IO, List, Literal, Set
+from typing import Dict, IO, List, Literal, Mapping, Set, Union, cast
 from datetime import date, timedelta
 from logging import getLogger
 import csv
@@ -11,7 +11,8 @@ from ..fares import add_fare_info
 from ..metro import append_metro_schedule
 from ..util import clear_directory, compress, ensure_dir_exists, prepare_tempdir
 from ..parser import Parser
-from ..parser.dataobj import ZTMVariantStop
+from ..parser.dataobj import ZTMStopTime, ZTMTrip, ZTMVariantStop
+from ..shapes import Shaper
 
 from .helpers import DirStopsType, FileNamespace, get_proper_headsign, get_route_color_type, \
     get_trip_direction, match_day_type
@@ -20,7 +21,8 @@ from .stophandler import StopHandler
 
 
 class Converter:
-    def __init__(self, version: str, parser: Parser, target_dir: str, start_date: date):
+    def __init__(self, version: str, parser: Parser, target_dir: str, start_date: date,
+                 shapes: Union[Literal[False], Shaper] = False):
         """(Partially) inits the Converter.
         Since __init__ can't be asynchronous, caller has to also invoke converter.open_files():
         Make sure target_dir is clean before starting the converter.
@@ -34,6 +36,11 @@ class Converter:
         self.calendars: Dict[date, List[str]] = {}
         self.routes: List[str] = []
         self.stops = StopHandler(version)
+
+        # Shape-related shit
+        self.shapes: Union[Literal[False], Shaper] = shapes
+        if self.shapes:
+            self.shapes.stop_data = self.stops.data
 
         # File-related properites
         self.target_dir = target_dir
@@ -139,6 +146,12 @@ class Converter:
         # Set route_name
         self.route_name = first_name + " — " + last_name
 
+    def _fix_stops_in_trip(self, trip: ZTMTrip) -> None:
+        """Modifies trip.stops to fix stop_ids, and remove references to unknown stops."""
+        for stopt in trip.stops:
+            stopt.stop = self.stops.get_id(stopt.stop)  # type: ignore | None will be removed later
+        trip.stops = [i for i in trip.stops if i.stop is not None]
+
     def _get_variants(self):
         """Loads data about variants of a route. Exhausts self.parse.parse_tr."""
         self.logger.debug(f"Parsing schedules (TR) - {self.route_id}")
@@ -179,12 +192,8 @@ class Converter:
         self.logger.debug(f"Parsing schedules (WK) - {self.route_id}")
 
         for trip in self.parser.parse_wk(self.route_id):
-            # Change stop_ids
-            for stopt in trip.stops:
-                stopt.stop = self.stops.get_id(stopt.stop)
-
-            # Remove stoptimes with invalid stops
-            trip.stops = [i for i in trip.stops if i.stop is not None]
+            # Fix stop_ids and remove invalid stops
+            self._fix_stops_in_trip(trip)
 
             # Ignore trips with only one stoptime
             if len(trip.stops) <= 1:
@@ -228,6 +237,18 @@ class Converter:
             # Mark day_type as used
             self.used_day_types.add(day_type)
 
+            # Generate shape
+            shape_id: str
+            stop_dist_traveled: Mapping[int, float]
+
+            if self.shapes:
+                shape_id, stop_dist_traveled = self.shapes.get(
+                    self.route_type, self.route_id, variant_id,
+                    [stopt.stop for stopt in trip.stops]
+                )
+            else:
+                shape_id, stop_dist_traveled = "", {}
+
             # Write to trips.txt
             self.wrtr.trips.writerow([
                 self.route_id,
@@ -235,7 +256,7 @@ class Converter:
                 trip.id,
                 headsign,
                 direction,
-                "",
+                shape_id,
                 exceptional,
                 wheelchair,
                 "1",
@@ -263,7 +284,10 @@ class Converter:
                     dropoff = "0"
 
                 # Mark stop as used
-                self.stops.use(stopt.stop)  # type: ignore | ensured stopt.stop is str earlier
+                self.stops.use(stopt.stop)
+
+                # Get shape_dist_travelled
+                stopt_dist = stop_dist_traveled.get(seq, 0.0)
 
                 # Write to stop_times.txt
                 self.wrtr.times.writerow([
@@ -274,7 +298,7 @@ class Converter:
                     seq,
                     pickup,
                     dropoff,
-                    "",
+                    f"{stopt_dist:.4f}",
                 ])
 
     def save_schedules(self):
@@ -288,7 +312,7 @@ class Converter:
             self.route_id = route.id
 
             # Ignore Koleje Mazowieckie & Warszawska Kolej Dojazdowa routes
-            # if self.route_id not in {"1", "9", "115", "525"}:
+            # if self.route_id not in {"1", "9", "35", "S1", "S2"}:
             if self.route_id.startswith("R") or self.route_id.startswith("WKD"):
                 self.parser.skip_to_section("WK", end=True)
                 continue
@@ -337,8 +361,18 @@ class Converter:
         self.stops.export(self.target_dir)
 
     @classmethod
-    def create(cls, finfo: FileInfo, target: str, sync_time: str, in_temp_dir: bool = False,
-               pub_name: str = "", pub_url: str = "", metro: bool = False):
+    def create(
+            cls,
+            finfo: FileInfo,
+            target: str,
+            sync_time: str,
+            in_temp_dir: bool = False,
+            pub_name: str = "",
+            pub_url: str = "",
+            metro: bool = False,
+            shapes: Union[bool, Shaper] = False,
+            clear_shape_errors: bool = True) -> None:
+
         # Open the ZTM txt file and wrap a Parser around it
         with open(finfo.path, mode="r", encoding="windows-1250") as f:
             parser = Parser(f, finfo.version)
@@ -350,8 +384,14 @@ class Converter:
                 target_dir = DIR_SINGLE_FEED
                 ensure_dir_exists(target_dir, clear=True)
 
+            # Create Shaper object
+            if shapes:
+                if not isinstance(shapes, Shaper):
+                    shapes = Shaper()
+                shapes.open(target_dir, clear_shape_errors)
+
             # Create Converter instance
-            self = cls(finfo.version, parser, target_dir, finfo.start)
+            self = cls(finfo.version, parser, target_dir, finfo.start, shapes)
             self.open_files()
 
             # Parse data from ZTM file
@@ -363,17 +403,21 @@ class Converter:
 
             self.logger.info("Parsing finished")
 
+        # Create static files
         self.logger.info("Creating static files")
-        static_all(target_dir, False, finfo.version, sync_time, pub_name, pub_url)
+        static_all(target_dir, bool(shapes), finfo.version, sync_time, pub_name, pub_url)
 
+        # Add metro schedules
         if metro:
             self.logger.info("Appending metro schedules")
             metro_routes = append_metro_schedule(target_dir)
             self.routes = metro_routes + self.routes
 
+        # Add fare info
         self.logger.info("Adding fare info")
         add_fare_info(target_dir, self.routes)
 
+        # Compress to .zip
         self.logger.info(f"Compressing to {target!r}")
         compress(target_dir, target)
 

@@ -8,6 +8,7 @@ Fare data is stored in fares/data.py.
 DIR_DOWNLOAD = "data_src"
 DIR_CONVERTED = "data_feeds"
 DIR_SINGLE_FEED = "data_gtfs"
+DIR_SHAPE_ERR = "err_shapes"
 
 # External data sources
 FTP_ADDR = "rozklady.ztm.waw.pl"

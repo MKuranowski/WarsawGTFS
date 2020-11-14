@@ -270,8 +270,8 @@ def sync_files(max_files: int = 5, start_date: Optional[date] = None, reparse_al
     Please call append_modtimes for each sucessfuly converted file.
     """
     # Ensure DIR_DOWNLOAD and DIR_CONVERTED exist
-    ensure_dir_exists(DIR_DOWNLOAD)
-    ensure_dir_exists(DIR_CONVERTED)
+    ensure_dir_exists(DIR_DOWNLOAD, clear=True)
+    ensure_dir_exists(DIR_CONVERTED, clear=True)
 
     with ftplib.FTP(FTP_ADDR) as ftp:
         ftp.login()
@@ -311,8 +311,8 @@ def sync_single_file(valid_day: Optional[date] = None) -> FileInfo:
     Call append_modtimes after successfuly converting this feed.
     """
     # Ensure DIR_DOWNLOAD and DIR_CONVERTED exist
-    ensure_dir_exists(DIR_DOWNLOAD)
-    ensure_dir_exists(DIR_CONVERTED)
+    ensure_dir_exists(DIR_DOWNLOAD, clear=True)
+    ensure_dir_exists(DIR_CONVERTED, clear=True)
 
     with ftplib.FTP(FTP_ADDR) as ftp:
         ftp.login()

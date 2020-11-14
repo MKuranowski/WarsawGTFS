@@ -1,4 +1,4 @@
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, TypeVar, Union
 from dataclasses import dataclass
 import datetime
 
@@ -11,6 +11,8 @@ __all__ = [
     "ZTMCalendar", "ZTMStopGroup", "ZTMStop", "ZTMStopTime", "ZTMTrip",
     "ZTMRouteVariant", "ZTMVariantStop", "ZTMTTableDep", "ZTMRoute"
 ]
+
+_UnknownStop = TypeVar("_UnknownStop", bound=Union[str, None])
 
 
 @dataclass
@@ -46,7 +48,7 @@ class ZTMStop:
 class ZTMStopTime:
     __slots__ = ("stop", "original_stop", "time", "flags")
 
-    stop: Optional[str]
+    stop: str
     original_stop: str
     time: str
     flags: Literal["", "P", "B"]

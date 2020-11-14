@@ -49,8 +49,11 @@ def ensure_dir_exists(path: str, clear: bool = False):
     """
     try:
         os.mkdir(path)
+        return False
     except FileExistsError:
-        clear_directory(path)
+        if clear:
+            clear_directory(path)
+        return True
 
 
 def prepare_tempdir(suffix: Optional[str] = None) -> str:
