@@ -1,6 +1,5 @@
 from pyroutelib3 import Router, distHaversine
-from contextlib import closing
-from typing import Any, Dict, IO, List, Literal, Mapping, Sequence, Tuple
+from typing import Any, Dict, IO, List, Literal, Mapping, Optional, Sequence, Tuple
 from logging import getLogger
 import requests
 import json
@@ -13,7 +12,7 @@ from ..util import ensure_dir_exists
 
 from .const import (
     BUS_ROUTER_SETTINGS, OVERPASS_BUS_GRAPH, OVERPASS_STOPS_JSON, OVERRIDE_SHAPE_RATIOS,
-    URL_OVERPASS, URL_TRAM_TRAIN_GRAPH
+    PATH_BETWEEN_STOPS_VIA, URL_OVERPASS, URL_TRAM_TRAIN_GRAPH
 )
 from .helpers import _Pt, cache_retr, cache_save, time_limit, simplify_line, total_length
 from .kdtree import KDTree
@@ -132,7 +131,7 @@ class Shaper:
             router = Router(
                 transport=router_type,
                 localfile=temp_buffer,  # type: ignore
-                localfileType="xml"
+                localfileType="xml",
             )
 
         # Close the temporary buffer
@@ -249,6 +248,59 @@ class Shaper:
 
         return [(stop1_lat, stop1_lon), (stop2_lat, stop2_lon)]
 
+    @staticmethod
+    def do_route(router: Router, start: int, end: int, via: Optional[int] = None) \
+            -> Tuple[str, List[int]]:
+        """
+        If via is None, delegates execution to router.doRoute(start, end).
+        Otherwise calls router.doRoute twice and then combines both results.
+        """
+        # No via point - simple doRoute
+        if via is None:
+            with time_limit(10):
+                return router.doRoute(start, end)
+
+        # Via point - do search on both legs
+        else:
+            with time_limit(10):
+                s1, r1 = router.doRoute(start, via)
+            with time_limit(10):
+                s2, r2 = router.doRoute(via, end)
+
+            if s1 != "success":
+                return (s1 + "_to_via"), []
+            elif s2 != "success":
+                return (s2 + "_from_via"), []
+            else:
+                return "success", r1 + r2[1:]
+
+    def _calculate_ratio(self, from_stop: str, to_stop: str, route: List[_Pt],
+                         straight_route: List[_Pt]) -> Optional[str]:
+        """
+        Checks if given route between to stops isn't too long.
+        Returns 'None' if route is deemed fine.
+        Otherwise returns new 'status'.
+        """
+        total_route_dist = total_length(route)
+        total_straight_dist = total_length(straight_route)
+        dist_ratio = total_route_dist / total_straight_dist if total_straight_dist else 1
+
+        expected_std_ratio = 7 if from_stop[:4] == to_stop[:4] else 3.5
+        expected_ovr_ratio = OVERRIDE_SHAPE_RATIOS.get((from_stop, to_stop))
+        expected_ratio = expected_ovr_ratio or expected_std_ratio
+
+        too_long = dist_ratio > expected_ratio
+
+        # Additional check if expected ovr_ratio is neccessary
+        if expected_ovr_ratio and dist_ratio <= expected_std_ratio:
+            self.logger.warn(
+                f"Unnecessary pair ({from_stop}, {to_stop}) in OVERRIDE_SHAPE_RATIOS "
+                f"(actual dist. ratio: {dist_ratio:.2f})"
+            )
+
+        if too_long:
+            return f"route_too_long_{dist_ratio:.2f}_expected_{expected_ratio:.2f}"
+
     def route_between_stops(self, from_stop: str, to_stop: str, transport: str) \
             -> List[Tuple[float, float, float]]:
         """
@@ -262,10 +314,15 @@ class Shaper:
         start_node = self.get_node(from_stop, transport)
         end_node = self.get_node(to_stop, transport)
 
+        # Check if a 'via' point is required
+        if (via_point := PATH_BETWEEN_STOPS_VIA.get((from_stop, to_stop))):
+            via_node = self._kdtree(transport).search_nn(via_point).id
+        else:
+            via_node = None
+
         # Do the route
         try:
-            with time_limit(10):
-                status, route = router.doRoute(start_node, end_node)
+            status, route = self.do_route(router, start_node, end_node, via_node)
         except TimeoutError:
             status, route = "timeout", []
 
@@ -278,15 +335,8 @@ class Shaper:
             route = straight_route
 
         # Calculate the ratio between route length and staright line between start and end stop
-        total_route_dist = total_length(route)
-        total_straight_dist = total_length(straight_route)
-        dist_ratio = total_route_dist / total_straight_dist if total_straight_dist else 1
-
-        expected_ratio = 7 if from_stop[:4] == to_stop[:4] else 3.5
-        expected_ratio = OVERRIDE_SHAPE_RATIOS.get((from_stop, to_stop), expected_ratio)
-
-        if status == "success" and dist_ratio > expected_ratio:
-            status = f"route_too_long_{dist_ratio:.2f}_expected_{expected_ratio:.2f}"
+        if (too_long_msg := self._calculate_ratio(from_stop, to_stop, route, straight_route)):
+            status = too_long_msg
 
         # Simplify route using the RDP formula
         route = simplify_line(route, 0.000006)

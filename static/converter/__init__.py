@@ -312,7 +312,6 @@ class Converter:
             self.route_id = route.id
 
             # Ignore Koleje Mazowieckie & Warszawska Kolej Dojazdowa routes
-            # if self.route_id not in {"1", "9", "35", "S1", "S2"}:
             if self.route_id.startswith("R") or self.route_id.startswith("WKD"):
                 self.parser.skip_to_section("WK", end=True)
                 continue
