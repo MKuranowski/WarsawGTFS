@@ -1,5 +1,7 @@
 from os.path import join
 
+from ..util import ConversionOpts
+
 """
 Functions generating GTFS files not depending on ZTM data.
 """
@@ -52,8 +54,7 @@ def static_attributions(target_dir: str, shapes: bool, download_time: str):
             )
 
 
-def static_all(target_dir: str, shapes: bool, version: str, download_time: str,
-               pub_name: str = "", pub_url: str = ""):
+def static_all(target_dir: str, version: str, opts: ConversionOpts):
     static_agency(target_dir)
-    static_feedinfo(target_dir, version, pub_name, pub_url)
-    static_attributions(target_dir, shapes, download_time)
+    static_feedinfo(target_dir, version, opts.pub_name, opts.pub_url)
+    static_attributions(target_dir, opts.shapes, opts.sync_time)

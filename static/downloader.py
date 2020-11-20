@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from operator import itemgetter
 from typing import Dict, List, Optional, Set, Tuple
 from pytz import timezone
@@ -128,6 +128,7 @@ def list_files(ftp: ftplib.FTP, max_files: int = 5,
         # Get last day when file is active (next file - 1 day)
         try:
             file_end = datetime.strptime(str(files[idx + 1][0]), "RA%y%m%d.7z").date()
+            file_end -= timedelta(days=1)
         except IndexError:
             file_end = date.max
 
@@ -271,7 +272,7 @@ def sync_files(max_files: int = 5, start_date: Optional[date] = None, reparse_al
     """
     # Ensure DIR_DOWNLOAD and DIR_CONVERTED exist
     ensure_dir_exists(DIR_DOWNLOAD, clear=True)
-    ensure_dir_exists(DIR_CONVERTED, clear=True)
+    ensure_dir_exists(DIR_CONVERTED, clear=False)
 
     with ftplib.FTP(FTP_ADDR) as ftp:
         ftp.login()
@@ -312,7 +313,6 @@ def sync_single_file(valid_day: Optional[date] = None) -> FileInfo:
     """
     # Ensure DIR_DOWNLOAD and DIR_CONVERTED exist
     ensure_dir_exists(DIR_DOWNLOAD, clear=True)
-    ensure_dir_exists(DIR_CONVERTED, clear=True)
 
     with ftplib.FTP(FTP_ADDR) as ftp:
         ftp.login()

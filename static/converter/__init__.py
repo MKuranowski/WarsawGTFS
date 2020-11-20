@@ -1,5 +1,5 @@
 
-from typing import Dict, IO, List, Literal, Mapping, Set, Union, cast
+from typing import Dict, IO, List, Literal, Mapping, Optional, Set, Union, cast
 from datetime import date, timedelta
 from logging import getLogger
 import csv
@@ -9,7 +9,7 @@ from ..const import HEADERS, DIR_SINGLE_FEED
 from ..downloader import FileInfo
 from ..fares import add_fare_info
 from ..metro import append_metro_schedule
-from ..util import clear_directory, compress, ensure_dir_exists, prepare_tempdir
+from ..util import ConversionOpts, clear_directory, compress, ensure_dir_exists, prepare_tempdir
 from ..parser import Parser
 from ..parser.dataobj import ZTMTrip, ZTMVariantStop
 from ..shapes import Shaper
@@ -22,7 +22,7 @@ from .stophandler import StopHandler
 
 class Converter:
     def __init__(self, version: str, parser: Parser, target_dir: str, start_date: date,
-                 shapes: Union[Literal[False], Shaper] = False):
+                 shapes: Optional[Shaper] = None):
         """(Partially) inits the Converter.
         Since __init__ can't be asynchronous, caller has to also invoke converter.open_files():
         Make sure target_dir is clean before starting the converter.
@@ -38,7 +38,7 @@ class Converter:
         self.stops = StopHandler(version)
 
         # Shape-related shit
-        self.shapes: Union[Literal[False], Shaper] = shapes
+        self.shapes = shapes
         if self.shapes:
             self.shapes.stop_data = self.stops.data
 
@@ -363,13 +363,9 @@ class Converter:
     def create(
             cls,
             finfo: FileInfo,
-            target: str,
-            sync_time: str,
+            opts: ConversionOpts,
             in_temp_dir: bool = False,
-            pub_name: str = "",
-            pub_url: str = "",
-            metro: bool = False,
-            shapes: Union[bool, Shaper] = False,
+            shaper_obj: Optional[Shaper] = None,
             clear_shape_errors: bool = True) -> None:
 
         # Open the ZTM txt file and wrap a Parser around it
@@ -384,13 +380,15 @@ class Converter:
                 ensure_dir_exists(target_dir, clear=True)
 
             # Create Shaper object
-            if shapes:
-                if not isinstance(shapes, Shaper):
-                    shapes = Shaper()
-                shapes.open(target_dir, clear_shape_errors)
+            if opts.shapes:
+                if shaper_obj is None:
+                    shaper_obj = Shaper()
+                shaper_obj.open(target_dir, clear_shape_errors)
+            else:
+                shaper_obj = None
 
             # Create Converter instance
-            self = cls(finfo.version, parser, target_dir, finfo.start, shapes)
+            self = cls(finfo.version, parser, target_dir, finfo.start, shaper_obj)
             self.open_files()
 
             # Parse data from ZTM file
@@ -399,17 +397,17 @@ class Converter:
                 self.convert()
             finally:
                 self.close_files()
-                if shapes:
-                    shapes.close()
+                if opts.shapes:
+                    shaper_obj.close()
 
             self.logger.info("Parsing finished")
 
         # Create static files
         self.logger.info("Creating static files")
-        static_all(target_dir, bool(shapes), finfo.version, sync_time, pub_name, pub_url)
+        static_all(target_dir, finfo.version, opts)
 
         # Add metro schedules
-        if metro:
+        if opts.metro:
             self.logger.info("Appending metro schedules")
             metro_routes = append_metro_schedule(target_dir)
             self.routes = metro_routes + self.routes
@@ -419,8 +417,8 @@ class Converter:
         add_fare_info(target_dir, self.routes)
 
         # Compress to .zip
-        self.logger.info(f"Compressing to {target!r}")
-        compress(target_dir, target)
+        self.logger.info(f"Compressing to {opts.target!r}")
+        compress(target_dir, opts.target)
 
         # Remove the tempdir after working with it
         if in_temp_dir:

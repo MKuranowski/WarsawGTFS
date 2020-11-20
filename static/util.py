@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from tempfile import mkdtemp
 from typing import Optional
 import coloredlogs
@@ -13,6 +14,18 @@ Module containing various utility functions
 
 
 # = DATA UTILITIES = #
+
+@dataclass
+class ConversionOpts:
+    """Toggles for the whole conversion process"""
+    __slots__ = ("target", "sync_time", "pub_name", "pub_url", "metro", "shapes")
+
+    target: str     # Where to put the created .zip file
+    sync_time: str  # Time when data was downloaded (for attributions.txt)
+    pub_name: str   # value for feed_publisher_name
+    pub_url: str    # value for feed_publisher_url
+    metro: bool     # whether to add metro schedules
+    shapes: bool    # whether to generate shapes
 
 
 def normal_time(time, lessthen24=False):
