@@ -281,8 +281,12 @@ def sync_files(max_files: int = 5, start_date: Optional[date] = None, reparse_al
         required_feeds = list_files(ftp, max_files, start_date)
 
         # Determine which feeeds were already converted
-        current_modtimes = read_modtimes() if not reparse_all else {}
-        converted_versions = which_versions_ok(required_feeds, current_modtimes)
+        if not reparse_all:
+            current_modtimes = read_modtimes()
+            converted_versions = which_versions_ok(required_feeds, current_modtimes)
+        else:
+            current_modtimes = {}
+            converted_versions = set()
 
         # Check if new files will be downloaded
         new_files = sum(1 for i in required_feeds if i.version not in converted_versions)
