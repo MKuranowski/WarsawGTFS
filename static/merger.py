@@ -228,15 +228,21 @@ class Merger:
 
         for row in reader:
             if row["service_id"] in self.active_services:
-                # Save outputed primary keys
+                # Save outputed primary keys and
+                # determine which fields should be prepended with feed.version
                 self.active_trips.add(row["trip_id"])
-                if self.shapes:
-                    self.active_shapes.add(row["shape_id"])
-
-                # Prepend per-file ids
                 prepend_keys = {"trip_id", "service_id"}
+
                 if self.shapes:
+                    # If shapes are expected to be in the result file -
+                    # consider 'shape_id' fields for the above actions
+                    self.active_shapes.add(row["shape_id"])
                     prepend_keys.add("shape_id")
+                else:
+                    # If no shapes - force-clear the shape_id field.
+                    # This is to prevent invalid references if source files have shapes, but
+                    # the shape option wasn't set in the Merger
+                    row["shape_id"] = ""
 
                 self._prepend_values_with_version(row, prepend_keys)
 
@@ -255,6 +261,12 @@ class Merger:
                 # Swap stop_id
                 stop_conv_key = self.file.version, row["stop_id"]
                 row["stop_id"] = self.stop_conversion.get(stop_conv_key, row["stop_id"])
+
+                # If no shapes - force-clear the shape_dist_traveled field.
+                # This is to prevent invalid references if source files have shapes, but
+                # the shape option wasn't set in the Merger
+                if not self.shapes:
+                    row["shape_dist_traveled"] = ""
 
                 # Re-write the row
                 self.wrtr_times.writerow(row)
