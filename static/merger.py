@@ -134,7 +134,7 @@ class Merger:
             elif j["route_type"] == "2":
                 train_routes.append(i)
 
-        tram_routes.sort(key=lambda i: i.ljust(2, "0") if i.isnumeric() else i)
+        tram_routes.sort(key=lambda i: i.rjust(2, "0") if i.isnumeric() else i)
         bus_routes.sort(key=lambda i: i.replace("-", "0").ljust(3, "0"))
         train_routes.sort()
 
