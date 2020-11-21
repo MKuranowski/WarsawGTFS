@@ -234,7 +234,11 @@ class Merger:
                     self.active_shapes.add(row["shape_id"])
 
                 # Prepend per-file ids
-                self._prepend_values_with_version(row, {"trip_id", "service_id"})
+                prepend_keys = {"trip_id", "service_id"}
+                if self.shapes:
+                    prepend_keys.add("shape_id")
+
+                self._prepend_values_with_version(row, prepend_keys)
 
                 # Re-write the row
                 self.wrtr_trips.writerow(row)
@@ -246,8 +250,7 @@ class Merger:
         for row in reader:
             if row["trip_id"] in self.active_trips:
                 # Prepend per-file ids
-                prepend_keys = {"trip_id", "shape_id"} if self.shapes else {"trip_id"}
-                self._prepend_values_with_version(row, prepend_keys)
+                self._prepend_values_with_version(row, {"trip_id"})
 
                 # Swap stop_id
                 stop_conv_key = self.file.version, row["stop_id"]
