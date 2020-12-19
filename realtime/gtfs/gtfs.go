@@ -130,6 +130,18 @@ func (g *Gtfs) Close() error {
 	return g.fileObj.Close()
 }
 
+// GetZipFileByName will loop over every file in the zip.Reader object,
+// and return the first pointer to zip.File taht matches the provided filename.
+// A nil-pointer is returned if no matching file was found.
+func (g *Gtfs) GetZipFileByName(fileName string) (filePointer *zip.File) {
+	for _, file := range g.ZipFile.File {
+		if file.Name == fileName {
+			return file
+		}
+	}
+	return nil
+}
+
 // LoadRoutes loads routes.txt from provided zip.File
 func (g *Gtfs) LoadRoutes(file *zip.File) (err error) {
 	fileReader, err := file.Open()

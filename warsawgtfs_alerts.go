@@ -65,15 +65,9 @@ func main() {
 
 	// Load GTFS routes
 	log.Println("Loading routes.txt")
-	loadedRoutes := false
-	for _, file := range gtfsFile.ZipFile.File {
-		if file.Name == "routes.txt" {
-			gtfsFile.LoadRoutes(file)
-			loadedRoutes = true
-			break
-		}
-	}
-	if !loadedRoutes {
+	if routesFile := gtfsFile.GetZipFileByName("routes.txt"); routesFile != nil {
+		gtfsFile.LoadRoutes(routesFile)
+	} else {
 		log.Fatalln("no file routes.txt in the GTFS")
 	}
 
