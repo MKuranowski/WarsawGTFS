@@ -22,12 +22,17 @@ type ReaderAtCloser interface {
 	io.Closer
 }
 
+type routeSerivcePair struct {
+	Route   string
+	Service string
+}
+
 // Gtfs is an object with access to GTFS data
 type Gtfs struct {
 	Routes   map[string]sort.StringSlice // route_type → [route_id route_id ...]
 	Stops    map[string][2]float64       // stop_id → [stop_lat stop_lon]
-	Services map[string]bool             // service_id → true
-	Trips    map[string][2]string        // trip_id → [route_id service_id]
+	Services map[string]bool             // service_id → true (if service is active on g.SyncTime)
+	Trips    map[string]routeSerivcePair // trip_id → [route_id service_id]
 
 	fileObj  ReaderAtCloser
 	ZipFile  *zip.Reader
@@ -41,7 +46,7 @@ func NewGtfsFromFile(fname string) (gtfs *Gtfs, err error) {
 		Routes:   make(map[string]sort.StringSlice),
 		Stops:    make(map[string][2]float64),
 		Services: make(map[string]bool),
-		Trips:    make(map[string][2]string),
+		Trips:    make(map[string]routeSerivcePair),
 	}
 
 	// Open the file
@@ -78,7 +83,7 @@ func NewGtfsFromURL(url string, client *http.Client) (gtfs *Gtfs, err error) {
 		Routes:   make(map[string]sort.StringSlice),
 		Stops:    make(map[string][2]float64),
 		Services: make(map[string]bool),
-		Trips:    make(map[string][2]string),
+		Trips:    make(map[string]routeSerivcePair),
 	}
 
 	// Request the URL
@@ -133,7 +138,7 @@ func (g *Gtfs) Close() error {
 // GetZipFileByName will loop over every file in the zip.Reader object,
 // and return the first pointer to zip.File taht matches the provided filename.
 // A nil-pointer is returned if no matching file was found.
-func (g *Gtfs) GetZipFileByName(fileName string) (filePointer *zip.File) {
+func (g *Gtfs) GetZipFileByName(fileName string) *zip.File {
 	for _, file := range g.ZipFile.File {
 		if file.Name == fileName {
 			return file
@@ -162,6 +167,7 @@ func (g *Gtfs) LoadRoutes(file *zip.File) (err error) {
 		rowSlice, errI := csvReader.Read()
 		err = errI
 		if err == io.EOF {
+			err = nil
 			break
 		} else if err != nil {
 			return
@@ -203,6 +209,7 @@ func (g *Gtfs) LoadStops(file *zip.File) (err error) {
 		rowSlice, errI := csvReader.Read()
 		err = errI
 		if err == io.EOF {
+			err = nil
 			break
 		} else if err != nil {
 			return
@@ -239,7 +246,6 @@ func (g *Gtfs) LoadStops(file *zip.File) (err error) {
 // LoadServices loads calendar_dates.txt from provided zip.File
 func (g *Gtfs) LoadServices(file *zip.File) (err error) {
 	expectedDate := g.SyncTime.Format("20060102")
-
 	fileReader, err := file.Open()
 	if err != nil {
 		return
@@ -258,6 +264,7 @@ func (g *Gtfs) LoadServices(file *zip.File) (err error) {
 		rowSlice, errI := csvReader.Read()
 		err = errI
 		if err == io.EOF {
+			err = nil
 			break
 		} else if err != nil {
 			return
@@ -301,6 +308,7 @@ func (g *Gtfs) LoadTrips(file *zip.File) (err error) {
 		rowSlice, errI := csvReader.Read()
 		err = errI
 		if err == io.EOF {
+			err = nil
 			break
 		} else if err != nil {
 			return
@@ -318,20 +326,22 @@ func (g *Gtfs) LoadTrips(file *zip.File) (err error) {
 		}
 
 		// Save data
-		g.Trips[tripID] = [2]string{routeID, serviceID}
+		g.Trips[tripID] = routeSerivcePair{routeID, serviceID}
 	}
 	return
 }
 
 // LoadAll attempts to load all file
-func (g *Gtfs) LoadAll() (err error) {
-	var wg sync.WaitGroup
+func (g *Gtfs) LoadAll() error {
 	expectedFiles := map[string]func(*zip.File) error{
 		"routes.txt":         g.LoadRoutes,
 		"stops.txt":          g.LoadStops,
 		"trips.txt":          g.LoadTrips,
 		"calendar_dates.txt": g.LoadServices,
 	}
+
+	wg := &sync.WaitGroup{}
+	errCh := make(chan error, len(expectedFiles)+1)
 
 	for _, f := range g.ZipFile.File {
 		loader, ok := expectedFiles[f.Name]
@@ -341,22 +351,31 @@ func (g *Gtfs) LoadAll() (err error) {
 
 		wg.Add(1)
 
-		go func() {
+		go func(f *zip.File) {
 			defer wg.Done()
 			err := loader(f)
 			if err != nil {
-				panic(err)
+				errCh <- err
 			}
-		}()
+		}(f)
 
 		delete(expectedFiles, f.Name)
 	}
 
 	wg.Wait()
+	close(errCh)
+
+	// Check if all files were present
 	if len(expectedFiles) != 0 {
-		err = errors.New("Missing files in GTFS (required routes.txt, stops.txt, trips.txt and calendar_dates.txt)")
+		return errors.New("Missing files in GTFS (required routes.txt, stops.txt, trips.txt and calendar_dates.txt)")
 	}
-	return
+
+	// Check if loaders returned an error
+	for err := range errCh {
+		return err
+	}
+
+	return nil
 }
 
 // ListGtfsRoutes will automatically open the GTFS file from a given source,

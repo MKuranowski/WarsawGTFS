@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Options some options for generating alerts
+// Options represents available options for generating alerts
 type Options struct {
 	GtfsRtTarget    string
 	JSONTarget      string
