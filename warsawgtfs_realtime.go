@@ -11,6 +11,7 @@ import (
 	"github.com/MKuranowski/WarsawGTFS/realtime/alerts"
 	"github.com/MKuranowski/WarsawGTFS/realtime/brigades"
 	"github.com/MKuranowski/WarsawGTFS/realtime/gtfs"
+	"github.com/MKuranowski/WarsawGTFS/realtime/positions"
 )
 
 // Default CLI flags
@@ -142,7 +143,7 @@ func mainAlerts() (err error) {
 	return
 }
 
-// mainBrigades prepares options for creating alerts and then creates them
+// mainBrigades prepares options for creating brigades and then creates them
 func mainBrigades() (err error) {
 	if *flagApikey == "" {
 		return errors.New("Key for api.um.warszawa.pl needs to be provided")
@@ -160,6 +161,29 @@ func mainBrigades() (err error) {
 	return
 }
 
+// mainPositions parses options for creating vehicle positions and then creates them
+func mainPositions() (err error) {
+	if *flagApikey == "" {
+		return errors.New("Key for api.um.warszawa.pl needs to be provided")
+	}
+
+	// Create options struct
+	opts := positions.Options{
+		GtfsRtTarget:  path.Join(*flagTarget, "positions.pb"),
+		HumanReadable: *flagReadable,
+		Apikey:        *flagApikey,
+		Brigades:      *flagBrigadesFile,
+	}
+	if *flagJSON {
+		opts.JSONTarget = path.Join(*flagTarget, "positions.json")
+	}
+
+	// Make alerts
+	log.Println("Creating brigades.json")
+	err = positions.Main(client, opts)
+	return
+}
+
 // Main functionality
 func main() {
 	var err error
@@ -174,18 +198,21 @@ func main() {
 	}
 
 	// Load gtfs
-	err = loadGtfs()
-	if err != nil {
-		log.Fatalln(err.Error())
+	if !*flagPostions {
+		err = loadGtfs()
+		if err != nil {
+			log.Fatalln(err.Error())
+		}
 	}
 
 	// Launch specified mode
-	if *flagAlerts {
+	switch {
+	case *flagAlerts:
 		err = mainAlerts()
-	} else if *flagBrigades {
+	case *flagBrigades:
 		err = mainBrigades()
-	} else if *flagPostions {
-		err = errors.New("postions mode is not implemented yet")
+	case *flagPostions:
+		err = mainPositions()
 	}
 	if err != nil {
 		log.Fatalln(err.Error())
