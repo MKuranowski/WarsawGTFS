@@ -7,11 +7,13 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/MKuranowski/WarsawGTFS/realtime/alerts"
 	"github.com/MKuranowski/WarsawGTFS/realtime/brigades"
 	"github.com/MKuranowski/WarsawGTFS/realtime/gtfs"
 	"github.com/MKuranowski/WarsawGTFS/realtime/positions"
+	"github.com/MKuranowski/WarsawGTFS/realtime/util"
 )
 
 // Default CLI flags
@@ -69,6 +71,20 @@ var (
 		false,
 		"for alerts: any errors when scraping wtp.waw.pl will become fatal,\n"+
 			"for brigades: any ignorable data mismatch will become fatal")
+
+	// Loop options
+	flagLoop = flag.Duration(
+		"loop",
+		time.Duration(0),
+		"alerts/positions: instead of running once and exiting, "+
+			"update the output file every given duration\n"+
+			"brigades: if non-zero, update the brigades file every time -gtfs-file changes")
+
+	flagDataCheck = flag.Duration(
+		"checkdata",
+		time.Duration(30*60*1_000_000_000), // 30 minutes in ns
+		"alerts/brigades: how often check if the -gtfs-file has changed,\n"+
+			"positions: how often check if the -brigades-file has changed")
 )
 
 // Other global objects
@@ -143,6 +159,32 @@ func mainAlerts() (err error) {
 	return
 }
 
+// loopAlerts prepares options for launching laerts in a loop mode and then launches the loop mode
+func loopAlerts() error {
+	// Create options struct
+	opts := alerts.Options{
+		GtfsRtTarget:    path.Join(*flagTarget, "alerts.pb"),
+		HumanReadable:   *flagReadable,
+		ThrowLinkErrors: *flagStrict,
+	}
+	if *flagJSON {
+		opts.JSONTarget = path.Join(*flagTarget, "alerts.json")
+	}
+
+	// Create the resource with data
+	var gtfsResource util.Resource
+	if strings.HasPrefix(*flagGtfsFile, "http://") || strings.HasPrefix(*flagGtfsFile, "https://") {
+		gtfsResource = &util.ResourceHTTP{
+			Client: client, URL: *flagGtfsFile, Peroid: *flagDataCheck,
+		}
+	} else {
+		gtfsResource = &util.ResourceLocal{Path: *flagGtfsFile, Peroid: *flagDataCheck}
+	}
+
+	// Call alerts.Loop
+	return alerts.Loop(client, gtfsResource, *flagLoop, opts)
+}
+
 // mainBrigades prepares options for creating brigades and then creates them
 func mainBrigades() (err error) {
 	if *flagApikey == "" {
@@ -192,13 +234,14 @@ func main() {
 	flag.Parse()
 
 	// Check excluding flags
+	loopMode := *flagLoop > 0
 	err = checkModes()
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
 	// Load gtfs
-	if !*flagPostions {
+	if !*flagPostions && !loopMode {
 		err = loadGtfs()
 		if err != nil {
 			log.Fatalln(err.Error())
@@ -207,13 +250,18 @@ func main() {
 
 	// Launch specified mode
 	switch {
+	case *flagAlerts && loopMode:
+		err = loopAlerts()
 	case *flagAlerts:
 		err = mainAlerts()
+	case loopMode:
+		err = errors.New("loop mode is only available for alerts")
 	case *flagBrigades:
 		err = mainBrigades()
 	case *flagPostions:
 		err = mainPositions()
 	}
+
 	if err != nil {
 		log.Fatalln(err.Error())
 	}

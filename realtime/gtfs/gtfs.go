@@ -78,26 +78,32 @@ func NewGtfsFromFile(fname string) (gtfs *Gtfs, err error) {
 
 // NewGtfsFromURL automatically creates a Gtfs object from a URL
 func NewGtfsFromURL(url string, client *http.Client) (gtfs *Gtfs, err error) {
-	// Make maps for some fields
-	gtfs = &Gtfs{
-		Routes:   make(map[string]sort.StringSlice),
-		Stops:    make(map[string][2]float64),
-		Services: make(map[string]bool),
-		Trips:    make(map[string]routeSerivcePair),
-	}
-
 	// Request the URL
 	resp, err := client.Get(url)
 	if err != nil {
 		return
 	}
 	defer resp.Body.Close()
-	gtfs.SyncTime = time.Now()
 
 	// Check response code
 	if resp.StatusCode <= 199 || resp.StatusCode >= 300 {
 		err = util.RequestError{URL: url, Status: resp.Status, StatusCode: resp.StatusCode}
-		return
+		return nil, err
+	}
+
+	// Make a GTFS object from the response Body
+	return NewGtfsFromReader(resp.Body)
+}
+
+// NewGtfsFromReader automatically creates a Gtfs object from a io.Reader
+func NewGtfsFromReader(r io.Reader) (gtfs *Gtfs, err error) {
+	// Make alll the required maps & set the syncTime
+	gtfs = &Gtfs{
+		Routes:   make(map[string]sort.StringSlice),
+		Stops:    make(map[string][2]float64),
+		Services: make(map[string]bool),
+		Trips:    make(map[string]routeSerivcePair),
+		SyncTime: time.Now(),
 	}
 
 	// Make a tempfile
@@ -105,7 +111,7 @@ func NewGtfsFromURL(url string, client *http.Client) (gtfs *Gtfs, err error) {
 	gtfs.fileObj = tempFile
 
 	// Write URL content to the tempfile
-	_, err = io.Copy(tempFile, resp.Body)
+	_, err = io.Copy(tempFile, r)
 	if err != nil {
 		return
 	}
@@ -380,26 +386,16 @@ func (g *Gtfs) LoadAll() error {
 
 // ListGtfsRoutes will automatically open the GTFS file from a given source,
 // and try to read routes.txt to extract a mapping route_type → sort.StringSlice[route_id, ...]
-func ListGtfsRoutes(source string) (routeMap map[string]sort.StringSlice, err error) {
-	// Open the GTFS file
-	gtfs, err := NewGtfsFromFile(source)
-	if err != nil {
+func ListGtfsRoutes(gtfs *Gtfs) (routeMap map[string]sort.StringSlice, err error) {
+	// Find routes.txt
+	f := gtfs.GetZipFileByName("routes.txt")
+	if f == nil {
+		err = errors.New("GTFS is missing routes.txt")
 		return
 	}
 
-	// Find routes.txt
-	for _, f := range gtfs.ZipFile.File {
-		if f.Name == "routes.txt" {
-			err = gtfs.LoadRoutes(f)
-			if err != nil {
-				return
-			}
-			break
-		}
-	}
-
-	// Extract the mapping
+	// Load routes.txt
+	err = gtfs.LoadRoutes(f)
 	routeMap = gtfs.Routes
-	gtfs.Close()
 	return
 }
