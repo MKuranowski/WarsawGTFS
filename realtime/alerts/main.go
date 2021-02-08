@@ -98,6 +98,9 @@ func Make(client *http.Client, routeMap map[string]sort.StringSlice, opts Option
 		return
 	}
 
+	// Filter invalid alerts
+	container.Filter()
+
 	// Export to a JSON file
 	if opts.JSONTarget != "" {
 		log.Println("Exporting to JSON")

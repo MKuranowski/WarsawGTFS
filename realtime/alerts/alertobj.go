@@ -140,7 +140,7 @@ type AlertContainer struct {
 }
 
 // AsProto returns this list of alerts marshalled into a GTFS-RT FeedMessage
-func (ac AlertContainer) AsProto() *gtfsrt.FeedMessage {
+func (ac *AlertContainer) AsProto() *gtfsrt.FeedMessage {
 	msg := util.MakeFeedMessage(ac.Timestamp)
 	for _, alert := range ac.Alerts {
 		msg.Entity = append(msg.Entity, alert.AsProto())
@@ -149,7 +149,7 @@ func (ac AlertContainer) AsProto() *gtfsrt.FeedMessage {
 }
 
 // LoadExternal asynchronously calls LoadExternal on all its alerts
-func (ac AlertContainer) LoadExternal(client exclusiveHTTPClient, routeMap map[string]sort.StringSlice, throwErrors bool) error {
+func (ac *AlertContainer) LoadExternal(client exclusiveHTTPClient, routeMap map[string]sort.StringSlice, throwErrors bool) error {
 	// Make synchronization primitives
 	wg := &sync.WaitGroup{}
 	errCh := make(chan error, len(ac.Alerts)+1)
@@ -185,8 +185,25 @@ func (ac AlertContainer) LoadExternal(client exclusiveHTTPClient, routeMap map[s
 	return nil
 }
 
+// Filter removes all alerts without associated routes
+func (ac *AlertContainer) Filter() {
+	filtered := ac.Alerts[:0]
+	// Filter alerts
+	for _, a := range ac.Alerts {
+		if len(a.Routes) > 0 {
+			filtered = append(filtered, a)
+		}
+	}
+	// Garbage collect deleted alerts
+	for i := len(filtered); i < len(ac.Alerts); i++ {
+		ac.Alerts[i] = nil
+	}
+	// Set the filtered slice
+	ac.Alerts = filtered
+}
+
 // SaveJSON marshalls the container into a json file at the given location
-func (ac AlertContainer) SaveJSON(target string) (err error) {
+func (ac *AlertContainer) SaveJSON(target string) (err error) {
 	// Open target file
 	f, err := os.Create(target)
 	if err != nil {
@@ -205,7 +222,7 @@ func (ac AlertContainer) SaveJSON(target string) (err error) {
 }
 
 // SavePB marshalls the container into a GTFS-Realtime protocol buffer file
-func (ac AlertContainer) SavePB(target string, humanReadable bool) (err error) {
+func (ac *AlertContainer) SavePB(target string, humanReadable bool) (err error) {
 	// Open target file
 	f, err := os.Create(target)
 	if err != nil {
