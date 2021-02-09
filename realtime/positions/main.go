@@ -1,8 +1,13 @@
 package positions
 
 import (
+	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
+
+	"github.com/MKuranowski/WarsawGTFS/realtime/util"
+	"github.com/cenkalti/backoff/v4"
 )
 
 // CalculateLastStopTime sets the LastStopTime object on a brigadeEntry
@@ -78,4 +83,102 @@ func Main(client *http.Client, opts Options) (err error) {
 	// Call Create
 	_, err = Create(api, brigadeMap, prevVehicles, opts)
 	return
+}
+
+// routesResource is a pair of resource pointing to a GTFS file and a routeMap
+type brigadesResource struct {
+	Resource   util.Resource
+	BrigadeMap map[string][]*brigadeEntry
+}
+
+// Update automatically updates the RouteMap if the Resource has changed
+func (rr *brigadesResource) Update() error {
+	// Check for GTFS updates
+	shouldUpdate, err := rr.Resource.Check()
+	if err != nil {
+		return err
+	} else if shouldUpdate || rr.BrigadeMap == nil {
+		log.Println("brigades.json changed, reloading")
+
+		// Try to fetch updated brigades.json
+		newData, err := rr.Resource.Fetch()
+		if err != nil {
+			return err
+		}
+		defer newData.Close()
+
+		// Read brigades.json
+		rawData, err := ioutil.ReadAll(newData)
+		if err != nil {
+			return err
+		}
+
+		// Re-load brigades
+		rr.BrigadeMap, err = makeBrigades(rawData)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Loop automatically updates the GTFS-RT Positions files
+func Loop(client *http.Client, jsonResource util.Resource, sleepTime time.Duration, opts Options) (err error) {
+	// Automatic wrapper around the resource
+	var prevPositions map[string]*Vehicle
+	api := VehicleAPI{Key: opts.Apikey, Client: client}
+	br := brigadesResource{Resource: jsonResource}
+
+	// Backoff shit
+	exponantialBackoff := backoff.NewExponentialBackOff()
+	exponantialBackoff.Multiplier = 2
+	loopBackoff := backoff.WithMaxRetries(exponantialBackoff, 12)
+
+	for {
+		// Try to update brigades.json
+		err = br.Update()
+		if err != nil {
+			return
+		}
+
+		// Try updating the GTFS-RT
+		loopBackoff.Reset()
+		for sleep := time.Duration(0); sleep != backoff.Stop; sleep = loopBackoff.NextBackOff() {
+			// Print error when backing off
+			if sleep != 0 {
+				// Log when backingoff
+				sleepUntil := time.Now().Add(sleep).Format("15:04:05")
+				log.Printf(
+					"Updating the GTFS-RT Positions failed. Backoff until %s. Error: %q.\n",
+					sleepUntil, err.Error(),
+				)
+
+				// Sleep for the backoff
+				time.Sleep(sleep)
+			}
+
+			// Try to update the GTFS-RT
+			var newPositions map[string]*Vehicle
+			newPositions, err = Create(api, br.BrigadeMap, prevPositions, opts)
+			if err != nil {
+				return
+			}
+
+			// Replace positions
+			prevPositions, newPositions = newPositions, nil
+
+			// If no errors were encountered, break out of the backoff loop
+			if err == nil {
+				log.Println("GTFS-RT Positions updated successfully.")
+				break
+			}
+		}
+		if err != nil {
+			return
+		}
+
+		// Sleep until next try
+		time.Sleep(sleepTime)
+	}
+
 }

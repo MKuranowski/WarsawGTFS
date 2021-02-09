@@ -38,25 +38,12 @@ func readURL(client *http.Client, url string) (buff []byte, err error) {
 	return
 }
 
-// loadBrigades creates a map from "V/route_id/brigade_id" to a list to brigadeEntry
-// from brigades.json file loaded from either a file or a http/https remote location
-func loadBrigades(source string, client *http.Client) (m map[string][]*brigadeEntry, err error) {
-	// Load data from the source
-	var dataRaw []byte
-
-	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
-		dataRaw, err = readURL(client, source)
-	} else {
-		dataRaw, err = ioutil.ReadFile(source)
-	}
-
-	if err != nil {
-		return
-	}
-
+// makeBrigades take a JSON file (as a []byte) and tries to create a map
+// from "V/route_id/brigade_id" to list of brigadeEntry
+func makeBrigades(raw []byte) (m map[string][]*brigadeEntry, err error) {
 	// Decode the JSON response
 	var dataJSON map[string]map[string][]*brigadeEntry
-	err = json.Unmarshal(dataRaw, &dataJSON)
+	err = json.Unmarshal(raw, &dataJSON)
 
 	// Unload data from JSON
 	m = make(map[string][]*brigadeEntry)
@@ -76,4 +63,23 @@ func loadBrigades(source string, client *http.Client) (m map[string][]*brigadeEn
 		}
 	}
 	return
+}
+
+// loadBrigades creates a map from "V/route_id/brigade_id" to a list of brigadeEntry
+// from brigades.json file loaded from either a file or a http/https remote location
+func loadBrigades(source string, client *http.Client) (m map[string][]*brigadeEntry, err error) {
+	// Load data from the source
+	var dataRaw []byte
+
+	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
+		dataRaw, err = readURL(client, source)
+	} else {
+		dataRaw, err = ioutil.ReadFile(source)
+	}
+
+	if err != nil {
+		return
+	}
+
+	return makeBrigades(dataRaw)
 }

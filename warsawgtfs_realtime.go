@@ -77,8 +77,7 @@ var (
 		"loop",
 		time.Duration(0),
 		"alerts/positions: instead of running once and exiting, "+
-			"update the output file every given duration\n"+
-			"brigades: if non-zero, update the brigades file every time -gtfs-file changes")
+			"update the output file every given duration (alerts/positions only)")
 
 	flagDataCheck = flag.Duration(
 		"checkdata",
@@ -226,6 +225,36 @@ func mainPositions() (err error) {
 	return
 }
 
+func loopPositions() (err error) {
+	if *flagApikey == "" {
+		return errors.New("Key for api.um.warszawa.pl needs to be provided")
+	}
+
+	// Create options struct
+	opts := positions.Options{
+		GtfsRtTarget:  path.Join(*flagTarget, "positions.pb"),
+		HumanReadable: *flagReadable,
+		Apikey:        *flagApikey,
+		Brigades:      *flagBrigadesFile,
+	}
+	if *flagJSON {
+		opts.JSONTarget = path.Join(*flagTarget, "positions.json")
+	}
+
+	// Create the resource with data
+	var brigResource util.Resource
+	if strings.HasPrefix(*flagBrigadesFile, "http://") || strings.HasPrefix(*flagBrigadesFile, "https://") {
+		brigResource = &util.ResourceHTTP{
+			Client: client, URL: *flagBrigadesFile, Peroid: *flagDataCheck,
+		}
+	} else {
+		brigResource = &util.ResourceLocal{Path: *flagBrigadesFile, Peroid: *flagDataCheck}
+	}
+
+	// Call positions.Loop
+	return positions.Loop(client, brigResource, *flagLoop, opts)
+}
+
 // Main functionality
 func main() {
 	var err error
@@ -254,12 +283,14 @@ func main() {
 		err = loopAlerts()
 	case *flagAlerts:
 		err = mainAlerts()
-	case loopMode:
-		err = errors.New("loop mode is only available for alerts")
-	case *flagBrigades:
-		err = mainBrigades()
+	case *flagPostions && loopMode:
+		err = loopPositions()
 	case *flagPostions:
 		err = mainPositions()
+	case loopMode:
+		err = errors.New("loop mode is not available for brigades")
+	case *flagBrigades:
+		err = mainBrigades()
 	}
 
 	if err != nil {
