@@ -156,7 +156,7 @@ func (rr *routesResource) Update() error {
 	return nil
 }
 
-// Loop automatically updates update
+// Loop automatically updates the GTFS-RT alerts file
 func Loop(client *http.Client, gtfsResource util.Resource, sleepTime time.Duration, opts Options) (err error) {
 	// We don't use ticker as there's no guarantee that a single pass
 	// will be shorter then sleepTime.
