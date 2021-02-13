@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Generic, List, Literal, Optional, Set, Tuple, TypeVar
+from typing import Dict, Generic, Iterator, List, Literal, Optional, Set, Tuple, TypeVar
 
 """
 Utility stuff used only by the Converter object.
@@ -13,10 +13,22 @@ _T = TypeVar("_T")
 
 @dataclass
 class FileNamespace(Generic[_T]):
+    # This should be a NamedTuple, but somehow typing.NamedTuple can't also be Generic.
+    # So, this is a workaround with a dataclass
     routes: _T
     trips: _T
     times: _T
     dates: _T
+
+    def __iter__(self) -> Iterator[_T]:
+        """Yields all files from this FileNamespace"""
+        # This is an ugly workaroud. In NamedTuple this worked fine,
+        # however with dataclasses something like astuple or asdict break,
+        # since there's io streams can't be pickled.
+        yield self.routes
+        yield self.trips
+        yield self.times
+        yield self.dates
 
 
 DirStopsType = Dict[Literal["0", "1"], Set[str]]
