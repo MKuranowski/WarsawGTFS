@@ -1,4 +1,5 @@
-from typing import Dict, Generic, List, Literal, NamedTuple, Optional, Set, Tuple, TypeVar
+from dataclasses import dataclass
+from typing import Dict, Generic, List, Literal, Optional, Set, Tuple, TypeVar
 
 """
 Utility stuff used only by the Converter object.
@@ -10,7 +11,8 @@ Utility stuff used only by the Converter object.
 _T = TypeVar("_T")
 
 
-class FileNamespace(NamedTuple, Generic[_T]):
+@dataclass
+class FileNamespace(Generic[_T]):
     routes: _T
     trips: _T
     times: _T
