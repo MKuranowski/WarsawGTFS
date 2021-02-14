@@ -160,15 +160,10 @@ func Loop(client *http.Client, jsonResource util.Resource, sleepTime time.Durati
 			// Try to update the GTFS-RT
 			var newPositions map[string]*Vehicle
 			newPositions, err = Create(api, br.BrigadeMap, prevPositions, opts)
-			if err != nil {
-				return
-			}
-
-			// Replace positions
-			prevPositions, newPositions = newPositions, nil
 
 			// If no errors were encountered, break out of the backoff loop
 			if err == nil {
+				prevPositions, newPositions = newPositions, nil
 				log.Println("GTFS-RT Positions updated successfully.")
 				break
 			}
