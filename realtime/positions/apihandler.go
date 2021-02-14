@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -78,6 +79,7 @@ func (api *VehicleAPI) Get(apiVehType string) ([]*APIVehicleEntry, error) {
 
 	err = json.Unmarshal(respRaw, &respJSON)
 	if err != nil {
+		log.Printf("Invalid API UM Respose for %s:\n%s\n", apiVehType, respRaw)
 		return nil, err
 	} else if respJSON.Error != "" {
 		return nil, apiError{respJSON.Error}
