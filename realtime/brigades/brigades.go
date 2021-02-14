@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"io"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -206,8 +205,9 @@ func Match(api *ttableAPI, gtfs *gtfs.Gtfs, stopTimesReader io.Reader) (matches 
 		// Find the brigadeId for this stop
 		brigadeID, ok := mtb[row.Time]
 		if !ok {
-			log.Printf(
-				"StopTimeEvent: T %s | R %s | S %s (from api: %t) ❌ NO MATCH FOR %s\n",
+			logPrintf(
+				"StopTimeEvent: T %s | R %s | S %s (from api: %t) ❌ NO MATCH FOR %s",
+				false,
 				row.TripID,
 				row.RouteID,
 				row.StopID,
@@ -217,8 +217,9 @@ func Match(api *ttableAPI, gtfs *gtfs.Gtfs, stopTimesReader io.Reader) (matches 
 			continue
 		} else {
 			tripEntry.BrigadeID = brigadeID
-			// log.Printf(
-			// 	"StopTimeEvent: T %s | R %s | S %s (from api: %t) ✔️ match for %s\n",
+			// logPrintf(
+			// 	"StopTimeEvent: T %s | R %s | S %s (from api: %t) ✔️ match for %s",
+			// 	true,
 			// 	row.TripID,
 			// 	row.RouteID,
 			// 	row.StopID,

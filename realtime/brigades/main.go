@@ -2,7 +2,6 @@ package brigades
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"os"
 
@@ -38,21 +37,21 @@ func Main(client *http.Client, gtfs *gtfs.Gtfs, opts Options) error {
 	defer reader.Close()
 
 	// Match data
-	log.Println("Matching data")
+	logPrint("Matching data", false)
 	data, err := Match(api, gtfs, reader)
 	if err != nil {
 		return err
 	}
 
 	// Marshall it to JSON
-	log.Println("Marshalling data to JSON")
+	logPrint("Marshalling data to JSON", false)
 	dataJSON, err := data.MarshalJSON()
 	if err != nil {
 		return err
 	}
 
 	// Create a target file
-	log.Println("Writing to JSON")
+	logPrint("Writing to JSON", false)
 	f, err := os.Create(opts.JSONTarget)
 	if err != nil {
 		return err

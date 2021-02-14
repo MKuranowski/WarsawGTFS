@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -59,7 +58,7 @@ func (api *ttableAPI) Get(rs routeStopPair) (mapTimeBrigade, bool, error) {
 	}
 
 	// Prepare request
-	log.Printf("Making call for R %s | S %s\n", rs.Route, rs.Stop)
+	logPrintf("Making call for R %s | S %s", true, rs.Route, rs.Stop)
 	requestURL := api.BuildURL(rs)
 	resp, err := api.Client.Get(requestURL)
 	if err != nil {
@@ -70,7 +69,7 @@ func (api *ttableAPI) Get(rs routeStopPair) (mapTimeBrigade, bool, error) {
 
 	// Check response code
 	if resp.StatusCode <= 199 || resp.StatusCode >= 300 {
-		log.Printf("Timetable API for %+v responded with status code: %d\n", rs, resp.StatusCode)
+		logPrintf("Timetable API for %+v responded with status code: %d", false, rs, resp.StatusCode)
 		if api.ForwardErrors {
 			err = util.RequestError{
 				URL:        strings.ReplaceAll(requestURL, api.Key, "xxxxxx"),
@@ -121,7 +120,7 @@ func parseBrigadesResponse(rawData []byte, rs routeStopPair, forwardErrors bool)
 	// Check if there actually is a timetable
 	if len(decodedData.Result) == 0 {
 		errInfo := fmt.Sprintf("Timetable API for %+v returned an empty departures list (%q)", rs, string(rawData))
-		log.Printf(errInfo)
+		logPrint(errInfo, false)
 		if forwardErrors {
 			err = invalidTTableAPIResp{errInfo}
 			return
@@ -147,7 +146,7 @@ func parseBrigadesResponse(rawData []byte, rs routeStopPair, forwardErrors bool)
 			errInfo := fmt.Sprintf(
 				"Timetable API for %+v returned a timetable with missing times or brigades (%q)",
 				rs, string(rawData))
-			log.Printf(errInfo)
+			logPrint(errInfo, false)
 			if forwardErrors {
 				err = invalidTTableAPIResp{errInfo}
 				return
