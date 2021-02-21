@@ -54,6 +54,7 @@ def make_multiple(
 
         for file in files_to_convert:
             file_opts = copy(opts)
+            file_opts.metro = False
             file_opts.target = join(DIR_CONVERTED, (file.version + ".zip"))
 
             Converter.create(
