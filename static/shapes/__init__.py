@@ -111,6 +111,7 @@ class Shaper:
             for chunk in resp.iter_content(1024 * 128):
                 temp_buffer.write(chunk)
 
+        temp_buffer.seek(0)
         return temp_buffer
 
     def _make_router(self, transport: Literal["bus", "tram", "train"]) -> Router:
