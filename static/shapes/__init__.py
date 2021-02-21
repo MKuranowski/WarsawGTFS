@@ -418,6 +418,9 @@ class Shaper:
 
     def open(self, target_dir: str, clear_shape_errs: bool = True) -> None:
         """Opens required files."""
+        # Clear already-written shapes
+        self.written_shapes = {}
+
         # Create file object
         file_path = os.path.join(target_dir, "shapes.txt")
         self.file_obj = open(file_path, "w", encoding="utf-8", newline="")
