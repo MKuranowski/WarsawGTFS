@@ -37,13 +37,13 @@ def _remove_non_digits(text: str) -> str:
     return result
 
 
-class _WithcReadline(Protocol):
+class _WithReadline(Protocol):
     def readline(self) -> str:
         ...
 
 
 class Parser:
-    def __init__(self, reader: _WithcReadline, version: str):
+    def __init__(self, reader: _WithReadline, version: str):
         self.r = reader
         self.logger = getLogger(f"WarsawGTFS.{version}.Parser")
 

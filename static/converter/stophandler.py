@@ -394,7 +394,7 @@ class StopHandler:
 
                     writer.writerow(stop_data)
 
-        # Calculate unused stos from missing
+        # Calculate unused entries from missing_stops.json
         unused_missing = set(self.missing_stops.keys()).difference(self.used_invalid)
 
         # Dump missing stops info

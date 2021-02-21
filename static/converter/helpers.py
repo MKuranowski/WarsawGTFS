@@ -24,7 +24,7 @@ class FileNamespace(Generic[_T]):
         """Yields all files from this FileNamespace"""
         # This is an ugly workaroud. In NamedTuple this worked fine,
         # however with dataclasses something like astuple or asdict break,
-        # since there's io streams can't be pickled.
+        # since the io streams can't be pickled.
         yield self.routes
         yield self.trips
         yield self.times

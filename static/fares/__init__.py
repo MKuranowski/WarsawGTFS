@@ -33,7 +33,7 @@ def write_regular_fare(attr_writer: "csv._writer", rule_writer: "csv._writer",
     """Saves info about a RegularFare"""
     # GTFS fare applies if a journey passes through ALL `contains_id` zones.
     # ZTM tickets apply to ANY combination of zones mentioned in `fare["zones"]`.
-    # Therefore, a separate fare_id has to be create for every combination of zones in given fare
+    # Therefore, a separate fare_id has to be created for every combination of zones in given fare
     for zones in any_len_combinations(fare["zones"]):
         fare_id = fare["id"] + "_COMBINATION" + "+".join(zones)
 

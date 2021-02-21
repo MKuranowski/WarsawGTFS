@@ -30,7 +30,7 @@ class ConversionOpts:
 
 def normal_time(time, lessthen24=False):
     """Normalizes time from ZTM-file format (H.MM / HH.MM) to GTFS format (HH:MM:SS).
-    lessthen24 argument ensures hour will be, less theen 24.
+    lessthen24 argument ensures hour will be less then 24.
     """
     h, m = map(int, time.split("."))
     if lessthen24:
@@ -51,12 +51,12 @@ def setup_logging(verbose: bool = False):
 
 
 def clear_directory(path: str):
-    """Clears the contest of a directory. Only files can reside in this directory."""
+    """Clears the contents of a directory. Only files can reside in this directory."""
     for f in os.scandir(path):
         os.remove(f.path)
 
 
-def ensure_dir_exists(path: str, clear: bool = False):
+def ensure_dir_exists(path: str, clear: bool = False) -> bool:
     """Ensures such given directory exists.
     Returns False if directory was just created, True if it already exists.
     """
