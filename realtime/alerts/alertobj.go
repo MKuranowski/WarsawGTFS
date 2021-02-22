@@ -64,8 +64,8 @@ func alertFromRssItem(r *rssItem) (a *Alert, err error) {
 func (a *Alert) makeEntitySelector() []*gtfsrt.EntitySelector {
 	var entities []*gtfsrt.EntitySelector
 
-	for _, route := range a.Routes {
-		entities = append(entities, &gtfsrt.EntitySelector{RouteId: &route})
+	for i := range a.Routes {
+		entities = append(entities, &gtfsrt.EntitySelector{RouteId: &a.Routes[i]})
 	}
 
 	return entities
