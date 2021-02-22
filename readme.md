@@ -2,25 +2,27 @@
 
 ## Description
 Creates GTFS data feed for Warsaw.
-Data comes from [ZTM Warszawa FTP server](ftp://rozklady.ztm.waw.pl/) and optionally [mkuran.pl website](https://mkuran.pl/).
+Static data comes from [ZTM Warszawa FTP server](ftp://rozklady.ztm.waw.pl/) and optionally [mkuran.pl website](https://mkuran.pl/).
+Realtime feeds incorporate data from <https://api.um.warszawa.pl>.
 
 ## Fetures
 
 1. Line colors
 2. Calendar exceptions
 3. Trip headsigns and On-Request stops
-4. Added town names to stop_name
-5. Merging railway stops into one
-6. Geting railway platforms from [external gist](https://gist.github.com/MKuranowski/0ca97a012d541899cb1f859cd0bab2e7#file-rail_platforms-json)
-7. Geting missing stop positions from [external gist](https://gist.github.com/MKuranowski/0ca97a012d541899cb1f859cd0bab2e7#file-missing_stops-json)
-8. Inserting metro schedules from [mkuran.pl](https://mkuran.pl/gtfs/warsaw/)
+4. Fares
+5. Adding town names to stop_name
+6. Proper handling of virtual stakes
+7. Geting railway platforms from [external gist](https://gist.github.com/MKuranowski/0ca97a012d541899cb1f859cd0bab2e7#file-rail_platforms-json)
+8. Geting missing stop positions from [external gist](https://gist.github.com/MKuranowski/0ca97a012d541899cb1f859cd0bab2e7#file-missing_stops-json)
+9. Inserting metro schedules from [mkuran.pl](https://mkuran.pl/gtfs/warsaw/)
 10. Realtime data
 11. Shapes generator: Buses based on [OSM Data](https://www.openstreetmap.org/), Rail/Tram based on [my own graph](https://mkuran.pl/gtfs/warsaw/tram-rail-shapes.osm).
 
 
 ## Static GTFS script
 
-### First Launch
+### Requirements
 
 First of all you need [Python3](https://www.python.org) and several modules, included in `requirements.txt`, so run `pip3 intall -r requirements.txt`.
 
@@ -38,7 +40,6 @@ After some time (up to 1 min, or 15 mins with the `--shapes` option turned on) t
 
 
 Produced GTFS feed has additional columns not included in standard GTFS specification:
-- ~~`original_stop_id` in `stop_times.txt` - WarsawGTFS changes some stop_ids (especially for railway stops and xxxx8x virtual stops), so this column contains original stop_id as referenced in the ZTM file,~~
 - `is_data_source` in `attributions.txt` - to indicate that this attribution represents entity that provides data,
 - `platform_code` in `stops.txt` - A platform identifier for (most) railway stops ([from Google Transit extensions](https://developers.google.com/transit/gtfs/reference/gtfs-extensions#station-platforms)),
 - `stop_IBNR` and `stop_PKPPLK` in `stops.txt` - railway station ids shared by rail operators in Poland.
@@ -47,44 +48,56 @@ Produced GTFS feed has additional columns not included in standard GTFS specific
 
 ## Realtime GTFS script
 
-The `warsawgtfs_realtime.py` contains three realtime functions.
+These scripts are written in [go](https://golang.org/) and as such require the `go` command to be available.
+You can run the main `warsawgtfs_realtime.go` script with `go run warsawgtfs_realtime.go` or by compiling it first with `go build`.
 
-All reailtime data is created in `gtfs-rt/` directory.
-By default only the binary protobuf file is created. Outputing human-readable representation can be done by adding the `--readable` flag to the script. An additional JSON file is added when the script sees flag `--json`.
+There are several dependencies required by this project, all listed in the `go.mod` file.
+AFAIK they should be downloaded automatically when running/compiling the project.
+If they are not, `go mod download` explicitly downloads the dependencies.
 
-- **Alerts** (option `-a` / `--alerts`):  
-  Arguments:
-  - (optional) `--gtfs-file PATH_OR_URL` - Location of GTFS feed to fetch a list of valid routes.
-    Defaults to <https://mkuran.pl/gtfs/warsaw.zip>
-
-- **Brigades** (option `-b` / `--brigades`):  
-  Arguments:
-  - `--key APIKEY` / `-k APIKEY` - The apikey to <https://api.um.warszawa.pl>,
-  - (optional) `--gtfs-file PATH_OR_URL` - Location of GTFS feed to base brigades on.
-    Defaults to <https://mkuran.pl/gtfs/warsaw.zip>
-  
-  Notes:
-  - Always outputs only a json file,
-  - Data is valid only on the date of creation - this process has to be run every day.
+Brigades and positions feeds are mostly based on data from <https://api.um.warszawa.pl>.
 
 
-- **Positions** (option `-p` / `--position`):  
-  Arguments:
-  - `--key APIKEY` / `-k APIKEY` - The apikey to <https://api.um.warszawa.pl>,
-  - (optional) `--brigades-file PATH_OR_URL` - Location of the brigades.json file.
-    Defaults to <https://mkuran.pl/gtfs/warsaw/brigades.json>
+### Alerts
 
-  Notes:
-  - This script assumes that all trips are running on time.
-  - If you wish to update positions in a loop, please `from src import Realtime` and call
-  `Realtime.positions()` on your own. It returns matched vehicles, which then can be provided again to
-  `Realtime.positions()` for a slightly better accuracy of matching trip_ids (instead of assuming everything runs on time).
+Creates the GTFS-Realtime feed with a list of all known alerts.
 
-  Arguments of `Realtime.positions()`:
-  - `apikey`: Apikey to <https://api.um.warszawa.pl>
-  - `brigades`: Path/URL to brigades.json
-  - `previous`: Dictionary of known vehicles, as returned by this function.
-    If calling for the first time provide an empty dict, `{}`.
+This mode is enabled by the `-a` command line flag. Here are all available options:
+
+- `-json`: Apart from the GTFS-RT file, write the parsed alerts into a custom JSON format
+- `-readable`: Use a human-readable GTFS-RT format instead of the binary one
+- `-strict`: Failing to get more data about an alert from the wtp.waw.pl causes an error, instead of being ignored
+- `-gtfs-file SOME_FILE_OR_URL`: from which file should available routes be loaded? defaults to <https://mkuran.pl/gtfs/warsaw.zip>
+- `-target SOME_FOLDER`: where to put the created files? defaults to `data_rt`
+- `-loop DURATION`: if positive (e.g. `1m30s`), updates the files every DURATION. defaults to `0s`, loop mode disabled.
+- `-checkdata DURATION`: when in loop-mode, decides how often should the `-gtfs-file` be checked for changes. defaults to `30m`.
+
+
+### Brigades
+
+Creates a file joning a brigade number to a list of trips (_for today only_), required for positions.
+
+This mode is enabled by the `-b` command line flag. Here are all available options:
+
+- `-k` (**required**): apikey to api.um.warszawa.pl
+- `-strict`: any mismatches between api.um.warszawa.pl and gtfs data will become fatal, instead of being ignored
+- `-gtfs-file SOME_FILE_OR_URL`: from which file should the trips be loaded? defaults to <https://mkuran.pl/gtfs/warsaw.zip>
+- `-target SOME_FOLDER`: where to put the brigades.json file? defaults to `data_rt`
+
+
+### Positions
+
+Creates the GTFS-Realtime feed with a vehicle positions and their active trips.
+
+This mode is enabled by the `-p` command line flag. Here are all available options:
+
+- `-k` (**required**): apikey to api.um.warszawa.pl
+- `-json`: Apart from the GTFS-RT file, write the parsed positions into a custom JSON format
+- `-readable`: Use a human-readable GTFS-RT format instead of the binary one
+- `-brigades-file SOME_FILE_OR_URL`: path/url to the brigades.json file created by the `-b` mode. defaults to <https://mkuran.pl/gtfs/warsaw/brigades.json>
+- `-target SOME_FOLDER`: where to put the created files? defaults to `data_rt`
+- `-loop DURATION`: if positive (e.g. `30s`), updates the files every DURATION. defaults to `0s`, loop mode disabled.
+- `-checkdata DURATION`: when in loop-mode, decides how often should the `-brigades-file` be checked for changes. defaults to `30m`.
 
 
 ## License
