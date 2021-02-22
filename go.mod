@@ -10,6 +10,6 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.0
 	github.com/golang/protobuf v1.4.3
 	github.com/microcosm-cc/bluemonday v1.0.4
-	golang.org/x/net v0.0.0-20210119194325-5f4716e94777 // indirect
+	golang.org/x/net v0.0.0-20210220033124-5f55cee0dc0d // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 )
