@@ -99,10 +99,21 @@ func (v *Vehicle) MatchTripNoPV(cst compareTime, be []*brigadeEntry) error {
 		}
 	}
 
-	// if the synctime is past the last trip end time, assume the vehicle is still doing the
-	// last trip
+	// if the synctime is past the last trip end time
+	// check if it makes sense to say that the vehicle is doing the last trip
 	if v.Trip == "" {
-		v.Trip = be[len(be)-1].TripID
+		// Extract info about last trip
+		lastBE := be[len(be)-1]
+		secondsToEnd, err := lastBE.LastStopTime.Since(cst)
+		if err != nil {
+			return err
+		}
+
+		// Assume vehicle is doing the last trip if and only if
+		// it's no more then 15 minutes past the last trip end
+		if secondsToEnd >= -900 {
+			v.Trip = lastBE.TripID
+		}
 	}
 
 	return nil
@@ -113,29 +124,35 @@ func (v *Vehicle) MatchTripWithPV(pv *Vehicle, cst compareTime, be []*brigadeEnt
 	// first - get the index in be of pv.Trip
 	prevTripIdx := indexMatchingTrip(be, pv.Trip)
 
-	// handle some edge cases
+	// EGDE CASE: previous trip not found in brigadeEntries
+	// calculate as if previous trip was not known
 	if prevTripIdx < 0 {
-		// previous trip not found in be (brigades changed?) - calculate as if
-		// the previous trip was not known
 		return v.MatchTripNoPV(cst, be)
-	} else if prevTripIdx == len(be)-1 {
-		// vehicle was doing the last trip -there's nothing to calculate
-		v.Trip = pv.Trip
-		return nil
 	}
 
 	// extract info about previous vehicle trip
 	pvTripEntry := be[prevTripIdx]
-	pvTripTerminiLat := pvTripEntry.LastStopPos[0]
-	pvTripTerminiLon := pvTripEntry.LastStopPos[1]
-
 	secondsToEnd, err := pvTripEntry.LastStopTime.Since(cst)
 	if err != nil {
 		return err
 	}
 
+	// EDGE CASE: previous vehicle was doing the last trip
+	if prevTripIdx == len(be)-1 {
+		// 15 minutes past last trip end time - assume the vehicle is no longer
+		// active on the network
+		if secondsToEnd < -900 {
+			v.Trip = ""
+			return nil
+		}
+
+		// Otherwise assume the vehicle is still doing the last trip
+		v.Trip = pv.Trip
+		return nil
+	}
+
 	// The vehicle is "nearTerminus" if it's 50 meters to tripLastStop
-	nearTerminus := haversine(v.Lat, v.Lon, pvTripTerminiLat, pvTripTerminiLon) <= 0.05
+	nearTerminus := haversine(v.Lat, v.Lon, pvTripEntry.LastStopPos[0], pvTripEntry.LastStopPos[1]) <= 0.05
 
 	// The vehicle is "nearEndTime" if it's 4 minutes to or past the tripLastTime
 	nearEndTime := secondsToEnd < 240
@@ -268,6 +285,13 @@ func (vc *VehicleContainer) Prepare(apiEntries []*APIVehicleEntry) error {
 // function such vehicle is removed for the container.
 func (vc *VehicleContainer) MatchAll(brigadeMap map[string][]*brigadeEntry, prevVehicles map[string]*Vehicle) error {
 	for vID, v := range vc.Vehicles {
+		// Don't match if the vehicle position is not realtime -
+		// older then 3 minutes
+		if vc.SyncTime.Sub(v.TimeObj).Minutes() > 3 {
+			delete(vc.Vehicles, vID)
+			continue
+		}
+
 		// Try to find matching brigade fields
 		be := brigadeMap[vID]
 
