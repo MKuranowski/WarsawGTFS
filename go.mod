@@ -1,15 +1,14 @@
 module github.com/MKuranowski/WarsawGTFS
 
-go 1.15
+go 1.16
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown v1.2.0
-	github.com/MobilityData/gtfs-realtime-bindings v0.0.0-20210126182015-908d04998022
+	github.com/MobilityData/gtfs-realtime-bindings v0.0.0-20210226192902-3ae99822874a
 	github.com/PuerkitoBio/goquery v1.6.1
 	github.com/andybalholm/cascadia v1.2.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.0
-	github.com/golang/protobuf v1.4.3
-	github.com/microcosm-cc/bluemonday v1.0.4
-	golang.org/x/net v0.0.0-20210222171744-9060382bd457 // indirect
-	google.golang.org/protobuf v1.25.0 // indirect
+	github.com/golang/protobuf v1.5.1
+	github.com/microcosm-cc/bluemonday v1.0.5
+	golang.org/x/net v0.0.0-20210326220855-61e056675ecf // indirect
 )
