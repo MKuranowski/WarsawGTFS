@@ -45,6 +45,7 @@ PROPER_STOP_NAMES = {
     "2296": "Szosa Lubelska",
     "2324": "Wiązowna",
     "4040": "Lotnisko Chopina",
+    "4305": "Posag 7 Panien",  # theoretically "Zajezdnia Ursus Płn."
     "4400": "Mobilis Sp. z.o.o.",
     "5001": "Połczyńska - Parking P+R",
     "6201": "Lipków Paschalisa-Jakubowicza",
