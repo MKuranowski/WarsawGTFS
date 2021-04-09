@@ -20,7 +20,7 @@ func MakeTranslatedString(s string) *gtfsrt.TranslatedString {
 func MakeFeedMessage(t time.Time) *gtfsrt.FeedMessage {
 	ver := "2.0"
 	incr := gtfsrt.FeedHeader_FULL_DATASET
-	tstamp := uint64(t.Unix())
+	tstamp := uint64(t.UTC().Unix())
 	return &gtfsrt.FeedMessage{
 		Header: &gtfsrt.FeedHeader{
 			GtfsRealtimeVersion: &ver,
