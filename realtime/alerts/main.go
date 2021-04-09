@@ -65,7 +65,7 @@ func Make(client *http.Client, routeMap map[string]sort.StringSlice, opts Option
 	// Create a container for all Alerts
 	var container AlertContainer
 	container.Timestamp = time.Now()
-	container.Time = container.Timestamp.Format("2006-01-02 15:04:05")
+	container.Time = container.Timestamp.Format(time.RFC3339)
 
 	// Wrap the http.Client exclusiveHTTPClient to avoid spamming wtp.waw.pl
 	exclusiveClient := exclusiveHTTPClient{

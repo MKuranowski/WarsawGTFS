@@ -44,7 +44,7 @@ func NewVehicle(av *APIVehicleEntry, timezone *time.Location) (v *Vehicle, err e
 
 	// Try to parse the time
 	v.TimeObj, err = time.ParseInLocation("2006-01-02 15:04:05", av.Time, timezone)
-	v.Time = v.TimeObj.Format("2006-01-02T15:04:05")
+	v.Time = v.TimeObj.Format(time.RFC3339)
 	return
 }
 
@@ -206,7 +206,7 @@ func (vc *VehicleContainer) MarshalJSON() ([]byte, error) {
 			Time      string     `json:"time"`
 			Positions []*Vehicle `json:"positions"`
 		}{
-			Time:      vc.SyncTime.Format("2006-02-01 15:04:05"),
+			Time:      vc.SyncTime.Format(time.RFC3339),
 			Positions: vehList,
 		},
 		"",
