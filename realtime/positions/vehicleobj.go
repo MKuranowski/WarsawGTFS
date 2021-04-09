@@ -31,7 +31,7 @@ type Vehicle struct {
 }
 
 // NewVehicle creates a Vehicle object from an apiVehicle object
-func NewVehicle(av *APIVehicleEntry) (v *Vehicle, err error) {
+func NewVehicle(av *APIVehicleEntry, timezone *time.Location) (v *Vehicle, err error) {
 	// Fill basic fields
 	v = &Vehicle{
 		ID:         "V/" + av.Lines + "/" + av.Brigade,
@@ -43,12 +43,12 @@ func NewVehicle(av *APIVehicleEntry) (v *Vehicle, err error) {
 	}
 
 	// Try to parse the time
-	v.TimeObj, err = time.Parse("2006-01-02 15:04:05", av.Time)
+	v.TimeObj, err = time.ParseInLocation("2006-01-02 15:04:05", av.Time, timezone)
 	v.Time = v.TimeObj.Format("2006-01-02T15:04:05")
 	return
 }
 
-// AsProto returns the Vehicle marshalled into a gtsrt.FeedEntity
+// AsProto returns the Vehicle marshalled into a gtfs.FeedEntity
 func (v *Vehicle) AsProto() *gtfsrt.FeedEntity {
 	lat32 := float32(v.Lat)
 	lon32 := float32(v.Lon)
@@ -267,10 +267,15 @@ func (vc *VehicleContainer) SavePB(target string, humanReadable bool) (err error
 // Prepare initializes the vehiclecontainer.Vehicles map with
 // vehicle objects created from a sequence of apiVehicleEntry
 func (vc *VehicleContainer) Prepare(apiEntries []*APIVehicleEntry) error {
+	timezone, err := time.LoadLocation("Europe/Warsaw")
+	if err != nil {
+		return err
+	}
+
 	vc.Vehicles = make(map[string]*Vehicle, len(apiEntries))
 
 	for _, ae := range apiEntries {
-		v, err := NewVehicle(ae)
+		v, err := NewVehicle(ae, timezone)
 		if err != nil {
 			return err
 		}
