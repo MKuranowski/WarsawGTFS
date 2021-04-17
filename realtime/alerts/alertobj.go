@@ -27,7 +27,7 @@ type Alert struct {
 }
 
 // alertFromRssItem extracts basic data from an RssItem and puts them into an Alert
-func alertFromRssItem(r *rssItem) (a *Alert, err error) {
+func alertFromRssItem(r *rssItem, routeMap map[string]sort.StringSlice) (a *Alert, err error) {
 	a = &Alert{}
 
 	// Extract the ID
@@ -54,7 +54,19 @@ func alertFromRssItem(r *rssItem) (a *Alert, err error) {
 	// Extract affected routes from the title
 	if strings.Contains(r.Title, ":") {
 		routesString := strings.SplitN(r.Title, ":", 2)[1]
-		a.Routes = regexRoute.FindAllString(routesString, -1)
+
+		for _, route := range regexRoute.FindAllString(routesString, -1) {
+			validRoute := false
+
+			// Check if the route is mentioned in the GTFS
+			for _, routeSubList := range routeMap {
+				validRoute = validRoute || util.StringSliceHas(routeSubList, route)
+			}
+
+			if validRoute {
+				a.Routes = append(a.Routes, route)
+			}
+		}
 	}
 
 	return

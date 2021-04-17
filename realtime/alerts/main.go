@@ -67,7 +67,7 @@ func Make(client *http.Client, routeMap map[string]sort.StringSlice, opts Option
 	container.Timestamp = time.Now()
 	container.Time = container.Timestamp.Format(time.RFC3339)
 
-	// Wrap the http.Client exclusiveHTTPClient to avoid spamming wtp.waw.pl
+	// Wrap the http.Client into exclusiveHTTPClient to avoid spamming wtp.waw.pl
 	exclusiveClient := exclusiveHTTPClient{
 		m: &sync.Mutex{},
 		c: client,
@@ -84,7 +84,7 @@ func Make(client *http.Client, routeMap map[string]sort.StringSlice, opts Option
 	log.Println("Casting RSS items to Alert objects")
 	for _, item := range items {
 		var a *Alert
-		a, err = alertFromRssItem(item)
+		a, err = alertFromRssItem(item, routeMap)
 		if err != nil {
 			return
 		}
