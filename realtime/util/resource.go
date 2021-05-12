@@ -61,7 +61,7 @@ func (r *ResourceLocal) Check() (fetch bool, err error) {
 	return
 }
 
-// Fetch returns the ReadCoser with access to the underlaying file
+// Fetch returns the ReadCloser with access to the underlaying file
 func (r *ResourceLocal) Fetch() (io.ReadCloser, error) {
 	// Open the file
 	f, err := os.Open(r.Path)
@@ -128,7 +128,7 @@ func (r *ResourceHTTP) Check() (fetch bool, err error) {
 	return
 }
 
-// Fetch returns the ReadCoser with access to the underlaying file
+// Fetch returns the ReadCloser with access to the underlaying file
 func (r *ResourceHTTP) Fetch() (io.ReadCloser, error) {
 	// Make the get request
 	resp, err := r.Client.Get(r.URL)

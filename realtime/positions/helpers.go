@@ -14,7 +14,7 @@ func degrees(x float64) float64 {
 	return x * 180 / math.Pi
 }
 
-// haversine caluclates the distance between 2 points in km
+// haversine calculates the distance between 2 points in km
 func haversine(lat1, lon1, lat2, lon2 float64) float64 {
 	// Convert to radians
 	lat1 = radians(lat1)

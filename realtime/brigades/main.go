@@ -8,7 +8,7 @@ import (
 	"github.com/MKuranowski/WarsawGTFS/realtime/gtfs"
 )
 
-// Options represents options for creating breigades.json
+// Options represents options for creating brigades.json
 type Options struct {
 	JSONTarget     string
 	Apikey         string
@@ -21,7 +21,7 @@ func Main(client *http.Client, gtfs *gtfs.Gtfs, opts Options) error {
 	api := &ttableAPI{
 		Key:           opts.Apikey,
 		Client:        client,
-		Reposnses:     make(map[routeStopPair]mapTimeBrigade),
+		Respones:      make(map[routeStopPair]mapTimeBrigade),
 		ForwardErrors: opts.ThrowAPIErrors,
 	}
 

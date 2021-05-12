@@ -124,7 +124,7 @@ func (v *Vehicle) MatchTripWithPV(pv *Vehicle, cst compareTime, be []*brigadeEnt
 	// first - get the index in be of pv.Trip
 	prevTripIdx := indexMatchingTrip(be, pv.Trip)
 
-	// EGDE CASE: previous trip not found in brigadeEntries
+	// EDGE CASE: previous trip not found in brigadeEntries
 	// calculate as if previous trip was not known
 	if prevTripIdx < 0 {
 		return v.MatchTripNoPV(cst, be)
@@ -285,7 +285,7 @@ func (vc *VehicleContainer) Prepare(apiEntries []*APIVehicleEntry) error {
 	return nil
 }
 
-// MatchAll tries to calculate the bearing and to match a vehicle to a prticular trip
+// MatchAll tries to calculate the bearing and to match a vehicle to a particular trip
 // for all its Vehicles. If a Vehicle still has an empty Trip field after calling its Match
 // function such vehicle is removed for the container.
 func (vc *VehicleContainer) MatchAll(brigadeMap map[string][]*brigadeEntry, prevVehicles map[string]*Vehicle) error {
@@ -300,7 +300,7 @@ func (vc *VehicleContainer) MatchAll(brigadeMap map[string][]*brigadeEntry, prev
 		// Try to find matching brigade fields
 		be := brigadeMap[vID]
 
-		// Try to find precious Vehicle for this ID
+		// Try to find previous Vehicle for this ID
 		pv := prevVehicles[vID]
 
 		// Match this vehicle to a particular trip

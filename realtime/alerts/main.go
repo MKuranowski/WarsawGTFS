@@ -128,7 +128,7 @@ func (rr *routesResource) Update() error {
 	if err != nil {
 		return err
 	} else if shouldUpdate || rr.RouteMap == nil {
-		log.Println("GTFS has changed, updating avaiilable route_ids.")
+		log.Println("GTFS has changed, updating available route_ids.")
 
 		var newData io.ReadCloser
 		var gtfsObj *gtfs.Gtfs
@@ -163,9 +163,9 @@ func Loop(client *http.Client, gtfsResource util.Resource, sleepTime time.Durati
 	// And, it doesn't really matter, it's not mission crticial that the alerts feed is updated
 	// every `sleepTime`, it's fine if it's updated sleepTime + a few seconds.
 	rr := &routesResource{Resource: gtfsResource}
-	exponantialBackoff := backoff.NewExponentialBackOff()
-	exponantialBackoff.Multiplier = 2
-	loopBackoff := backoff.WithMaxRetries(exponantialBackoff, 12)
+	exponentialBackoff := backoff.NewExponentialBackOff()
+	exponentialBackoff.Multiplier = 2
+	loopBackoff := backoff.WithMaxRetries(exponentialBackoff, 12)
 
 	for {
 		// Try to update the underlaying GTFS data

@@ -33,7 +33,7 @@ type VehicleAPI struct {
 	Client *http.Client
 }
 
-// buildURL returs the url of API endpoint with vehicle data for given vehicle type
+// buildURL returns the url of API endpoint with vehicle data for given vehicle type
 func (api *VehicleAPI) buildURL(apiVehType string) string {
 	return fmt.Sprintf(
 		"https://api.um.warszawa.pl/api/action/busestrams_get/"+

@@ -22,7 +22,7 @@ type ReaderAtCloser interface {
 	io.Closer
 }
 
-type routeSerivcePair struct {
+type routeServicePair struct {
 	Route   string
 	Service string
 }
@@ -32,7 +32,7 @@ type Gtfs struct {
 	Routes   map[string]sort.StringSlice // route_type → [route_id route_id ...]
 	Stops    map[string][2]float64       // stop_id → [stop_lat stop_lon]
 	Services map[string]bool             // service_id → true (if service is active on g.SyncTime)
-	Trips    map[string]routeSerivcePair // trip_id → [route_id service_id]
+	Trips    map[string]routeServicePair // trip_id → [route_id service_id]
 
 	fileObj  ReaderAtCloser
 	ZipFile  *zip.Reader
@@ -46,7 +46,7 @@ func NewGtfsFromFile(fname string) (gtfs *Gtfs, err error) {
 		Routes:   make(map[string]sort.StringSlice),
 		Stops:    make(map[string][2]float64),
 		Services: make(map[string]bool),
-		Trips:    make(map[string]routeSerivcePair),
+		Trips:    make(map[string]routeServicePair),
 	}
 
 	// Open the file
@@ -97,12 +97,12 @@ func NewGtfsFromURL(url string, client *http.Client) (gtfs *Gtfs, err error) {
 
 // NewGtfsFromReader automatically creates a Gtfs object from a io.Reader
 func NewGtfsFromReader(r io.Reader) (gtfs *Gtfs, err error) {
-	// Make alll the required maps & set the syncTime
+	// Make all the required maps & set the syncTime
 	gtfs = &Gtfs{
 		Routes:   make(map[string]sort.StringSlice),
 		Stops:    make(map[string][2]float64),
 		Services: make(map[string]bool),
-		Trips:    make(map[string]routeSerivcePair),
+		Trips:    make(map[string]routeServicePair),
 		SyncTime: time.Now(),
 	}
 
@@ -142,7 +142,7 @@ func (g *Gtfs) Close() error {
 }
 
 // GetZipFileByName will loop over every file in the zip.Reader object,
-// and return the first pointer to zip.File taht matches the provided filename.
+// and return the first pointer to zip.File that matches the provided filename.
 // A nil-pointer is returned if no matching file was found.
 func (g *Gtfs) GetZipFileByName(fileName string) *zip.File {
 	for _, file := range g.ZipFile.File {
@@ -332,7 +332,7 @@ func (g *Gtfs) LoadTrips(file *zip.File) (err error) {
 		}
 
 		// Save data
-		g.Trips[tripID] = routeSerivcePair{routeID, serviceID}
+		g.Trips[tripID] = routeServicePair{routeID, serviceID}
 	}
 	return
 }

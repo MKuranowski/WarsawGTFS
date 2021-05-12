@@ -28,7 +28,7 @@ func (e invalidTTableAPIResp) Error() string {
 type ttableAPI struct {
 	Key           string
 	Client        *http.Client
-	Reposnses     map[routeStopPair]mapTimeBrigade // routeStop → time → brigade
+	Respones      map[routeStopPair]mapTimeBrigade // routeStop → time → brigade
 	ForwardErrors bool
 }
 
@@ -52,7 +52,7 @@ func (api *ttableAPI) BuildURL(rs routeStopPair) string {
 // Get returns the time→brigade map for a particular route-stop pair
 func (api *ttableAPI) Get(rs routeStopPair) (mapTimeBrigade, bool, error) {
 	// Check if this pair was defined earlier
-	ttb, hasCached := api.Reposnses[rs]
+	ttb, hasCached := api.Respones[rs]
 	if hasCached {
 		return ttb, true, nil
 	}
@@ -89,11 +89,11 @@ func (api *ttableAPI) Get(rs routeStopPair) (mapTimeBrigade, bool, error) {
 	// Parse the response
 	ttb, err = parseBrigadesResponse(rawData, rs, api.ForwardErrors)
 	if err != nil {
-		api.Reposnses[rs] = make(mapTimeBrigade)
+		api.Respones[rs] = make(mapTimeBrigade)
 		return nil, false, err
 	}
 
-	api.Reposnses[rs] = ttb
+	api.Respones[rs] = ttb
 	return ttb, false, nil
 }
 

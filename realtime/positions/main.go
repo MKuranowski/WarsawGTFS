@@ -26,8 +26,8 @@ type Options struct {
 }
 
 // Create auto-magically creates realtime feeds with position data.
-// Create is designed to run a loop, hence it doesn't conatin logic to load
-// brigades JSON and assumes
+// Create is designed to run a loop, hence it doesn't contain logic to load
+// brigades JSON
 func Create(api VehicleAPI, brigadeMap map[string][]*brigadeEntry, prevVehicles map[string]*Vehicle, opts Options) (map[string]*Vehicle, error) {
 	// 0. Prepare a container
 	container := &VehicleContainer{}
@@ -130,9 +130,9 @@ func Loop(client *http.Client, jsonResource util.Resource, sleepTime time.Durati
 	br := brigadesResource{Resource: jsonResource}
 
 	// Backoff shit
-	exponantialBackoff := backoff.NewExponentialBackOff()
-	exponantialBackoff.Multiplier = 2
-	loopBackoff := backoff.WithMaxRetries(exponantialBackoff, 12)
+	exponentialBackoff := backoff.NewExponentialBackOff()
+	exponentialBackoff.Multiplier = 2
+	loopBackoff := backoff.WithMaxRetries(exponentialBackoff, 12)
 
 	for {
 		// Try to update brigades.json

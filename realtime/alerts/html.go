@@ -113,7 +113,7 @@ func getWebsite(client exclusiveHTTPClient, rawurl string, alertID string) (doc 
 // getAlertFlags determines which flags are set for this alert.
 // Flags usually represent which routes are affected by an alert.
 func getAlertFlags(doc *goquery.Document, alertType string) (flags []string) {
-	// CSS class for flag icons is different in impedimants and changes.
+	// CSS class for flag icons is different in impediments and changes.
 	var selector string
 	if alertType == "REDUCED_SERVICE" {
 		selector = ".impediment-category-icon"
