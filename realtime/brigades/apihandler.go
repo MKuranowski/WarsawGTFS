@@ -11,7 +11,7 @@ import (
 	"github.com/MKuranowski/WarsawGTFS/realtime/util"
 )
 
-// routeStopPait is a struct, for a (route_id, stop_id) pair
+// routeStopPair is a struct, for a (route_id, stop_id) pair
 type routeStopPair struct{ Route, Stop string }
 
 // mapTimeBrigade is an alias for a map from a timestamp to a brigade_id

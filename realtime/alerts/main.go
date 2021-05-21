@@ -160,12 +160,18 @@ func (rr *routesResource) Update() error {
 func Loop(client *http.Client, gtfsResource util.Resource, sleepTime time.Duration, opts Options) (err error) {
 	// We don't use ticker as there's no guarantee that a single pass
 	// will be shorter then sleepTime.
-	// And, it doesn't really matter, it's not mission crticial that the alerts feed is updated
+	// And, it doesn't really matter, it's not mission critical that the alerts feed is updated
 	// every `sleepTime`, it's fine if it's updated sleepTime + a few seconds.
 	rr := &routesResource{Resource: gtfsResource}
-	exponentialBackoff := backoff.NewExponentialBackOff()
-	exponentialBackoff.Multiplier = 2
-	loopBackoff := backoff.WithMaxRetries(exponentialBackoff, 12)
+	backoff := &backoff.ExponentialBackOff{
+		InitialInterval:     10 * time.Second,
+		RandomizationFactor: 0.3,
+		Multiplier:          2,
+		MaxInterval:         48 * time.Hour,
+		MaxElapsedTime:      48 * time.Hour,
+		Stop:                backoff.Stop,
+		Clock:               backoff.SystemClock,
+	}
 
 	for {
 		// Try to update the underlaying GTFS data
@@ -175,8 +181,8 @@ func Loop(client *http.Client, gtfsResource util.Resource, sleepTime time.Durati
 		}
 
 		// Try updating the GTFS-RT
-		loopBackoff.Reset()
-		for sleep := time.Duration(0); sleep != backoff.Stop; sleep = loopBackoff.NextBackOff() {
+		backoff.Reset()
+		for sleep := time.Duration(0); sleep != backoff.Stop; sleep = backoff.NextBackOff() {
 			// Print error when backing off
 			if sleep != 0 {
 				// Log when backingoff
