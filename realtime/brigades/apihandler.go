@@ -114,6 +114,7 @@ func parseBrigadesResponse(rawData []byte, rs routeStopPair, forwardErrors bool)
 
 	err = json.Unmarshal(rawData, &decodedData)
 	if err != nil {
+		logPrintf("Failed to parse API response: %s", false, string(rawData))
 		return
 	}
 
