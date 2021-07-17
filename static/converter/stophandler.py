@@ -1,15 +1,15 @@
+import csv
+import json
 from functools import lru_cache
 from logging import getLogger
 from os.path import join
-from typing import Any, Callable, Dict, Optional, List, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
+
 import requests
-import json
-import csv
 
-from ..const import PROPER_STOP_NAMES, ACTIVE_RAIL_STATIONS, HEADERS, \
-    GIST_MISSING_STOPS, GIST_RAIL_PLATFORMS
+from ..const import (GIST_MISSING_STOPS, GIST_RAIL_PLATFORMS, GIST_STOP_NAMES,
+                     HEADERS)
 from ..parser.dataobj import ZTMStop, ZTMStopGroup
-
 
 """
 Module reposible for handling handling stop data.
@@ -59,7 +59,7 @@ def should_town_be_added_to_name(group: ZTMStopGroup) -> bool:
 
 def avg_position(stops: Sequence[ZTMStop]) -> Optional[Tuple[float, float]]:
     """Returns the average position of all stops"""
-    lats = (i.lat for i in stops if i.lon is not None)
+    lats = (i.lat for i in stops if i.lat is not None)
     lons = (i.lon for i in stops if i.lon is not None)
     count = len(stops)
 
@@ -85,12 +85,20 @@ def get_rail_platforms() -> Dict[str, Dict[str, Any]]:
         return req.json()
 
 
+@lru_cache(maxsize=None)
+def get_stop_names() -> Dict[str, str]:
+    """Gets fixed stop names for some of the groups"""
+    with requests.get(GIST_STOP_NAMES) as req:
+        req.raise_for_status()
+        return req.json()
+
+
 class StopHandler:
     def __init__(self, version: str) -> None:
         self.logger = getLogger(f"WarsawGTFS.{version}.StopHandler")
 
         # Stop data
-        self.names = PROPER_STOP_NAMES.copy()
+        self.names: Dict[str, str] = {}
         self.data: Dict[str, Dict[str, Any]] = {}
         self.parents: Dict[str, str] = {}
         self.zones: Dict[str, str] = {}
@@ -113,6 +121,7 @@ class StopHandler:
         self.logger.info("Loading data from external gists")
         self.missing_stops = get_missing_stops()
         self.rail_platforms = get_rail_platforms()
+        self.names = get_stop_names()
 
     @staticmethod
     def _match_virtual(virt: ZTMStop, stakes: Sequence[ZTMStop]) -> Optional[str]:
@@ -187,10 +196,10 @@ class StopHandler:
     def _load_railway_group(self, group_id: str, group_name: str, virt_stops: List[ZTMStop]):
         """Saves data about a stop group representing a railway station"""
         # Nop KM & WKD stations
-        if group_id not in ACTIVE_RAIL_STATIONS:
-            for i in virt_stops:
-                self.change[i.id] = None
-            return
+        # if group_id not in ACTIVE_RAIL_STATIONS:
+        #     for i in virt_stops:
+        #         self.change[i.id] = None
+        #     return
 
         # Load station info
         station_data = self.rail_platforms.get(group_id, {})
