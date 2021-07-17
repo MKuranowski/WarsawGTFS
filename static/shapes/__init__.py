@@ -1,26 +1,51 @@
-from pyroutelib3 import Router, distHaversine
-from typing import Any, Dict, IO, List, Literal, Mapping, Optional, Sequence, Tuple
-from logging import getLogger
-import requests
-import json
 import csv
-import os
 import io
+import json
+import os
+from logging import getLogger
+from typing import (IO, Any, Dict, List, Literal, Mapping, Optional, Sequence,
+                    Tuple)
+
+import requests
+from pyroutelib3 import Router, distHaversine
 
 from ..const import DIR_SHAPE_ERR, HEADERS
 from ..util import ensure_dir_exists
-
-from .const import (
-    BUS_ROUTER_SETTINGS, OVERPASS_BUS_GRAPH, OVERPASS_STOPS_JSON, OVERRIDE_SHAPE_RATIOS,
-    PATH_BETWEEN_STOPS_VIA, URL_OVERPASS, URL_TRAM_TRAIN_GRAPH
-)
-from .helpers import _Pt, cache_retr, cache_save, time_limit, simplify_line, total_length
+from .const import (BUS_ROUTER_SETTINGS, GIST_FORCE_VIA, GIST_OVERRIDE_RATIOS,
+                    OVERPASS_BUS_GRAPH, OVERPASS_STOPS_JSON, URL_OVERPASS,
+                    URL_TRAM_TRAIN_GRAPH)
+from .helpers import (_Pt, cache_retr, cache_save, simplify_line, time_limit,
+                      total_length)
 from .kdtree import KDTree
+
+
+def get_force_via() -> Dict[Tuple[str, str], Tuple[float, float]]:
+    """Gets via points for some shapes between given stops"""
+    with requests.get(GIST_FORCE_VIA) as req:
+        req.raise_for_status()
+        return {
+            (i["from"], i["to"]): tuple(i["via"])
+            for i in req.json()
+        }  # type: ignore
+
+
+def get_override_ratios() -> Dict[Tuple[str, str], float]:
+    """Gets via points for some shapes between given stops"""
+    with requests.get(GIST_OVERRIDE_RATIOS) as req:
+        req.raise_for_status()
+        return {
+            (i["from"], i["to"]): i["ratio"]
+            for i in req.json()
+        }  # type: ignore
 
 
 class Shaper:
     def __init__(self):
         self.logger = getLogger("WarsawGTFS.Shaper")
+
+        # External data
+        self.override_ratios = get_override_ratios()
+        self.force_via = get_force_via()
 
         # Make routers
         self.bus_router = self._make_router("bus")
@@ -217,7 +242,7 @@ class Shaper:
             return cached_id
 
         # Get stop poisition
-        stop_info = self.stop_data.get(stop_id)
+        stop_info = self.stop_data[stop_id]
         lat = stop_info["stop_lat"]
         lon = stop_info["stop_lon"]
 
@@ -234,11 +259,11 @@ class Shaper:
 
     def staright_line(self, stop1: str, stop2: str) -> List[_Pt]:
         """Generates a straight line between 2 stops"""
-        stop1_data = self.stop_data.get(stop1)
+        stop1_data = self.stop_data[stop1]
         stop1_lat = stop1_data["stop_lat"]
         stop1_lon = stop1_data["stop_lon"]
 
-        stop2_data = self.stop_data.get(stop2)
+        stop2_data = self.stop_data[stop2]
         stop2_lat = stop2_data["stop_lat"]
         stop2_lon = stop2_data["stop_lon"]
 
@@ -287,7 +312,7 @@ class Shaper:
         dist_ratio = total_route_dist / total_straight_dist if total_straight_dist else 1
 
         expected_std_ratio = 7 if from_stop[:4] == to_stop[:4] else 3.5
-        expected_ovr_ratio = OVERRIDE_SHAPE_RATIOS.get((from_stop, to_stop))
+        expected_ovr_ratio = self.override_ratios.get((from_stop, to_stop))
         expected_ratio = expected_ovr_ratio or expected_std_ratio
 
         too_long = dist_ratio > expected_ratio
@@ -316,7 +341,7 @@ class Shaper:
         end_node = self.get_node(to_stop, transport)
 
         # Check if a 'via' point is required
-        if (via_point := PATH_BETWEEN_STOPS_VIA.get((from_stop, to_stop))):
+        if (via_point := self.force_via.get((from_stop, to_stop))):
             via_node = self._kdtree(transport).search_nn(via_point).id
         else:
             via_node = None
