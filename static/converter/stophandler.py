@@ -404,7 +404,9 @@ class StopHandler:
                     writer.writerow(stop_data)
 
         # Calculate unused entries from missing_stops.json
-        unused_missing = set(self.missing_stops.keys()).difference(self.used_invalid)
+        unused_missing = set(self.missing_stops.keys()) \
+            .difference(self.used_invalid) \
+            .difference(self.used)
 
         # Dump missing stops info
         self.logger.info("Exporting missing_stops.json")
