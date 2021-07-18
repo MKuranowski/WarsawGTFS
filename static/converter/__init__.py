@@ -5,7 +5,7 @@ from logging import getLogger
 import csv
 import os
 
-from ..const import HEADERS, DIR_SINGLE_FEED
+from ..const import DIR_SHAPE_ERR, HEADERS, DIR_SINGLE_FEED
 from ..downloader import FileInfo
 from ..fares import add_fare_info
 from ..metro import append_metro_schedule
@@ -382,6 +382,8 @@ class Converter:
             # Create Shaper object
             if opts.shapes:
                 if shaper_obj is None:
+                    # Clear shape errors
+                    ensure_dir_exists(DIR_SHAPE_ERR, True)
                     shaper_obj = Shaper()
                 shaper_obj.open(target_dir, clear_shape_errors)
             else:

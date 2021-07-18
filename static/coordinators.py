@@ -7,9 +7,9 @@ from copy import copy
 
 from .downloader import append_modtimes, mark_as_converted, sync_files, sync_single_file
 from .converter import Converter
-from .const import DIR_CONVERTED
+from .const import DIR_CONVERTED, DIR_SHAPE_ERR
 from .merger import Merger
-from .util import ConversionOpts
+from .util import ConversionOpts, ensure_dir_exists
 
 """
 Module conatins function that coordinate file synchornization with GTFS convertions.
@@ -48,6 +48,8 @@ def make_multiple(
     if changed:
         # Create a shaper object
         if opts.shapes:
+            # Clear shape errors
+            ensure_dir_exists(DIR_SHAPE_ERR, True)
             shaper = Shaper()
         else:
             shaper = None
