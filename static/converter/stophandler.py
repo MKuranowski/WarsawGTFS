@@ -332,7 +332,7 @@ class StopHandler:
 
         valid_id = self.change.get(original_id, original_id)
 
-        if valid_id is None or valid_id in self.invalid:
+        if valid_id is None:
             return None
 
         elif valid_id in self.invalid:
