@@ -9,6 +9,5 @@ require (
 	github.com/andybalholm/cascadia v1.2.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.0
 	github.com/golang/protobuf v1.5.1
-	github.com/microcosm-cc/bluemonday v1.0.5
-	golang.org/x/net v0.0.0-20210326220855-61e056675ecf // indirect
+	github.com/microcosm-cc/bluemonday v1.0.16
 )
