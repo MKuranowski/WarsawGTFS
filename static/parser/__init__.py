@@ -110,7 +110,8 @@ class Parser:
         Skips to next PR section and parses data from there.
         Yields ZTMStop objects.
         """
-        regexp = re.compile(r"(\d{4})(\d{2}).+Y=\s?([0-9Yy.]+)\s+X=\s?([0-9Xx.]+)\s+Pu=([0-9?])")
+        regexp = re.compile(r"(\d{4})(\d{2}).+Y=\s?([0-9Yy.]+)\s+X=\s?([0-9Xx.]+)"
+                            r"(?:\s+Pu=([0-9?]))?")
         self.skip_to_section("PR")
 
         while (line := self.r.readline()):
@@ -129,9 +130,10 @@ class Parser:
             # parse data
 
             # convert accessibility info → GTFS
-            if line_match[5] == "?":
+            accessibility_data = line_match[5]
+            if accessibility_data == "?" or accessibility_data is None:
                 wheelchair = "0"
-            elif int(line_match[5]) > 5:
+            elif int(accessibility_data) > 5:
                 wheelchair = "2"
             else:
                 wheelchair = "1"
