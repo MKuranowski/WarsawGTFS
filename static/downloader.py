@@ -275,6 +275,7 @@ def sync_files(max_files: int = 5, start_date: Optional[date] = None, reparse_al
     ensure_dir_exists(DIR_CONVERTED, clear=False)
 
     with ftplib.FTP(FTP_ADDR) as ftp:
+        ftp.set_pasv(False)
         ftp.login()
 
         # List source feeds
@@ -319,6 +320,7 @@ def sync_single_file(valid_day: Optional[date] = None) -> FileInfo:
     ensure_dir_exists(DIR_DOWNLOAD, clear=True)
 
     with ftplib.FTP(FTP_ADDR) as ftp:
+        ftp.set_pasv(False)
         ftp.login()
 
         # Check which file to download
