@@ -124,8 +124,7 @@ func (a *Alert) LoadExternal(client exclusiveHTTPClient, routeMap map[string]sor
 				a.Routes = append(a.Routes, routeMap["1"]...)
 			case "tramwaje":
 				a.Routes = append(a.Routes, routeMap["0"]...)
-			case "kolej":
-			case "skm":
+			case "skm", "kolej":
 				a.Routes = append(a.Routes, routeMap["2"]...)
 			case "autobusy":
 				a.Routes = append(a.Routes, routeMap["3"]...)
