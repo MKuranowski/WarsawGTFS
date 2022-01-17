@@ -1,0 +1,686 @@
+{
+  "4900": {
+    "name": "Warszawa Zachodnia",
+    "pkpplk_code": 33506,
+    "ibnr_code": 404,
+    "wheelchair": 2,
+    "zone": "1",
+    "pos": "52.220052,20.965217",
+    "oneplatform": false,
+    "stops": {
+      "490001": "4900p2",
+      "490002": "4900p3",
+      "490003": "4900p5",
+      "490004": "4900p6"
+    },
+    "platforms": {
+      "4900p2": "52.219610,20.965447",
+      "4900p3": "52.219777,20.965352",
+      "4900p5": "52.220160,20.965144",
+      "4900p6": "52.220352,20.965034"
+    }
+  },
+  "4901": {
+    "name": "Warszawa Ochota",
+    "pkpplk_code": 33498,
+    "ibnr_code": 1487,
+    "wheelchair": 2,
+    "zone": "1",
+    "pos": "52.225795,20.990744",
+    "oneplatform": true
+  },
+  "7900": {
+    "name": "Warszawa Centralna",
+    "pkpplk_code": 33605,
+    "ibnr_code": 242,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.228812,21.003193",
+    "oneplatform": false,
+    "stops": {
+      "790001": "7900p1",
+      "790002": "7900p4"
+    },
+    "platforms": {
+      "7900p1": "52.228635,21.003287",
+      "7900p4": "52.229039,21.003019"
+    }
+  },
+  "7901": {
+    "name": "Warszawa Śródmieście",
+    "pkpplk_code": 33571,
+    "ibnr_code": 1502,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.229401,21.007591",
+    "oneplatform": false,
+    "stops": {
+      "790101": "7901p1&2",
+      "790102": "7901p2&3"
+    },
+    "platforms": {
+      "7901p1&2": "52.229377,21.007985",
+      "7901p2&3": "52.229432,21.007219"
+    }
+  },
+  "7902": {
+    "name": "Warszawa Powiśle",
+    "pkpplk_code": 33639,
+    "ibnr_code": 1492,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.233704,21.028144",
+    "oneplatform": false,
+    "stops": {
+      "790201": "7902p1",
+      "790202": "7902p2"
+    },
+    "platforms": {
+      "7902p1": "52.233699,21.028290",
+      "7902p2": "52.233729,21.028041"
+    }
+  },
+  "2901": {
+    "name": "Warszawa Stadion",
+    "pkpplk_code": 33647,
+    "ibnr_code": 1501,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.2449, 21.04393",
+    "oneplatform": false,
+    "stops": {
+      "290101": "2901p2",
+      "290102": "2901p1"
+    },
+    "platforms": {
+      "2901p1": "52.24508,21.04409",
+      "2901p2": "52.24464,21.04377"
+    }
+  },
+  "2900": {
+    "name": "Warszawa Wschodnia",
+    "pkpplk_code": 38653,
+    "ibnr_code": 244,
+    "wheelchair": 2,
+    "zone": "1",
+    "pos": "52.25157,21.05214",
+    "oneplatform": false,
+    "stops": {
+      "290001": "2900p6",
+      "290002": "2900p7",
+      "290003": "2900p2",
+      "290004": "2900p4"
+    },
+    "platforms": {
+      "2900p2": "52.25176,21.05196",
+      "2900p4": "52.25142,21.05224",
+      "2900p6": "52.25151,21.05354",
+      "2900p7": "52.25135,21.05367"
+    }
+  },
+  "2918": {
+    "name": "Otwock",
+    "pkpplk_code": 38885,
+    "ibnr_code": 147,
+    "wheelchair": 1,
+    "zone": "2",
+    "pos": "52.109700,21.262953",
+    "platforms_unavailable": true,
+    "oneplatform": true
+  },
+  "2917": {
+    "name": "Świder",
+    "pkpplk_code": 38869,
+    "ibnr_code": 1459,
+    "wheelchair": 1,
+    "zone": "2",
+    "pos": "52.120965,21.251655",
+    "oneplatform": true
+  },
+  "2916": {
+    "name": "Józefów",
+    "pkpplk_code": 38851,
+    "ibnr_code": 1182,
+    "wheelchair": 1,
+    "zone": "2",
+    "pos": "52.13591,21.236825",
+    "oneplatform": true
+  },
+  "2915": {
+    "name": "Michalin",
+    "pkpplk_code": 38844,
+    "ibnr_code": 1270,
+    "wheelchair": 1,
+    "zone": "2",
+    "pos": "52.14814,21.22466",
+    "oneplatform": true
+  },
+  "2909": {
+    "name": "Warszawa Falenica",
+    "pkpplk_code": 38836,
+    "ibnr_code": 1476,
+    "wheelchair": 2,
+    "zone": "1/2",
+    "pos": "52.162005,21.210895",
+    "oneplatform": false,
+    "stops": {
+      "290901": "2909p1",
+      "290902": "2909p2"
+    },
+    "platforms": {
+      "2909p1": "52.16211,21.21087",
+      "2909p2": "52.16187,21.21086"
+    }
+  },
+  "2908": {
+    "name": "Warszawa Miedzeszyn",
+    "pkpplk_code": 38810,
+    "ibnr_code": 1485,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.17271,21.20016",
+    "oneplatform": true
+  },
+  "2907": {
+    "name": "Warszawa Radość",
+    "pkpplk_code": 38786,
+    "ibnr_code": 1494,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.185705,21.18721",
+    "oneplatform": true
+  },
+  "2906": {
+    "name": "Warszawa Międzylesie",
+    "pkpplk_code": 38778,
+    "ibnr_code": 1486,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.2039,21.16904",
+    "oneplatform": true
+  },
+  "2905": {
+    "name": "Warszawa Anin",
+    "pkpplk_code": 38760,
+    "ibnr_code": 1473,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.21304,21.1599",
+    "oneplatform": true
+  },
+  "2904": {
+    "name": "Warszawa Wawer",
+    "pkpplk_code": 38737,
+    "ibnr_code": 1506,
+    "wheelchair": 2,
+    "zone": "1",
+    "pos": "52.22347,21.1495",
+    "oneplatform": true
+  },
+  "2903": {
+    "name": "Warszawa Gocławek",
+    "pkpplk_code": 38539,
+    "ibnr_code": 1478,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.237055,21.1355141",
+    "oneplatform": false,
+    "stops": {
+      "290301": "2903p1",
+      "290302": "2903p2"
+    },
+    "platforms": {
+      "2903p1": "52.23717,21.13548",
+      "2903p2": "52.2369,21.13559"
+    }
+  },
+  "2902": {
+    "name": "Warszawa Olszynka Grochowska",
+    "pkpplk_code": 38745,
+    "ibnr_code": 1490,
+    "wheelchair": 2,
+    "zone": "1",
+    "pos": "52.24988,21.106515",
+    "oneplatform": true
+  },
+  "4902": {
+    "name": "Warszawa Włochy",
+    "pkpplk_code": 33514,
+    "ibnr_code": 1507,
+    "wheelchair": 2,
+    "zone": "1",
+    "pos": "52.2061115,20.914779",
+    "oneplatform": false,
+    "stops": {
+      "490201": "4902p1",
+      "490202": "4902p2"
+    },
+    "platforms": {
+      "4902p1": "52.20613,20.91501",
+      "4902p2": "52.20612,20.91452"
+    }
+  },
+  "4903": {
+    "name": "Warszawa Ursus",
+    "pkpplk_code": 33530,
+    "ibnr_code": 1504,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.196455,20.885445",
+    "oneplatform": false,
+    "stops": {
+      "490301": "4903p1",
+      "490302": "4903p2"
+    },
+    "platforms": {
+      "4903p1": "52.19644,20.88561",
+      "4903p2": "52.19645,20.88526"
+    }
+  },
+  "4923": {
+    "name": "Warszawa Ursus-Niedźwiadek",
+    "pkpplk_code": 251603,
+    "ibnr_code": 1509,
+    "wheelchair": 1,
+    "zone": "1/2",
+    "pos": "52.1913715,20.869622",
+    "oneplatform": true
+  },
+  "4904": {
+    "name": "Piastów",
+    "pkpplk_code": 34124,
+    "ibnr_code": 1343,
+    "wheelchair": 2,
+    "zone": "2",
+    "pos": "52.18266,20.84291",
+    "oneplatform": false,
+    "stops": {
+      "490401": "4904p1",
+      "490402": "4904p2"
+    },
+    "platforms": {
+      "4904p1": "52.18265,20.84304",
+      "4904p2": "52.18267,20.84261"
+    }
+  },
+  "4905": {
+    "name": "Pruszków",
+    "pkpplk_code": 34108,
+    "ibnr_code": 431,
+    "wheelchair": 2,
+    "zone": "2",
+    "pos": "52.16823,20.79887",
+    "oneplatform": true
+  },
+  "2914": {
+    "name": "Sulejówek Miłosna",
+    "pkpplk_code": 38729,
+    "ibnr_code": 1445,
+    "wheelchair": 1,
+    "zone": "2",
+    "pos": "52.2405035,21.298862",
+    "oneplatform": false,
+    "stops": {
+      "291401": "2914p1",
+      "291402": "2914p2"
+    },
+    "platforms": {
+      "2914p1": "52.2406,21.2988",
+      "2914p2": "52.24037,21.29894"
+    }
+  },
+  "2913": {
+    "name": "Sulejówek",
+    "pkpplk_code": 38711,
+    "ibnr_code": 1444,
+    "wheelchair": 1,
+    "zone": "2",
+    "pos": "52.2478,21.277075",
+    "oneplatform": false,
+    "stops": {
+      "291301": "2913p2",
+      "291302": "2913p1"
+    },
+    "platforms": {
+      "2913p1": "52.24834,21.27505",
+      "2913p2": "52.24721,21.27883"
+    }
+  },
+  "2912": {
+    "name": "Warszawa Wola Grzybowska",
+    "pkpplk_code": 38687,
+    "ibnr_code": 1526,
+    "wheelchair": 1,
+    "zone": "1/2",
+    "pos": "52.25282,21.251025",
+    "oneplatform": false,
+    "stops": {
+      "291201": "2912p2",
+      "291202": "2912p1"
+    },
+    "platforms": {
+      "2912p1": "52.25267,21.2525",
+      "2912p2": "52.25293,21.24926"
+    }
+  },
+  "2911": {
+    "name": "Warszawa Wesoła",
+    "pkpplk_code": 38679,
+    "ibnr_code": 1516,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.254095,21.22409",
+    "oneplatform": false,
+    "stops": {
+      "291101": "2911p2",
+      "291102": "2911p1"
+    },
+    "platforms": {
+      "2911p1": "52.253968,21.225457",
+      "2911p2": "52.2542,21.22237"
+    }
+  },
+  "2910": {
+    "name": "Warszawa Rembertów",
+    "pkpplk_code": 38661,
+    "ibnr_code": 1498,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.257125,21.158455",
+    "oneplatform": true
+  },
+  "4919": {
+    "name": "Warszawa Lotnisko Chopina",
+    "pkpplk_code": 241994,
+    "ibnr_code": 1499,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.16975,20.975106",
+    "oneplatform": true
+  },
+  "3901": {
+    "name": "Warszawa Służewiec",
+    "pkpplk_code": 33563,
+    "ibnr_code": 1500,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.1804055,20.9870415",
+    "oneplatform": true
+  },
+  "4918": {
+    "name": "Warszawa Żwirki i Wigury",
+    "pkpplk_code": 240720,
+    "ibnr_code": 1497,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.1933985,20.980364",
+    "oneplatform": false,
+    "stops": {
+      "491801": "4918p2",
+      "491802": "4918p1"
+    },
+    "platforms": {
+      "4918p1": "52.19332,20.98043",
+      "4918p2": "52.19348,20.9803"
+    }
+  },
+  "4917": {
+    "name": "Warszawa Rakowiec",
+    "pkpplk_code": 33555,
+    "ibnr_code": 1495,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.1967705,20.9662185",
+    "oneplatform": false,
+    "stops": {
+      "491701": "4917p2",
+      "491702": "4917p1"
+    },
+    "platforms": {
+      "4917p1": "52.19686,20.96617",
+      "4917p2": "52.19665,20.96631"
+    }
+  },
+  "4913": {
+    "name": "Warszawa Aleje Jerozolimskie",
+    "pkpplk_code": 33456,
+    "ibnr_code": 1496,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.20594,20.94094",
+    "oneplatform": false,
+    "stops": {
+      "491301": "4913p1",
+      "491302": "4913p2"
+    },
+    "platforms": {
+      "4913p1": "52.20604,20.94098",
+      "4913p2": "52.20584,20.94091"
+    }
+  },
+  "1915": {
+    "name": "Radzymin",
+    "pkpplk_code": 38174,
+    "ibnr_code": 1384,
+    "wheelchair": 1,
+    "zone": "2",
+    "pos": "52.424295,21.177210",
+    "oneplatform": true
+  },
+  "1914": {
+    "name": "Dąbkowizna",
+    "pkpplk_code": 36640,
+    "ibnr_code": 1101,
+    "wheelchair": 2,
+    "zone": "2",
+    "pos": "52.423800,21.085703",
+    "oneplatform": true
+  },
+  "1913": {
+    "name": "Nieporęt",
+    "pkpplk_code": 36624,
+    "ibnr_code": 1300,
+    "wheelchair": 1,
+    "zone": "2",
+    "pos": "52.430672,21.032122",
+    "oneplatform": true
+  },
+  "1910": {
+    "name": "Wieliszew",
+    "pkpplk_code": 36582,
+    "ibnr_code": 1518,
+    "wheelchair": 1,
+    "zone": "2",
+    "pos": "52.42803,20.97443",
+    "oneplatform": true
+  },
+  "1909": {
+    "name": "Michałów-Reginów",
+    "pkpplk_code": 36574,
+    "ibnr_code": 1272,
+    "wheelchair": 1,
+    "zone": "2",
+    "pos": "52.42261,20.962815",
+    "oneplatform": true
+  },
+  "1908": {
+    "name": "Legionowo Piaski",
+    "pkpplk_code": 36525,
+    "ibnr_code": 1233,
+    "wheelchair": 1,
+    "zone": "2",
+    "pos": "52.41259,20.942705",
+    "oneplatform": true
+  },
+  "1907": {
+    "name": "Legionowo",
+    "pkpplk_code": 36509,
+    "ibnr_code": 428,
+    "wheelchair": 1,
+    "zone": "2",
+    "pos": "52.40167,20.94132",
+    "oneplatform": false,
+    "stops": {
+      "190701": "1907p2",
+      "190702": "1907p2"
+    },
+    "platforms": {
+      "1907p2": "52.40145,20.94179"
+    }
+  },
+  "1906": {
+    "name": "Warszawa Choszczówka",
+    "pkpplk_code": 36160,
+    "ibnr_code": 1474,
+    "wheelchair": 1,
+    "zone": "1/2",
+    "pos": "52.357665,20.97241",
+    "oneplatform": false,
+    "stops": {
+      "190601": "1906p2",
+      "190602": "1906p1"
+    },
+    "platforms": {
+      "1906p1": "52.35785,20.97241",
+      "1906p2": "52.35747,20.97232"
+    }
+  },
+  "1905": {
+    "name": "Warszawa Płudy",
+    "pkpplk_code": 36152,
+    "ibnr_code": 1491,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.33377,20.98607",
+    "oneplatform": false,
+    "stops": {
+      "190501": "1905p2",
+      "190502": "1905p1"
+    },
+    "platforms": {
+      "1905p1": "52.33387,20.98616",
+      "1905p2": "52.33362,20.98597"
+    }
+  },
+  "1904": {
+    "name": "Warszawa Żerań",
+    "pkpplk_code": 36145,
+    "ibnr_code": 1511,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.31418,20.9989",
+    "oneplatform": true
+  },
+  "1903": {
+    "name": "Warszawa Toruńska",
+    "pkpplk_code": 36137,
+    "ibnr_code": 1503,
+    "wheelchair": 2,
+    "zone": "1",
+    "pos": "52.294005,21.013135",
+    "oneplatform": true
+  },
+  "1902": {
+    "name": "Warszawa Praga",
+    "pkpplk_code": 36129,
+    "ibnr_code": 1493,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.277433,21.022394",
+    "oneplatform": true
+  },
+  "1901": {
+    "name": "Warszawa ZOO",
+    "pkpplk_code": 36111,
+    "ibnr_code": 1510,
+    "wheelchair": 2,
+    "zone": "1",
+    "pos": "52.263577,21.018030",
+    "oneplatform": true
+  },
+  "7903": {
+    "name": "Warszawa Gdańska",
+    "pkpplk_code": 36103,
+    "ibnr_code": 243,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.259014,20.992751",
+    "oneplatform": false,
+    "stops": {
+      "790301": "7903p3",
+      "790302": "7903p3"
+    },
+    "platforms": {
+      "7903p3": "52.259088,20.992263"
+    }
+  },
+  "5908": {
+    "name": "Warszawa Powązki",
+    "pkpplk_code": 264520,
+    "ibnr_code": 1488,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.256022,20.972199",
+    "oneplatform": false,
+    "stops": {
+      "590801": "5908p2",
+      "590802": "5908p1"
+    },
+    "platforms": {
+      "5908p1": "52.256076,20.972157",
+      "5908p2": "52.255964,20.972203"
+    }
+  },
+  "5907": {
+    "name": "Warszawa Koło",
+    "pkpplk_code": 261233,
+    "ibnr_code": 1481,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.246726,20.959052",
+    "oneplatform": false,
+    "stops": {
+      "590701": "5907p1",
+      "590702": "5907p2"
+    },
+    "platforms": {
+      "5907p1": "52.246733,20.959140",
+      "5907p2": "52.246725,20.958943"
+    }
+  },
+  "5904": {
+    "name": "Warszawa Młynów",
+    "pkpplk_code": 34835,
+    "ibnr_code": 1484,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.239250,20.958479",
+    "oneplatform": false,
+    "stops": {
+      "590401": "5904p1",
+      "590402": "5904p2"
+    },
+    "platforms": {
+      "5904p1": "52.239281,20.958569",
+      "5904p2": "52.239242,20.958374"
+    }
+  },
+  "5903": {
+    "name": "Warszawa Wola",
+    "pkpplk_code": 34850,
+    "ibnr_code": 1483,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.229779,20.957834",
+    "oneplatform": true
+  },
+  "5902": {
+    "name": "Warszawa Zachodnia (Peron 9)",
+    "pkpplk_code": 34868,
+    "ibnr_code": 1508,
+    "wheelchair": 1,
+    "zone": "1",
+    "pos": "52.221814,20.961419",
+    "oneplatform": true
+  }
+}

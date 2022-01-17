@@ -1,9 +1,11 @@
 __pycache__/
 .vscode/
 data_*
+!data_curated
 ignore*
 err_shapes
 *.json
+!data_curated/*.json
 *.zip
 *.html
 *.pdf
