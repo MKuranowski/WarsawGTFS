@@ -1,8 +1,8 @@
 from ..const import _BASE_GIST
 
 # Shape-generation external data
-GIST_OVERRIDE_RATIOS = _BASE_GIST + "raw/shapes_override_ratios.json"
-GIST_FORCE_VIA = _BASE_GIST + "raw/shapes_force_via.json"
+GIST_OVERRIDE_RATIOS = _BASE_GIST + "shapes_override_ratios.json"
+GIST_FORCE_VIA = _BASE_GIST + "shapes_force_via.json"
 
 # Bus router settings
 BUS_ROUTER_SETTINGS = {

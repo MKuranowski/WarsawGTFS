@@ -17,10 +17,10 @@ SHAPE_CACHE_TTL = 2 * 1440
 # External data sources
 FTP_ADDR = "rozklady.ztm.waw.pl"
 
-_BASE_GIST = "https://gist.githubusercontent.com/MKuranowski/0ca97a012d541899cb1f859cd0bab2e7/"
-GIST_MISSING_STOPS = _BASE_GIST + "raw/missing_stops.json"
-GIST_RAIL_PLATFORMS = _BASE_GIST + "raw/rail_platforms.json"
-GIST_STOP_NAMES = _BASE_GIST + "raw/stop_names.json"
+_BASE_GIST = "https://raw.githubusercontent.com/MKuranowski/WarsawGTFS/master/data_curated/"
+GIST_MISSING_STOPS = _BASE_GIST + "missing_stop_locations.json"
+GIST_RAIL_PLATFORMS = _BASE_GIST + "rail_platforms.json"
+GIST_STOP_NAMES = _BASE_GIST + "stop_names.json"
 
 URL_METRO_GTFS = "https://mkuran.pl/gtfs/warsaw/metro.zip"
 
