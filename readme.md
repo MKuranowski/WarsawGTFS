@@ -5,7 +5,7 @@ Creates GTFS data feed for Warsaw.
 Static data comes from [ZTM Warszawa FTP server](ftp://rozklady.ztm.waw.pl/) and optionally [mkuran.pl website](https://mkuran.pl/).
 Realtime feeds incorporate data from <https://api.um.warszawa.pl>.
 
-## Fetures
+## Features
 
 1. Line colors
 2. Calendar exceptions
@@ -13,8 +13,8 @@ Realtime feeds incorporate data from <https://api.um.warszawa.pl>.
 4. Fares
 5. Adding town names to stop_name
 6. Proper handling of virtual stakes
-7. Geting railway platforms from [external gist](https://gist.github.com/MKuranowski/0ca97a012d541899cb1f859cd0bab2e7#file-rail_platforms-json)
-8. Geting missing stop positions from [external gist](https://gist.github.com/MKuranowski/0ca97a012d541899cb1f859cd0bab2e7#file-missing_stops-json)
+7. Getting railway platforms from [manually curated data](data_curated/rail_platforms.json)
+8. Getting missing stop positions from [manually curated data](data_curated/missing_stop_locations.json)
 9. Inserting metro schedules from [mkuran.pl](https://mkuran.pl/gtfs/warsaw/)
 10. Realtime data
 11. Shapes generator: Buses based on [OSM Data](https://www.openstreetmap.org/), Rail/Tram based on [my own graph](https://mkuran.pl/gtfs/warsaw/tram-rail-shapes.osm).
@@ -24,7 +24,7 @@ Realtime feeds incorporate data from <https://api.um.warszawa.pl>.
 
 ### Requirements
 
-First of all you need [Python3](https://www.python.org) and several modules, included in `requirements.txt`, so run `pip3 intall -r requirements.txt`.
+First of all you need [Python3](https://www.python.org) and several modules, included in `requirements.txt`, so run `pip3 install -r requirements.txt`.
 
 Then start the script with `python3 warsawgtfs.py`
 
@@ -75,7 +75,7 @@ This mode is enabled by the `-a` command line flag. Here are all available optio
 
 ### Brigades
 
-Creates a file joning a brigade number to a list of trips (_for today only_), required for positions.
+Creates a file joining a brigade number to a list of trips (_for today only_), required for positions.
 
 This mode is enabled by the `-b` command line flag. Here are all available options:
 
