@@ -30,7 +30,7 @@ Then start the script with `python3 warsawgtfs.py`
 
 ### Configuration
 
-Run `python3 warsawgts.py -h` to see all possible options with their descriptions.
+Run `python3 warsawgtfs.py -h` to see all possible options with their descriptions.
 All of those are optional.
 
 ### Creating GTFS
