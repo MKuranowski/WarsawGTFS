@@ -57,9 +57,13 @@ class Shaper:
         self.tram_kdtree = self._make_kdtree("tram")
         self.train_kdtree = self._make_kdtree("train")
 
+        # Make stop_id → osm node lookup table
+        self.bus_cached_stop_lookup: Dict[str, int] = {}
+        self.tram_cached_stop_lookup: Dict[str, int] = {}
+        self.train_cached_stop_lookup: Dict[str, int] = {}
+
         # Other used variables
         self.written_shapes: Dict[str, Mapping[int, float]] = {}
-        self.cached_stop_lookups: Dict[str, int] = {}
         self.dump_shape_issues = True
 
         # Pre-cache ZTM stop to OSM ID mapping
@@ -94,6 +98,17 @@ class Shaper:
             return self.tram_kdtree
         elif transport in {"train", "2"}:
             return self.train_kdtree
+        else:
+            raise ValueError(f"Unknown transport type for shape generation: {transport}")
+
+    def _cached_stop_lookup(self, transport: str) -> Dict[str, int]:
+        """Returns the stop_id → osm_node lookup table for a specific transport type"""
+        if transport in {"bus", "3"}:
+            return self.bus_cached_stop_lookup
+        elif transport in {"tram", "0"}:
+            return self.tram_cached_stop_lookup
+        elif transport in {"train", "2"}:
+            return self.train_cached_stop_lookup
         else:
             raise ValueError(f"Unknown transport type for shape generation: {transport}")
 
@@ -179,7 +194,7 @@ class Shaper:
         if cached_file is not None:
             # Try to read osm stop mapping from a chaced file
             cahced_content = cached_file.read().decode("ascii")
-            self.cached_stop_lookups = json.loads(cahced_content)
+            self.bus_cached_stop_lookup = json.loads(cahced_content)
 
         else:
             # Make query to Overpass
@@ -191,10 +206,10 @@ class Shaper:
                     stop_ref = element.get("tags", {}).get("ref")
 
                     if stop_ref:
-                        self.cached_stop_lookups[stop_ref] = element["id"]
+                        self.bus_cached_stop_lookup[stop_ref] = element["id"]
 
             # Cache stop_lookup
-            stop_lookups_json = json.dumps(self.cached_stop_lookups, indent=2).encode("ascii")
+            stop_lookups_json = json.dumps(self.bus_cached_stop_lookup, indent=2).encode("ascii")
             cache_save(cached_name, stop_lookups_json)
 
     @staticmethod
@@ -235,9 +250,10 @@ class Shaper:
         """
         router = self._router(transport)
         kdtree = self._kdtree(transport)
+        cached_stop_lookups = self._cached_stop_lookup(transport)
 
         # First, check if this stop_is was already cached
-        cached_id = self.cached_stop_lookups.get(stop_id)
+        cached_id = cached_stop_lookups.get(stop_id)
         if cached_id is not None and cached_id in router.rnodes:
             return cached_id
 
@@ -253,7 +269,7 @@ class Shaper:
         nn = kdtree.search_nn((lat, lon))
 
         # Cache lookup
-        self.cached_stop_lookups[stop_id] = nn.id
+        cached_stop_lookups[stop_id] = nn.id
 
         return nn.id
 
