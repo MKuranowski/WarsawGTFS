@@ -108,6 +108,9 @@ func NewGtfsFromReader(r io.Reader) (gtfs *Gtfs, err error) {
 
 	// Make a tempfile
 	tempFile, err := ioutil.TempFile("", "warsawgtfsrt_*.zip")
+	if err != nil {
+		return
+	}
 	gtfs.fileObj = tempFile
 
 	// Write URL content to the tempfile
@@ -373,7 +376,7 @@ func (g *Gtfs) LoadAll() error {
 
 	// Check if all files were present
 	if len(expectedFiles) != 0 {
-		return errors.New("Missing files in GTFS (required routes.txt, stops.txt, trips.txt and calendar_dates.txt)")
+		return errors.New("missing files in GTFS (required routes.txt, stops.txt, trips.txt and calendar_dates.txt)")
 	}
 
 	// Check if loaders returned an error

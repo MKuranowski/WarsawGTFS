@@ -158,11 +158,11 @@ func (v *Vehicle) MatchTripWithPV(pv *Vehicle, cst compareTime, be []*brigadeEnt
 	nearEndTime := secondsToEnd < 240
 
 	// This is a fail-safe assumption that no trip is delayed more then 30 minutes
-	shouldveFinished := secondsToEnd < -1800
+	isVeryLate := secondsToEnd < -1800
 
 	// Move to the next trip if it's close to the trip end (in time and space) or
 	// if the fail-safe is active
-	if (nearTerminus && nearEndTime) || shouldveFinished {
+	if (nearTerminus && nearEndTime) || isVeryLate {
 		v.Trip = be[prevTripIdx+1].TripID
 	} else {
 		v.Trip = pv.Trip

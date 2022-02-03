@@ -46,7 +46,7 @@ func (m MatchedTripData) MarshalJSON() ([]byte, error) {
 	jsonMap := make(map[string]map[string][]*tripData)
 
 	for _, t := range m {
-		// Make map for route of this entry if it doens't exist
+		// Make map for route of this entry if it doesn't exist
 		if _, routeMapExists := jsonMap[t.RouteID]; !routeMapExists {
 			jsonMap[t.RouteID] = make(map[string][]*tripData)
 		}
@@ -66,7 +66,7 @@ func (m MatchedTripData) MarshalJSON() ([]byte, error) {
 			copy(tripList[insertIdx+1:], tripList[insertIdx:])
 			tripList[insertIdx] = t
 		} else {
-			// If inserIdx is at the end of tripList, simply append this trip
+			// If insertIdx is at the end of tripList, simply append this trip
 			tripList = append(tripList, t)
 		}
 

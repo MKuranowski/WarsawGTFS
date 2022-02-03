@@ -22,11 +22,11 @@ func haversine(lat1, lon1, lat2, lon2 float64) float64 {
 	lat2 = radians(lat2)
 	lon2 = radians(lon2)
 
-	dlathalf := (lat2 - lat1) / 2
-	dlonhalf := (lon2 - lon1) / 2
+	dLatHalf := (lat2 - lat1) / 2
+	dLonHalf := (lon2 - lon1) / 2
 
-	a := math.Pow(math.Sin(dlathalf), 2)
-	b := math.Pow(math.Sin(dlonhalf), 2)
+	a := math.Pow(math.Sin(dLatHalf), 2)
+	b := math.Pow(math.Sin(dLonHalf), 2)
 	c := math.Sqrt(a + (b * math.Cos(lat1) * math.Cos(lat2)))
 
 	return 2 * 6371 * math.Asin(c)
@@ -38,12 +38,12 @@ func initialBearing(lat1, lon1, lat2, lon2 float64) float64 {
 	// Convert to radians
 	lat1 = radians(lat1)
 	lat2 = radians(lat2)
-	dlon := radians(lon2 - lon1)
+	dLon := radians(lon2 - lon1)
 
 	// Calculate atan2 arguments
-	x := math.Sin(dlon) * math.Cos(lat2)
+	x := math.Sin(dLon) * math.Cos(lat2)
 	y1 := math.Cos(lat1) * math.Sin(lat2)
-	y2 := math.Sin(lat1) * math.Cos(lat2) * math.Cos(dlon)
+	y2 := math.Sin(lat1) * math.Cos(lat2) * math.Cos(dLon)
 	y := y1 - y2
 
 	// Calculate the initial bearing, then return it in degrees
