@@ -4,6 +4,8 @@ from time import time
 
 from static import ConversionOpts, make_multiple, make_single, setup_logging
 
+# cSpell: words remerge
+
 ASCII_ART = """
 . . .                         ,---.--.--,---.,---.
 | | |,---.,---.,---.,---.. . .|  _.  |  |__. `---.
@@ -20,13 +22,13 @@ if __name__ == "__main__":
         "-m",
         "--metro",
         action="store_true",
-        help="wheteher to add metro schedules from an external source")
+        help="add metro schedules from an external source")
 
     argprs.add_argument(
         "-s",
         "--shapes",
         action="store_true",
-        help="wheteher to generate shapes.txt for all trips")
+        help="generate shapes.txt for all trips")
 
     argprs.add_argument(
         "-d",
