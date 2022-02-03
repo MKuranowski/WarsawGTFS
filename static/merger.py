@@ -1,22 +1,24 @@
 
-from pyroutelib3 import distHaversine
-from contextlib import contextmanager
-from datetime import datetime
-from operator import itemgetter
-from os.path import join
-from os import rmdir
-from logging import getLogger
-from zipfile import ZipFile
-from typing import Dict, IO, Iterable, List, Set, Tuple
 import csv
 import io
+from contextlib import contextmanager
+from datetime import datetime
+from logging import getLogger
+from operator import itemgetter
+from os import rmdir
+from os.path import join
+from typing import IO, Dict, Iterable, List, Set, Tuple
+from zipfile import ZipFile
+
+from pyroutelib3 import distHaversine
 
 from .const import DIR_SINGLE_FEED, HEADERS
 from .converter.static_files import static_all
 from .downloader import FileInfo
 from .fares import add_fare_info
 from .metro import append_metro_schedule
-from .util import ConversionOpts, clear_directory, compress, ensure_dir_exists, prepare_tempdir
+from .util import (ConversionOpts, clear_directory, compress,
+                   ensure_dir_exists, prepare_tempdir)
 
 """
 Module implements functionality to merge multiple converted GTFS feeds.
@@ -38,7 +40,7 @@ class ZipFileWithCsv(ZipFile):
 
 class Merger:
 
-    # Merger initalization
+    # Merger initialization
 
     def __init__(self, files: List[FileInfo], target_dir: str, shapes: bool) -> None:
         self.files = files
@@ -162,7 +164,7 @@ class Merger:
                 continue
 
             # List all stops with same stop_id
-            # If any of them is closer then 10 meters and has the same name:
+            # If any of them is closer than 10 meters and has the same name:
             # Consider those stops are the same.
             similar_stops = self._silimar_stops(stop_id)
             for similar_stop in similar_stops:
@@ -180,15 +182,14 @@ class Merger:
                 if distance <= 0.01 and similar_stop["stop_name"] == row["stop_name"]:
                     # Only save to stop_conversion if the suffix is set
                     if similar_stop_suffix:
-                        stop_conv_key = self.file.version, stop_id
-                        self.stop_conversion[stop_conv_key] = similar_stop_id
+                        self.stop_conversion[self.file.version, stop_id] = similar_stop_id
 
                     break
 
             # If there's no stop "close-enough" - append it to known stops with a new suffix
             else:
                 # Disallow new topologies for stops belonging to a group, as the
-                # stop-station strucutre would be heavily screwed up
+                # stop-station structure would be heavily screwed up
                 if row["location_type"]:
                     raise ValueError(
                         f"Stop {stop_id} belongs to a stop-station group, and "
@@ -213,7 +214,7 @@ class Merger:
         for row in reader:
             day = datetime.strptime(row["date"], "%Y%m%d").date()
             if self.file.start <= day <= self.file.end:
-                # Save outputed primary keys
+                # Save outputted primary keys
                 self.active_services.add(row["service_id"])
 
                 # Prepend per-file ids
@@ -228,7 +229,7 @@ class Merger:
 
         for row in reader:
             if row["service_id"] in self.active_services:
-                # Save outputed primary keys and
+                # Save outputted primary keys and
                 # determine which fields should be prepended with feed.version
                 self.active_trips.add(row["trip_id"])
                 prepend_keys = {"trip_id", "service_id"}
@@ -259,8 +260,8 @@ class Merger:
                 self._prepend_values_with_version(row, {"trip_id"})
 
                 # Swap stop_id
-                stop_conv_key = self.file.version, row["stop_id"]
-                row["stop_id"] = self.stop_conversion.get(stop_conv_key, row["stop_id"])
+                stop_conversion_key = self.file.version, row["stop_id"]
+                row["stop_id"] = self.stop_conversion.get(stop_conversion_key, row["stop_id"])
 
                 # If no shapes - force-clear the shape_dist_traveled field.
                 # This is to prevent invalid references if source files have shapes, but
@@ -330,7 +331,7 @@ class Merger:
             target_dir = DIR_SINGLE_FEED
             ensure_dir_exists(target_dir, clear=True)
 
-        # Initalize merger
+        # Initialize the merger
         self = cls(files, target_dir, opts.shapes)
         self._open_incremental_files()
 

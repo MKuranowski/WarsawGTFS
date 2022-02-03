@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Dict, Generic, Iterator, List, Literal, Optional, Set, Tuple, TypeVar
+from typing import (Dict, Generic, Iterator, List, Literal, Optional, Set,
+                    Tuple, TypeVar)
 
 """
 Utility stuff used only by the Converter object.
@@ -22,9 +23,6 @@ class FileNamespace(Generic[_T]):
 
     def __iter__(self) -> Iterator[_T]:
         """Yields all files from this FileNamespace"""
-        # This is an ugly workaroud. In NamedTuple this worked fine,
-        # however with dataclasses something like astuple or asdict break,
-        # since the io streams can't be pickled.
         yield self.routes
         yield self.trips
         yield self.times
@@ -90,7 +88,7 @@ def get_trip_direction(trip_original_stops: Set[str], direction_stops: DirStopsT
                            f"{trip_stops_1_len}")
 
 
-def get_proper_headsign(stop_id: str, stop_name: str):
+def get_proper_headsign(stop_id: str, stop_name: str) -> str:
     """Get trip_headsign based on last stop_id and its stop_name"""
     if stop_id in ["503803", "503804"]:
         return "Zjazd do zajezdni Wola"

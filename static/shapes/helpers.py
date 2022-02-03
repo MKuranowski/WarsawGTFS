@@ -1,19 +1,22 @@
-from pyroutelib3 import distHaversine
-from contextlib import contextmanager
-from typing import IO, Optional, List, Union, Tuple
-from time import time
-import signal
 import math
 import os
+import signal
+from contextlib import contextmanager
+from time import time
+from typing import IO, Generator, List, Optional, Tuple, Union
+
+from pyroutelib3 import distHaversine
 
 from ..const import DIR_SHAPE_CACHE, SHAPE_CACHE_TTL
 from ..util import ensure_dir_exists
+
+# cSpell: words retr SIGALRM Ramer Douglas Peucker
 
 _Pt = Tuple[float, float]
 
 
 @contextmanager
-def time_limit(sec):
+def time_limit(sec) -> Generator[None, None, None]:
     "Time limter based on https://gist.github.com/Rabbit52/7449101"
     def handler(x, y):
         raise TimeoutError
@@ -80,14 +83,14 @@ def simplify_line(x: List[_Pt], threshold: float) -> List[_Pt]:
 
 def cache_retr(file: str, ttl_minutes: int = SHAPE_CACHE_TTL) -> Optional[IO[bytes]]:
     """
-    Tries to read specified from cahce.
+    Tries to read specified from cache.
     If file is older then specified time-to-live,
-    or cahced files doesn't exist at all, returns None.
+    or cached files doesn't exist at all, returns None.
     Otherwise, returns a file-like object.
     """
     file_path = os.path.join(DIR_SHAPE_CACHE, file)
 
-    # Check if cahced file exists
+    # Check if cached file exists
     if not os.path.exists(file_path):
         return
 
@@ -100,12 +103,12 @@ def cache_retr(file: str, ttl_minutes: int = SHAPE_CACHE_TTL) -> Optional[IO[byt
         return open(file_path, "rb")
 
 
-def cache_save(file: str, reader: Union[IO[bytes], bytes]):
+def cache_save(file: str, reader: Union[IO[bytes], bytes]) -> None:
     """Caches contents of `reader` in DIR_SHAPE_CACHE/{file}."""
     ensure_dir_exists(DIR_SHAPE_CACHE, clear=False)
     file_path = os.path.join(DIR_SHAPE_CACHE, file)
 
-    # Check if cahced file exists
+    # Check if cached file exists
     with open(file_path, "wb") as writer:
         if isinstance(reader, bytes):
             writer.write(reader)

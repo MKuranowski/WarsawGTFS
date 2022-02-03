@@ -1,15 +1,15 @@
-from datetime import date, datetime, timedelta
-from contextlib import contextmanager
-from logging import getLogger
-from zipfile import ZipFile
-from os.path import join, exists
-from typing import Dict, Generator, IO, List, Optional, Sequence, Set, Tuple
-from io import BytesIO, TextIOWrapper
-import requests
 import csv
+from contextlib import contextmanager
+from datetime import date, datetime, timedelta
+from io import BytesIO, TextIOWrapper
+from logging import getLogger
+from os.path import exists, join
+from typing import IO, Dict, Generator, List, Optional, Sequence, Set, Tuple
+from zipfile import ZipFile
+
+import requests
 
 from .const import URL_METRO_GTFS
-
 
 """
 Module responsible for appending metro schedules.
@@ -66,7 +66,7 @@ def read_calendars(buffer: IO[str], calendars: Dict[str, List[str]]) \
 
 def write_calendars(target_dir: str, calendars: Dict[str, List[str]],
                     start_day: date, end_day: date) -> Set[str]:
-    """Exports data from `caledars` dict to target_dir/calendar_dates.txt.
+    """Exports data from `calendars` dict to target_dir/calendar_dates.txt.
     Only dates between (and including) start_day and end_day are considered.
     Returns a set of all exported service_ids.
     """
@@ -78,7 +78,7 @@ def write_calendars(target_dir: str, calendars: Dict[str, List[str]],
         writer = csv.writer(f)
         writer.writerow(["date", "service_id", "exception_type"])
 
-        # Iterate over each day in provided peroid
+        # Iterate over each day in provided period
         while start_day <= end_day:
             date_str = start_day.strftime("%Y%m%d")
 
@@ -134,21 +134,17 @@ def rewrite_calendars(metro_arch: ZipFile, gtfs_dir: str) -> Set[str]:
 def append_routes(metro_arch: ZipFile, gtfs_dir: str) -> List[str]:
     """Appends data from metro_arch zip file to gtfs_dir/filename.
 
-    If `collect_saved_key` is provided, for each saved row `row[collect_saved_key]` will be
-    saved in a set. This set will be then returned.
-
-    If `filter_key` is provided, rows for which `row[filter_key] not in filter_vals`
-    will be skipped.
+    Returns a list of all inserter route_ids
     """
     filename = "routes.txt"
     inserted_routes = []
-    local_fpath = join(gtfs_dir, filename)
+    local_file = join(gtfs_dir, filename)
 
     # Get the header of local GTFS file
-    header = peek_csv_header(local_fpath)
+    header = peek_csv_header(local_file)
 
     # Open local file in read+write mode, open file form metro GTFS and create wrap it into text
-    with open(local_fpath, "a", encoding="utf-8", newline="") as target_buff, \
+    with open(local_file, "a", encoding="utf-8", newline="") as target_buff, \
             metro_arch.open(filename, "r") as in_binary_buff, \
             TextIOWrapper(in_binary_buff, encoding="utf-8", newline="") as in_txt_buff:
 
@@ -170,24 +166,25 @@ def append_routes(metro_arch: ZipFile, gtfs_dir: str) -> List[str]:
 
 def append_from_metro(metro_arch: ZipFile, gtfs_dir: str, filename: str,
                       collect_saved_keys: Optional[Sequence[str]] = None,
-                      filter_key: Optional[str] = None, filter_vals: Set[str] = set()) \
-        -> Tuple[Set[str], ...]:
+                      filter_key: Optional[str] = None, filter_values: Set[str] = set()) \
+        -> List[Set[str]]:
     """Appends data from metro_arch zip file to gtfs_dir/filename.
 
     If `collect_saved_key` is provided, for each saved row `row[collect_saved_key]` will be
     saved in a set. This set will be then returned.
 
-    If `filter_key` is provided, rows for which `row[filter_key] not in filter_vals`
+    If `filter_key` is provided, rows for which `row[filter_key] not in filter_values`
     will be skipped.
     """
-    collected_sets = tuple(set() for _ in collect_saved_keys) if collect_saved_keys else tuple()
-    local_fpath = join(gtfs_dir, filename)
+    collected_keys: List[Set[str]] = [set() for _ in (collect_saved_keys or [])]
+
+    local_file = join(gtfs_dir, filename)
 
     # Get the header of local GTFS file
-    header = peek_csv_header(local_fpath)
+    header = peek_csv_header(local_file)
 
     # Open local file in append mode, open file form metro GTFS and create wrap it into text IO.
-    with open(local_fpath, "a", encoding="utf-8", newline="") as target_buff, \
+    with open(local_file, "a", encoding="utf-8", newline="") as target_buff, \
             metro_arch.open(filename, "r") as in_binary_buff, \
             TextIOWrapper(in_binary_buff, encoding="utf-8", newline="") as in_txt_buff:
         # Pass file objects into csv readers/writers.
@@ -196,7 +193,7 @@ def append_from_metro(metro_arch: ZipFile, gtfs_dir: str, filename: str,
 
         for row in reader:
             # Check against provided filter
-            if filter_key is not None and row[filter_key] not in filter_vals:
+            if filter_key is not None and row[filter_key] not in filter_values:
                 continue
 
             # Set special values
@@ -209,18 +206,18 @@ def append_from_metro(metro_arch: ZipFile, gtfs_dir: str, filename: str,
             # Collect primary keys
             if collect_saved_keys:
                 for idx, key in enumerate(collect_saved_keys):
-                    collected_sets[idx].add(row[key])
+                    collected_keys[idx].add(row[key])
 
             # Pass row to writer
             writer.writerow(row)
 
-    return collected_sets
+    return collected_keys
 
 
 def copy_from_metro(metro_arch: ZipFile, gtfs_dir: str, filename: str,
-                    filter_key: Optional[str] = None, filter_vals: Set[str] = set()) -> None:
-    """If `filter_key` is None, extarcts filename from metro_arch to gtfs_dir.
-    Otherwites, only rows where `row[filter_key] not in filter_vals` are skipped.
+                    filter_key: Optional[str] = None, filter_values: Set[str] = set()) -> None:
+    """If `filter_key` is None, extracts `filename` from metro_arch to gtfs_dir.
+    Otherwise, only rows where `row[filter_key] not in filter_values` are skipped.
     """
 
     # Shortcut if no filter was provided: just extarct the file
@@ -229,8 +226,8 @@ def copy_from_metro(metro_arch: ZipFile, gtfs_dir: str, filename: str,
         return
 
     # Open local file in write mode, open file form metro GTFS and create wrap it into text IO.
-    local_fpath = join(gtfs_dir, filename)
-    with open(local_fpath, "w", encoding="utf-8", newline="") as target_buff, \
+    local_file = join(gtfs_dir, filename)
+    with open(local_file, "w", encoding="utf-8", newline="") as target_buff, \
             metro_arch.open(filename, "r") as in_binary_buff, \
             TextIOWrapper(in_binary_buff, encoding="utf-8", newline="") as in_txt_buff:
 
@@ -247,7 +244,7 @@ def copy_from_metro(metro_arch: ZipFile, gtfs_dir: str, filename: str,
         # Re-write each row
         for row in reader:
             # Check against provided filter
-            if filter_key is not None and row[filter_key] not in filter_vals:
+            if filter_key is not None and row[filter_key] not in filter_values:
                 continue
 
             # Pass row to writer
@@ -281,17 +278,17 @@ def append_metro_schedule(gtfs_dir: str) -> List[str]:
             "trips.txt",
             collect_saved_keys=["trip_id", "shape_id"],
             filter_key="service_id",
-            filter_vals=valid_services
+            filter_values=valid_services
         )
 
         # Rewrite files with filters
         logger.debug("Appending stop_times.txt")
         append_from_metro(metro_arch, gtfs_dir, "stop_times.txt",
-                          filter_key="trip_id", filter_vals=valid_trips)
+                          filter_key="trip_id", filter_values=valid_trips)
 
         logger.debug("Appending frequencies.txt")
         copy_from_metro(metro_arch, gtfs_dir, "frequencies.txt",
-                        filter_key="trip_id", filter_vals=valid_trips)
+                        filter_key="trip_id", filter_values=valid_trips)
 
         # Check if shapes.txt already exists
         if exists(join(gtfs_dir, "shapes.txt")):
@@ -301,6 +298,6 @@ def append_metro_schedule(gtfs_dir: str) -> List[str]:
 
         logger.debug("Appending shapes.txt")
         shapes_copier(metro_arch, gtfs_dir, "shapes.txt",
-                      filter_key="shape_id", filter_vals=valid_shapes)
+                      filter_key="shape_id", filter_values=valid_shapes)
 
     return added_routes

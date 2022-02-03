@@ -1,6 +1,6 @@
-from typing import List, Optional, Literal, TypeVar, Union
-from dataclasses import dataclass
 import datetime
+from dataclasses import dataclass
+from typing import List, Literal, Optional
 
 """
 Classes used when Parser generates data
@@ -9,10 +9,8 @@ Classes used when Parser generates data
 
 __all__ = [
     "ZTMCalendar", "ZTMStopGroup", "ZTMStop", "ZTMStopTime", "ZTMTrip",
-    "ZTMRouteVariant", "ZTMVariantStop", "ZTMTTableDep", "ZTMRoute"
+    "ZTMRouteVariant", "ZTMVariantStop", "ZTMDeparture", "ZTMRoute"
 ]
-
-_UnknownStop = TypeVar("_UnknownStop", bound=Union[str, None])
 
 
 @dataclass
@@ -81,7 +79,7 @@ class ZTMVariantStop:
 
 
 @dataclass
-class ZTMTTableDep:
+class ZTMDeparture:
     __slots__ = ("trip_id", "time", "accessible")
 
     trip_id: str

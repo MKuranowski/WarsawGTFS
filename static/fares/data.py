@@ -1,9 +1,10 @@
 from typing import Iterable, List, Literal, Optional, TypedDict, Union
 
-
 """
 Constants describing fares.
 """
+
+# cSpell: words LRoute
 
 
 # Type Helpers

@@ -1,16 +1,24 @@
+# cSpell: words mkdtemp
+
+import os
+import zipfile
 from dataclasses import dataclass
 from tempfile import mkdtemp
-from typing import Optional
-import coloredlogs
-import zipfile
-import os
+from typing import Any, Iterable, Optional, Protocol
 
+import coloredlogs
 
 from .const import LOGGING_FMT, LOGGING_STYLE
 
 """
 Module containing various utility functions
 """
+
+
+# = TYPE UTILITIES = #
+
+class CsvWriter(Protocol):
+    def writerow(self, __row: Iterable[Any]) -> Any: ...
 
 
 # = DATA UTILITIES = #
@@ -28,7 +36,7 @@ class ConversionOpts:
     shapes: bool    # whether to generate shapes
 
 
-def normal_time(time, lessthen24=False):
+def normal_time(time: str, lessthen24: bool = False) -> str:
     """Normalizes time from ZTM-file format (H.MM / HH.MM) to GTFS format (HH:MM:SS).
     lessthen24 argument ensures hour will be less then 24.
     """
@@ -39,7 +47,7 @@ def normal_time(time, lessthen24=False):
     return f"{h:0>2}:{m:0>2}:00"
 
 
-def setup_logging(verbose: bool = False):
+def setup_logging(verbose: bool = False) -> None:
     coloredlogs.install(
         level="DEBUG" if verbose else "INFO",
         style=LOGGING_STYLE,
@@ -50,7 +58,7 @@ def setup_logging(verbose: bool = False):
 # = FILE SYSTEM UTILITIES = #
 
 
-def clear_directory(path: str):
+def clear_directory(path: str) -> None:
     """Clears the contents of a directory. Only files can reside in this directory."""
     for f in os.scandir(path):
         os.remove(f.path)
@@ -78,7 +86,7 @@ def prepare_tempdir(suffix: Optional[str] = None) -> str:
     return dir_str
 
 
-def compress(directory: str = "gtfs", target: str = "gtfs.zip"):
+def compress(directory: str = "gtfs", target: str = "gtfs.zip") -> None:
     """Compress all *.txt files from directory into GTFS named 'target'"""
     with zipfile.ZipFile(target, mode="w", compression=zipfile.ZIP_DEFLATED) as arch:
         for f in os.scandir(directory):
