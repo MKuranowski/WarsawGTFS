@@ -135,7 +135,7 @@ func parseAlertsFlags() (o alerts.Options, err error) {
 func parsePositionsFlags() (o positions.Options, err error) {
 	// Ensure an apikey was provided
 	if *flagApikey == "" {
-		err = errors.New("Key for api.um.warszawa.pl needs to be provided")
+		err = errors.New("key for api.um.warszawa.pl needs to be provided")
 		return
 	}
 
@@ -154,7 +154,7 @@ func parsePositionsFlags() (o positions.Options, err error) {
 func parseBrigadesFlags() (o brigades.Options, err error) {
 	// Ensure apikey was provided
 	if *flagApikey == "" {
-		err = errors.New("Key for api.um.warszawa.pl needs to be provided")
+		err = errors.New("key for api.um.warszawa.pl needs to be provided")
 		return
 	}
 	// Create options struct
@@ -195,7 +195,7 @@ func loadGtfs(routesOnly bool) (gtfsFile *gtfs.Gtfs, err error) {
 		err = gtfsFile.LoadAll()
 	}
 
-	// Close gtfsFile if an error occured
+	// Close gtfsFile if an error occurred
 	if err != nil {
 		gtfsFile.Close()
 	}

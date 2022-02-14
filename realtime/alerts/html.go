@@ -1,5 +1,7 @@
 package alerts
 
+// cSpell: words goquery selec
+
 import (
 	"net/url"
 	"strings"
@@ -47,13 +49,13 @@ func getSanitizePolicy() (p *bluemonday.Policy) {
 
 // getMarkdownConverter creates a default markdown converter from **sanitized** html to
 // a kinda-plaintext string.
-func getMarkdownConverter() (conv *md.Converter) {
-	conv = md.NewConverter("", true, &md.Options{HeadingStyle: "setext"})
+func getMarkdownConverter() (c *md.Converter) {
+	c = md.NewConverter("", true, &md.Options{HeadingStyle: "setext"})
 
 	// Striketrough text should be deleted
-	conv.Remove("s")
+	c.Remove("s")
 
-	conv.AddRules(
+	c.AddRules(
 		// Text decorations should be ignored
 		md.Rule{
 			Filter: []string{"strong", "em", "span"},
@@ -62,7 +64,7 @@ func getMarkdownConverter() (conv *md.Converter) {
 			},
 		},
 
-		// Blockqoutes should be indented
+		// Blockquotes should be indented
 		md.Rule{
 			Filter: []string{"blockquote"},
 			Replacement: func(content string, selec *goquery.Selection, options *md.Options) *string {

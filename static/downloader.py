@@ -1,25 +1,28 @@
+import ftplib
+import json
+import logging
+import os
+import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from operator import itemgetter
 from typing import Dict, List, Optional, Set, Tuple
-from pytz import timezone
-import libarchive.public
-import logging
-import ftplib
-import json
-import re
-import os
 
-from .const import DIR_DOWNLOAD, DIR_CONVERTED, FTP_ADDR
+import libarchive.public
+from pytz import timezone
+
+from .const import DIR_CONVERTED, DIR_DOWNLOAD, FTP_ADDR
 from .util import ensure_dir_exists
 
 """
-Module containg code responsible for synchornising feeds with the FTP server.
+Module contains code responsible for synchornising feeds with the FTP server.
 Calculates which feeds need to be converted, gets and decompresses required files.
 
 Information about specific feeds is passed around with the FileInfo objects.
 Main functionality is exposed in the sync_feeds() and append_modtimes() procedures.
 """
+
+# cSpell: words retr mlsd
 
 _logger = logging.getLogger("WarsawGTFS.downloader")
 
@@ -50,13 +53,13 @@ def read_modtimes() -> Dict[str, str]:
         return json.load(f)
 
 
-def write_modtimes(x: Dict[str, str]):
+def write_modtimes(x: Dict[str, str]) -> None:
     """Writes new content to the {DIR_CONVERTED}/modtimes.json"""
     with open(os.path.join(DIR_CONVERTED, "modtimes.json"), "w") as f:
         json.dump(x, f, indent=2)
 
 
-def append_modtimes(new: FileInfo):
+def append_modtimes(new: FileInfo) -> None:
     """Once a converted feed has been written to {DIR_CONVERTED}, call this function.
     Adds info about just converted feed to {DIR_CONVERTED}/modtimes.json/
     """
@@ -71,14 +74,14 @@ def which_versions_ok(required_feeds: List[FileInfo],
     ok_versions: Set[str] = set()
 
     for i in required_feeds:
-        curr_modtime = current_modtimes.get(i.version, "")
-        if curr_modtime == i.modtime:
+        current_modtime = current_modtimes.get(i.version, "")
+        if current_modtime == i.modtime:
             ok_versions.add(i.version)
 
     return ok_versions
 
 
-def remove_unused_converted(versions_ok: Set[str], curr_modtimes: Dict[str, str]):
+def remove_unused_converted(versions_ok: Set[str], current_modtimes: Dict[str, str]) -> None:
     """Removes outdated and unnecessary feeds from {DIR_CONVERTED},
     updates {DIR_CONVERTED}/modtimes.json
     """
@@ -94,8 +97,8 @@ def remove_unused_converted(versions_ok: Set[str], curr_modtimes: Dict[str, str]
     for f in unexpected_files:
         os.remove(os.path.join(DIR_CONVERTED, f))
 
-    # Remove versions from curr_modtimes
-    new_modtimes = {k: v for k, v in curr_modtimes.items() if k in versions_ok}
+    # Remove versions from current_modtimes
+    new_modtimes = {k: v for k, v in current_modtimes.items() if k in versions_ok}
     write_modtimes(new_modtimes)
 
 
@@ -199,7 +202,7 @@ def list_single_file(ftp: ftplib.FTP, for_day: Optional[date] = None) -> FileInf
     )
 
 
-def get_and_decompress(ftp: ftplib.FTP, i: FileInfo):
+def get_and_decompress(ftp: ftplib.FTP, i: FileInfo) -> None:
     """Requests given file from the FTP server, and decompresses the included TXT file.
 
     Provided FileInfo object will be modified as such:
@@ -247,9 +250,9 @@ def get_and_decompress(ftp: ftplib.FTP, i: FileInfo):
     os.remove(archive_local_path)
 
 
-def mark_as_converted(i: FileInfo):
+def mark_as_converted(i: FileInfo) -> None:
     """Modifies given FileInfo object to mark it as already-converted.
-    finfo.is_converted will be Ture, and finfo.path will point to the GTFS .zip.
+    finfo.is_converted will be True, and finfo.path will point to the GTFS .zip.
     """
     i.path = os.path.join(DIR_CONVERTED, (i.version + ".zip"))
     i.is_converted = True
@@ -262,13 +265,13 @@ def sync_files(max_files: int = 5, start_date: Optional[date] = None, reparse_al
     1. Lists required source feeds
     2. Determines which feeds were already converted.
     3. Removes non-required and outdated feeds
-    4. Downloads new/changed source feeds amd extarcts them.
+    4. Downloads new/changed source feeds amd extracts them.
 
     Returns 2 values:
     1. List of *all* required feeds
     2. Whether any new files were downloaded
 
-    Please call append_modtimes for each sucessfuly converted file.
+    Please call append_modtimes for each successfully converted file.
     """
     # Ensure DIR_DOWNLOAD and DIR_CONVERTED exist
     ensure_dir_exists(DIR_DOWNLOAD, clear=True)
@@ -313,7 +316,7 @@ def sync_single_file(valid_day: Optional[date] = None) -> FileInfo:
     Downloads and decompresses detected required file.
 
     Returns the FileInfo object containing data bout the required feed.
-    Call append_modtimes after successfuly converting this feed.
+    Call append_modtimes after successfully converting this feed.
     """
     # Ensure DIR_DOWNLOAD and DIR_CONVERTED exist
     ensure_dir_exists(DIR_DOWNLOAD, clear=True)

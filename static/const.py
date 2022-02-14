@@ -3,6 +3,7 @@ Constant values used all over the place.
 Fare data is stored in fares/data.py.
 """
 
+# cSpell: words rozklady
 
 # Directories
 DIR_DOWNLOAD = "data_src"
@@ -35,21 +36,6 @@ ACTIVE_RAIL_STATIONS = {
     "4904", "4905", "2914", "2913", "2912", "2911", "2910", "4919", "3901", "4918", "4917",
     "4913", "1910", "1909", "1908", "1907", "1906", "1905", "1904", "1903", "1902", "1901",
     "7903", "5908", "5907", "5904", "5903", "5902", "1913", "1914", "1915",
-}
-
-# Irregular stop names
-PROPER_STOP_NAMES = {
-    "1226": "Mańki-Wojody",
-    "1484": "Dom Samotnej Matki",
-    "1541": "Marki Bandurskiego I",
-    "2005": "Praga-Płd. - Ratusz",
-    "2296": "Szosa Lubelska",
-    "2324": "Wiązowna",
-    "4040": "Lotnisko Chopina",
-    "4305": "Posag 7 Panien",  # theoretically "Zajezdnia Ursus Płn."
-    "4400": "Mobilis Sp. z.o.o.",
-    "5001": "Połczyńska - Parking P+R",
-    "6201": "Lipków Paschalisa-Jakubowicza",
 }
 
 # GTFS headers

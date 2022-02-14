@@ -10,13 +10,15 @@ import requests
 from pyroutelib3 import Router, distHaversine
 
 from ..const import DIR_SHAPE_ERR, HEADERS
-from ..util import ensure_dir_exists
+from ..util import CsvWriter, ensure_dir_exists
 from .const import (BUS_ROUTER_SETTINGS, GIST_FORCE_VIA, GIST_OVERRIDE_RATIOS,
                     OVERPASS_BUS_GRAPH, OVERPASS_STOPS_JSON, URL_OVERPASS,
                     URL_TRAM_TRAIN_GRAPH)
 from .helpers import (_Pt, cache_retr, cache_save, simplify_line, time_limit,
                       total_length)
 from .kdtree import KDTree
+
+# cSpell: words kdtree retr rnodes
 
 
 def get_force_via() -> Dict[Tuple[str, str], Tuple[float, float]]:
@@ -40,7 +42,7 @@ def get_override_ratios() -> Dict[Tuple[str, str], float]:
 
 
 class Shaper:
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = getLogger("WarsawGTFS.Shaper")
 
         # External data
@@ -72,7 +74,7 @@ class Shaper:
         # Variables set by the caller in other functions
         self.stop_data: Dict[str, Dict[str, Any]]
         self.file_obj: IO[str]
-        self.writer: "csv._writer"
+        self.writer: CsvWriter
 
     def __bool__(self) -> Literal[True]:
         return True
@@ -143,7 +145,7 @@ class Shaper:
 
     @staticmethod
     def _get_tramrail_graph() -> IO[bytes]:
-        """Retrievies URL_TRAM_TRAIN_GRAPH"""
+        """Retrieves URL_TRAM_TRAIN_GRAPH"""
         temp_buffer = io.BytesIO()
 
         with requests.get(URL_TRAM_TRAIN_GRAPH, stream=True) as resp:
@@ -192,9 +194,9 @@ class Shaper:
         cached_file = cache_retr(cached_name)
 
         if cached_file is not None:
-            # Try to read osm stop mapping from a chaced file
-            cahced_content = cached_file.read().decode("ascii")
-            self.bus_cached_stop_lookup = json.loads(cahced_content)
+            # Try to read osm stop mapping from a cached file
+            cached_content = cached_file.read().decode("ascii")
+            self.bus_cached_stop_lookup = json.loads(cached_content)
 
         else:
             # Make query to Overpass
@@ -215,7 +217,7 @@ class Shaper:
     @staticmethod
     def _dump_shape_err(from_stop: str, to_stop: str, from_node: int, to_node: int,
                         route: List[_Pt], status: str) -> None:
-        """Dumps info about errored shape creation to DIR_SHAPE_ERR"""
+        """Dumps info about failed shape creation to DIR_SHAPE_ERR"""
         target_file = os.path.join(DIR_SHAPE_ERR, f"{from_stop}-{to_stop}.json")
 
         if os.path.exists(target_file):
@@ -368,7 +370,7 @@ class Shaper:
         except TimeoutError:
             status, route = "timeout", []
 
-        # Convert route to list of (lat, lons)
+        # Convert route to list of (lat, lon) pairs
         route = [router.nodeLatLon(i) for i in route]
         straight_route = self.staright_line(from_stop, to_stop)
 
@@ -473,6 +475,6 @@ class Shaper:
         # Clean the DIR_SHAPES_ERR directory
         ensure_dir_exists(DIR_SHAPE_ERR, clear_shape_errs)
 
-    def close(self):
+    def close(self) -> None:
         """Closes opened files."""
         self.file_obj.close()

@@ -1,5 +1,7 @@
 package alerts
 
+// cSpell: words cenkalti
+
 import (
 	"io"
 	"log"
@@ -50,12 +52,8 @@ func allRssItems(client exclusiveHTTPClient) (items []*rssItem, err error) {
 
 	// Make a slice for all RssItems
 	items = make([]*rssItem, 0, len(changesRss.Channel.Items)+len(impedimentsRss.Channel.Items))
-	for _, impedimentItem := range impedimentsRss.Channel.Items {
-		items = append(items, impedimentItem)
-	}
-	for _, changeItem := range changesRss.Channel.Items {
-		items = append(items, changeItem)
-	}
+	items = append(items, impedimentsRss.Channel.Items...)
+	items = append(items, changesRss.Channel.Items...)
 
 	return
 }

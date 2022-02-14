@@ -1,28 +1,30 @@
 
-from typing import Dict, IO, List, Literal, Mapping, Optional, Set, Union, cast
-from datetime import date, timedelta
-from logging import getLogger
 import csv
 import os
+from datetime import date, timedelta
+from logging import getLogger
+from typing import IO, Dict, List, Literal, Mapping, Optional, Set, Union, cast
 
-from ..const import DIR_SHAPE_ERR, HEADERS, DIR_SINGLE_FEED
+from ..const import DIR_SHAPE_ERR, DIR_SINGLE_FEED, HEADERS
 from ..downloader import FileInfo
 from ..fares import add_fare_info
 from ..metro import append_metro_schedule
-from ..util import ConversionOpts, clear_directory, compress, ensure_dir_exists, prepare_tempdir
 from ..parser import Parser
 from ..parser.dataobj import ZTMTrip, ZTMVariantStop
 from ..shapes import Shaper
-
-from .helpers import DirStopsType, FileNamespace, get_proper_headsign, get_route_color_type, \
-    get_trip_direction, match_day_type
+from ..util import (ConversionOpts, CsvWriter, clear_directory, compress,
+                    ensure_dir_exists, prepare_tempdir)
+from .helpers import (DirStopsType, FileNamespace, get_proper_headsign,
+                      get_route_color_type, get_trip_direction, match_day_type)
 from .static_files import static_all
 from .stophandler import StopHandler
+
+# cSpell: words WGOD
 
 
 class Converter:
     def __init__(self, version: str, parser: Parser, target_dir: str, start_date: date,
-                 shapes: Optional[Shaper] = None):
+                 shapes: Optional[Shaper] = None) -> None:
         """(Partially) inits the Converter.
         Since __init__ can't be asynchronous, caller has to also invoke converter.open_files():
         Make sure target_dir is clean before starting the converter.
@@ -42,34 +44,34 @@ class Converter:
         if self.shapes:
             self.shapes.stop_data = self.stops.data
 
-        # File-related properites
+        # File-related properties
         self.target_dir = target_dir
         self.version = version
         self.parser = parser
 
-        # It's the programmers responsiblity to call open_files and close_files
+        # It's the programmers responsibility to call open_files and close_files
         # to ensure those variables are available during conversion
         self.file: "FileNamespace[IO[str]]"
-        self.wrtr: "FileNamespace[csv._writer]"
+        self.wrtr: "FileNamespace[CsvWriter]"
 
         # Route-specific variables
         self.route_id: str = ""
         self.route_type: str = ""
         self.route_name: str
         self.direction_stops: DirStopsType
-        self.inaccesible_trips: Set[str]
+        self.inaccessible_trips: Set[str]
         self.on_demand_stops: Set[str]
         self.used_day_types: Set[str]
         self.variant_direction: Dict[str, Literal["0", "1"]]
 
     # File handlers
 
-    def open_files(self):
+    def open_files(self) -> None:
         """Open file handlers used when converting"""
         def get_file_obj(name: str) -> IO[str]:
             return open(os.path.join(self.target_dir, name), mode="w", encoding="utf8", newline="")
 
-        def get_writer(name: str, fileobj: IO[str]) -> "csv._writer":
+        def get_writer(name: str, fileobj: IO[str]) -> "CsvWriter":
             wrtr = csv.writer(fileobj)
             wrtr.writerow(HEADERS[name])
             return wrtr
@@ -90,14 +92,14 @@ class Converter:
             get_writer("calendar_dates.txt", self.file.dates),
         )
 
-    def close_files(self):
+    def close_files(self) -> None:
         """Close file handlers opened by open_files"""
         for i in self.file:
             i.close()
 
     # Stop & calendar loaders
 
-    def get_calendars(self):
+    def get_calendars(self) -> None:
         """Loads info about calendars. Exhausts self.parser.parse_ka."""
         self.logger.info("Loading calendars (KA)")
 
@@ -107,7 +109,7 @@ class Converter:
 
             self.calendars[day.date] = day.services
 
-    def get_stops(self):
+    def get_stops(self) -> None:
         """Loads info about calendars. Exhausts self.parser.parse_zp."""
         self.logger.info("Loading stops (ZP)")
 
@@ -117,16 +119,16 @@ class Converter:
 
     # Route data converters
 
-    def _reset_route_vars(self):
+    def _reset_route_vars(self) -> None:
         """Resets per-route variables"""
         self.route_name = ""
         self.direction_stops = {"0": set(), "1": set()}
-        self.inaccesible_trips = set()
+        self.inaccessible_trips = set()
         self.on_demand_stops = set()
         self.used_day_types = set()
         self.variant_direction = {}
 
-    def _set_route_name(self, variant_stops: List[ZTMVariantStop]):
+    def _set_route_name(self, variant_stops: List[ZTMVariantStop]) -> None:
         """Sets current route_long_name based on the list of stops of the main variant."""
         # Get group ids
         first_stop = variant_stops[0].id[:4]
@@ -152,7 +154,7 @@ class Converter:
             stopt.stop = self.stops.get_id(stopt.stop)  # type: ignore | None will be removed later
         trip.stops = [i for i in trip.stops if i.stop is not None]
 
-    def _get_variants(self):
+    def _get_variants(self) -> None:
         """Loads data about variants of a route. Exhausts self.parse.parse_tr."""
         self.logger.debug(f"Parsing schedules (TR) - {self.route_id}")
 
@@ -177,17 +179,17 @@ class Converter:
             # Add stops to per-direction dict for automatic direction_id detection
             self.direction_stops[variant.direction].update(i.id for i in variant_stops)
 
-            # Parse ODWG section parse to retrieve inaccessible trips
+            # Parse WG and OD sections to retrieve inaccessible trips
             # Only for trams: all busses & trains are accessible
             if self.route_type == "0":
                 self.logger.debug(f"Parsing schedules (WG/OD) - {self.route_id}")
                 for trip in self.parser.parse_wgod(self.route_type, self.route_id):
                     if not trip.accessible:
-                        self.inaccesible_trips.add(trip.trip_id)
+                        self.inaccessible_trips.add(trip.trip_id)
             else:
                 self.parser.skip_to_section("RP", end=True)
 
-    def _save_trips(self):
+    def _save_trips(self) -> None:
         """Dumps data from WK section to the GTFS. Exhausts self.parser.parse_wk."""
         self.logger.debug(f"Parsing schedules (WK) - {self.route_id}")
 
@@ -212,7 +214,7 @@ class Converter:
                 else "1"
 
             # Wheelchair accessibility
-            wheelchair = "2" if trip.id in self.inaccesible_trips else "1"
+            wheelchair = "2" if trip.id in self.inaccessible_trips else "1"
 
             # Direction
             if variant_id in self.variant_direction:
@@ -301,7 +303,7 @@ class Converter:
                     f"{stopt_dist:.4f}",
                 ])
 
-    def save_schedules(self):
+    def save_schedules(self) -> None:
         """Convert schedules into GTFS. Exhausts self.parser.parse_ll."""
         route_sort_order = 1  # First 2 are reserved for M1 and M2
 
@@ -352,8 +354,8 @@ class Converter:
                 route_sort_order,
             ])
 
-    def convert(self):
-        """Exhause whole self.parser.parse_* and export stops.txt"""
+    def convert(self) -> None:
+        """Exhaust the attached parser and aditionally export stops.txt"""
         self.get_calendars()
         self.get_stops()
         self.save_schedules()
@@ -400,6 +402,7 @@ class Converter:
             finally:
                 self.close_files()
                 if opts.shapes:
+                    assert shaper_obj
                     shaper_obj.close()
 
             self.logger.info("Parsing finished")

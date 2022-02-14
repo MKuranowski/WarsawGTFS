@@ -35,6 +35,7 @@ type ttableAPI struct {
 // BuildURL returns the URL to retrieve timetables of a specific route-stop pair
 func (api *ttableAPI) BuildURL(rs routeStopPair) string {
 	queryParams := url.Values{}
+	// cSpell: disable
 	queryParams.Set("id", "e923fa0e-d96c-43f9-ae6e-60518c9f3238")
 	queryParams.Set("apikey", api.Key)
 	queryParams.Set("busstopId", rs.Stop[:4])
@@ -46,6 +47,7 @@ func (api *ttableAPI) BuildURL(rs routeStopPair) string {
 		Path:     "/api/action/dbtimetable_get/",
 		RawQuery: queryParams.Encode(),
 	}
+	// cSpell: enable
 	return requestURL.String()
 }
 

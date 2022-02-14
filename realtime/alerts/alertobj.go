@@ -42,7 +42,7 @@ func alertFromRssItem(r *rssItem, routeMap map[string]sort.StringSlice) (a *Aler
 
 		a.ID = idPrefix + r.GUID[idMatch[0]+3:idMatch[1]]
 	} else {
-		err = fmt.Errorf("Unable to find alert ID in GUID %q", r.GUID)
+		err = fmt.Errorf("unable to find alert ID in GUID %q", r.GUID)
 		return
 	}
 

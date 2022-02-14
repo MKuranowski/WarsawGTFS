@@ -1,19 +1,24 @@
-from datetime import datetime, date
-from os.path import join
-from static.shapes import Shaper
-from typing import Optional, Tuple
-from pytz import timezone
 from copy import copy
+from datetime import date, datetime
+from os.path import join
+from typing import Optional, Tuple
 
-from .downloader import append_modtimes, mark_as_converted, sync_files, sync_single_file
-from .converter import Converter
+from pytz import timezone
+
+from static.shapes import Shaper
+
 from .const import DIR_CONVERTED, DIR_SHAPE_ERR
+from .converter import Converter
+from .downloader import (append_modtimes, mark_as_converted, sync_files,
+                         sync_single_file)
 from .merger import Merger
 from .util import ConversionOpts, ensure_dir_exists
 
 """
-Module conatins function that coordinate file synchornization with GTFS convertions.
+Module contains function that coordinate file synchronization with GTFS convertions.
 """
+
+# cSpell: words remerge
 
 
 def make_single(opts: ConversionOpts, for_day: Optional[date] = None) -> str:

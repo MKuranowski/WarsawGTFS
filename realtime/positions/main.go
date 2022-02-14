@@ -1,5 +1,7 @@
 package positions
 
+// cSpell: words cenkalti
+
 import (
 	"io/ioutil"
 	"log"

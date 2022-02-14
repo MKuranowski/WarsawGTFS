@@ -1,4 +1,4 @@
-from typing import Iterable, NamedTuple, Tuple, Union, Mapping, List
+from typing import Iterable, List, Mapping, NamedTuple, Tuple, Union
 
 from .helpers import _Pt
 
@@ -18,7 +18,7 @@ def _dist_squared(p: Union[Point, _Pt], q: Union[Point, _Pt]) -> float:
 
 def _brute_nn(root: _Pt, space: Iterable[Point]) -> Point:
     """
-    Implements a brute-force nearest-neighbour search.
+    Implements a brute-force nearest-neighbor search.
     Finds the nearest Point to given search root.
     """
     best = None
@@ -49,13 +49,13 @@ def _pick_closest(root: _Pt, p: Point, q: Point) -> Tuple[Point, float]:
 
 class KDTree:
     """
-    Implements a simple 2-dimentional KD Tree.
+    Implements a simple 2-dimensional KD Tree.
     Create new trees with KDTree.build().
     """
     __slots__ = ("is_leaf", "pivot", "left", "right", "points")
 
-    def __init__(self, is_leaf: bool, pivot: Point = None,
-                 left: "KDTree" = None, right: "KDTree" = None, points: List[Point] = None):
+    def __init__(self, is_leaf: bool, pivot: Point = None, left: "KDTree" = None,
+                 right: "KDTree" = None, points: List[Point] = None) -> None:
         self.is_leaf = is_leaf
         self.pivot = pivot
         self.left = left
@@ -116,8 +116,8 @@ class KDTree:
             first = self.right
             second = self.left
 
-        # Recusively check nn in first branch and comapre the distance with current pivot
-        best, best_sqdist = _pick_closest(
+        # Recursively check nn in first branch and comapre the distance with current pivot
+        best, best_square_dist = _pick_closest(
             search_root,
             first.search_nn(search_root, axis ^ 1),
             self.pivot
@@ -126,7 +126,7 @@ class KDTree:
         # Check if there is a possibility of a closer node on the opposite side
         # That is - whether current pivot is closer to search_root
         d_to_axis = (search_root[axis] - self.pivot[axis]) ** 2
-        if best_sqdist > d_to_axis:
+        if best_square_dist > d_to_axis:
             best, _ = _pick_closest(
                 search_root,
                 second.search_nn(search_root, axis ^ 1),

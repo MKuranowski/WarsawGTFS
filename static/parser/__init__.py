@@ -1,13 +1,14 @@
+import re
 from datetime import datetime
 from logging import getLogger
-from typing import Iterator, Dict, Literal, Protocol
-import re
+from typing import Dict, Iterator, Literal, Protocol
 
 from ..util import normal_time
-from .dataobj import (
-    ZTMCalendar, ZTMStopGroup, ZTMStop, ZTMStopTime, ZTMTrip,
-    ZTMRouteVariant, ZTMVariantStop, ZTMTTableDep, ZTMRoute
-)
+from .dataobj import (ZTMCalendar, ZTMDeparture, ZTMRoute, ZTMRouteVariant,
+                      ZTMStop, ZTMStopGroup, ZTMStopTime, ZTMTrip,
+                      ZTMVariantStop)
+
+# cSpell: words wgod
 
 """
 A set of generators which return nice data from ZTM File.
@@ -29,7 +30,7 @@ parser.close()
 
 
 def _remove_non_digits(text: str) -> str:
-    """Removes non-digit charachters from text"""
+    """Removes non-digit characters from text"""
     result = ""
     for chr in text:
         if chr.isdigit():
@@ -43,7 +44,7 @@ class _WithReadline(Protocol):
 
 
 class Parser:
-    def __init__(self, reader: _WithReadline, version: str):
+    def __init__(self, reader: _WithReadline, version: str) -> None:
         self.r = reader
         self.logger = getLogger(f"WarsawGTFS.{version}.Parser")
 
@@ -69,12 +70,11 @@ class Parser:
                 continue
 
             # data conversion
-            # pylint: disable = no-member
             row_date = datetime.strptime(line_split[0], "%Y-%m-%d").date()
 
             yield ZTMCalendar(row_date, line_split[2:])
 
-        raise EOFError("End of section KA not reched before EOF!")
+        raise EOFError("End of section KA not reached before EOF!")
 
     def parse_zp(self) -> Iterator[ZTMStopGroup]:
         """
@@ -205,7 +205,7 @@ class Parser:
             # append stop to active trip
             trip.stops.append(stopt)
 
-        raise EOFError("End of section WK not reched before EOF!")
+        raise EOFError("End of section WK not reached before EOF!")
 
     def parse_tr(self) -> Iterator[ZTMRouteVariant]:
         """
@@ -238,7 +238,7 @@ class Parser:
                 variant_order=line_match[7],
             )
 
-        raise EOFError("End of section TR not reched before EOF!")
+        raise EOFError("End of section TR not reached before EOF!")
 
     def parse_lw(self) -> Iterator[ZTMVariantStop]:
         """
@@ -296,9 +296,9 @@ class Parser:
 
                 yield stop_data
 
-        raise EOFError("End of section LW not reched before EOF!")
+        raise EOFError("End of section LW not reached before EOF!")
 
-    def _parse_single_wgod(self, route_type: str, route_id: str) -> Iterator[ZTMTTableDep]:
+    def _parse_single_wgod(self, route_type: str, route_id: str) -> Iterator[ZTMDeparture]:
         """
         Yield data for every trip inside section *OD and combine data with
         info about accessibility included in section *WG
@@ -365,19 +365,19 @@ class Parser:
                     continue
 
                 # combine data from OD with data from WG
-                yield ZTMTTableDep(
+                yield ZTMDeparture(
                     trip_id=trip_id,
                     time=time,
                     accessible=accessible_departures[time],
                 )
 
-        raise EOFError("End of section WG/OD not reched before EOF!")
+        raise EOFError("End of section WG/OD not reached before EOF!")
 
-    def parse_wgod(self, route_type: str, route_id: str) -> Iterator[ZTMTTableDep]:
+    def parse_wgod(self, route_type: str, route_id: str) -> Iterator[ZTMDeparture]:
         """
         Skips to next WG section and parses data from (WG, OD) section pairs.
         Pairs are parsed until the end of section PR.
-        Yields ZTMTTableDep objects.
+        Yields ZTMDeparture objects.
         """
         while self.find_another("WG", "RP"):
             yield from self._parse_single_wgod(route_type, route_id)
@@ -406,7 +406,7 @@ class Parser:
 
             yield ZTMRoute(id=line_match[1], desc=line_match[2])
 
-        raise EOFError("End of section LL not reched before EOF!")
+        raise EOFError("End of section LL not reached before EOF!")
 
     def skip_to_section(self, section_code: str, end: bool = False):
         """
