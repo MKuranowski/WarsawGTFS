@@ -10,12 +10,13 @@ from ..downloader import FileInfo
 from ..fares import add_fare_info
 from ..metro import append_metro_schedule
 from ..parser import Parser
-from ..parser.dataobj import ZTMTrip, ZTMVariantStop
+from ..parser.dataobj import ZTMStopTime, ZTMTrip, ZTMVariantStop
 from ..shapes import Shaper
 from ..util import (ConversionOpts, CsvWriter, clear_directory, compress,
                     ensure_dir_exists, prepare_tempdir)
 from .helpers import (DirStopsType, FileNamespace, get_proper_headsign,
                       get_route_color_type, get_trip_direction, match_day_type)
+from .platformhandler import PlatformHandler, PlatformLookupQuery
 from .static_files import static_all
 from .stophandler import StopHandler
 
@@ -34,10 +35,11 @@ class Converter:
         self.logger = getLogger(f"WarsawGTFS.{version}.Converter")
 
         # Data-related properties
-        self.calendar_start = start_date - timedelta(days=30)
+        self.calendar_start = start_date
         self.calendars: Dict[date, List[str]] = {}
         self.routes: List[str] = []
         self.stops = StopHandler(version)
+        self.platforms = PlatformHandler.instance()
 
         # Shape-related shit
         self.shapes = shapes
@@ -117,6 +119,13 @@ class Converter:
             stops = [i for i in self.parser.parse_pr()]
             self.stops.load_group(group, stops)
 
+    def _get_potential_dates(self, day_type: str) -> Set[date]:
+        return {
+            day
+            for day, potential_day_types in self.calendars.items()
+            if day_type in potential_day_types
+        }
+
     # Route data converters
 
     def _reset_route_vars(self) -> None:
@@ -150,9 +159,38 @@ class Converter:
 
     def _fix_stops_in_trip(self, trip: ZTMTrip) -> None:
         """Modifies trip.stops to fix stop_ids, and remove references to unknown stops."""
+        new_stops = []
+
         for stopt in trip.stops:
-            stopt.stop = self.stops.get_id(stopt.stop)  # type: ignore | None will be removed later
-        trip.stops = [i for i in trip.stops if i.stop is not None]
+            real_stop = self.stops.get_id(stopt.stop)
+            if real_stop:
+                new_stops.append(ZTMStopTime(real_stop, stopt.original_stop, stopt.time,
+                                             stopt.flags, stopt.platform))
+
+        trip.stops = new_stops
+
+    def _add_platform_data(self, trip: ZTMTrip, day_type: str) -> None:
+        """Adds railway-specific data (train number and platforms for special stations)
+        to a trip."""
+        headsign = self.stops.names.get(trip.stops[-1].stop[:4], "")
+        potential_active_dates = self._get_potential_dates(day_type)
+
+        for stopt in trip.stops:
+            platform_entry = self.platforms.get_entry(PlatformLookupQuery(
+                station_id=stopt.stop[:4],
+                gtfs_time=stopt.time,
+                route=self.route_id,
+                headsign=headsign,
+                train_dates=potential_active_dates,
+                calendar_start=self.calendar_start,
+            ))
+
+            if platform_entry:
+                stopt.platform = platform_entry.platform
+                trip.train_number = platform_entry.number
+
+        if not trip.train_number:
+            raise ValueError(f"No train number for: {trip.id}")
 
     def _get_variants(self) -> None:
         """Loads data about variants of a route. Exhausts self.parse.parse_tr."""
@@ -194,13 +232,6 @@ class Converter:
         self.logger.debug(f"Parsing schedules (WK) - {self.route_id}")
 
         for trip in self.parser.parse_wk(self.route_id):
-            # Fix stop_ids and remove invalid stops
-            self._fix_stops_in_trip(trip)
-
-            # Ignore trips with only one stoptime
-            if len(trip.stops) <= 1:
-                continue
-
             # Unpack data from trip_id
             trip_id_split = trip.id.split("/")
             variant_id = trip_id_split[1]
@@ -208,6 +239,17 @@ class Converter:
 
             service_id = self.route_id + "/" + day_type
             del trip_id_split
+
+            # Reconcile with platform data
+            if self.route_type == "2":
+                self._add_platform_data(trip, day_type)
+
+            # Fix stop_ids and remove invalid stops
+            self._fix_stops_in_trip(trip)
+
+            # Ignore trips with only one stoptime
+            if len(trip.stops) <= 1:
+                continue
 
             # Set exceptional trips
             exceptional = "0" if variant_id.startswith("TP-") or variant_id.startswith("TO-") \
@@ -262,6 +304,7 @@ class Converter:
                 exceptional,
                 wheelchair,
                 "1",
+                trip.train_number,
             ])
 
             # Convert stoptimes
@@ -301,6 +344,7 @@ class Converter:
                     pickup,
                     dropoff,
                     f"{stopt_dist:.4f}",
+                    stopt.platform,
                 ])
 
     def save_schedules(self) -> None:
@@ -314,7 +358,8 @@ class Converter:
             self.route_id = route.id
 
             # Ignore Koleje Mazowieckie & Warszawska Kolej Dojazdowa routes
-            if self.route_id.startswith("R") or self.route_id.startswith("WKD"):
+            # if self.route_id.startswith("R") or self.route_id.startswith("WKD"):
+            if self.route_id not in {"S1", "S2", "S3"}:
                 self.parser.skip_to_section("WK", end=True)
                 continue
 

@@ -44,19 +44,21 @@ class ZTMStop:
 
 @dataclass
 class ZTMStopTime:
-    __slots__ = ("stop", "original_stop", "time", "flags")
+    __slots__ = ("stop", "original_stop", "time", "flags", "platform")
 
     stop: str
     original_stop: str
     time: str
     flags: Literal["", "P", "B"]
+    platform: str
 
 
 @dataclass
 class ZTMTrip:
-    __slots__ = ("id", "stops")
+    __slots__ = ("id", "train_number", "stops")
 
     id: str
+    train_number: str
     stops: List[ZTMStopTime]
 
 

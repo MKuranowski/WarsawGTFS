@@ -78,10 +78,11 @@ HEADERS = {
     "trips.txt": [
         "route_id", "service_id", "trip_id", "trip_headsign", "direction_id",
         "shape_id", "exceptional", "wheelchair_accessible", "bikes_allowed",
+        "trip_short_name",
     ],
 
     "stop_times.txt": [
         "trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence",
-        "pickup_type", "drop_off_type", "shape_dist_traveled",
+        "pickup_type", "drop_off_type", "shape_dist_traveled", "platform",
     ],
 }
