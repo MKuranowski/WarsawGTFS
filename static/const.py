@@ -23,6 +23,8 @@ GIST_MISSING_STOPS = _BASE_GIST + "missing_stop_locations.json"
 GIST_RAIL_PLATFORMS = _BASE_GIST + "rail_platforms.json"
 GIST_STOP_NAMES = _BASE_GIST + "stop_names.json"
 
+RAILWAY_MAP = "https://raw.githubusercontent.com/MKuranowski/PLRailMap/master/plrailmap.osm"
+
 URL_METRO_GTFS = "https://mkuran.pl/gtfs/warsaw/metro.zip"
 
 # Logging attrivutes

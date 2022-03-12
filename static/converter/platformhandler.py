@@ -36,7 +36,8 @@ STA_NAMES: Dict[str, str] = {
 _logger = logging.getLogger("WarsawGTFS.Platforms")
 
 
-class PlatformEntry(NamedTuple):
+@dataclass
+class PlatformEntry:
     """Stored entry with platform (and more) data"""
     number: str
     route: str
@@ -45,7 +46,8 @@ class PlatformEntry(NamedTuple):
     dates: Optional[Set[date]] = None
 
     def is_similar(self, other: "PlatformEntry") -> bool:
-        return self.number == other.number and self.platform == other.platform
+        return self.number == other.number and \
+            (self.platform == other.platform or not self.platform or not other.platform)
 
 
 class PlatformEntryKey(NamedTuple):
@@ -130,17 +132,17 @@ class PlatformHandler:
                 if existing_entry.is_similar(entry):
                     # A similar entry is found.
                     # Some magic to handle merging of the `dates` attributes
-
                     if existing_entry.dates is not None and entry.dates is not None:
                         # Both entries are active on specific dates:
                         existing_entry.dates.update(entry.dates)
 
                     elif entry.dates is None:
-                        # entry is active everyday, but the existing one is not:
-                        # swap out the entry, since we can't mutate the already-saved one.
-                        into[key][idx] = entry
+                        existing_entry.dates = None
 
                     # else: existing_entry is active everyday - no merging to do
+
+                    # Also merge the platform attributes if one of the entries is missing one
+                    existing_entry.platform = existing_entry.platform or entry.platform
 
                     # Similar entry was found - break out of the loop
                     break

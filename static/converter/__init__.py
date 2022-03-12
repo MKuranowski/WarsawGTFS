@@ -162,7 +162,7 @@ class Converter:
         new_stops = []
 
         for stopt in trip.stops:
-            real_stop = self.stops.get_id(stopt.stop)
+            real_stop = self.stops.get_id(stopt.stop, stopt.platform)
             if real_stop:
                 new_stops.append(ZTMStopTime(real_stop, stopt.original_stop, stopt.time,
                                              stopt.flags, stopt.platform))
