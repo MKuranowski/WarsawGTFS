@@ -67,6 +67,7 @@ class PlatformLookupQuery:
     headsign: str
     train_dates: set[date]
     calendar_start: date
+    is_last: bool
     time: int = 0
 
     def entry_key(self) -> PlatformEntryKey:
@@ -216,7 +217,8 @@ class PlatformHandler:
             or self._scored_result(all_entries, query.calendar_start, f_route_id) \
             or self._scored_result(all_entries, query.calendar_start)
 
-    def get_entry(self, query: PlatformLookupQuery) -> Optional[PlatformEntry]:
+    def get_entry(self, query: PlatformLookupQuery) \
+            -> Optional[PlatformEntry]:
         if query.station_id not in STATION_HAFAS_IDS:
             return
 
@@ -229,7 +231,7 @@ class PlatformHandler:
         h %= 24  # Wrap around past-24 departures
         query.time = (h * 3600 + m * 60 + s)
 
-        result = self.do_get_entry(query, True) or self.do_get_entry(query, False)
+        result = self.do_get_entry(query, dep=not query.is_last)
 
         if result is None:
             raise ValueError(

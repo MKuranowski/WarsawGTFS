@@ -1,6 +1,7 @@
 
 import csv
 import os
+import re
 from datetime import date, timedelta
 from logging import getLogger
 from typing import IO, Dict, List, Literal, Mapping, Optional, Set, Union, cast
@@ -128,6 +129,33 @@ class Converter:
 
     # Route data converters
 
+    @staticmethod
+    def _reconcile_train_numbers(trip: ZTMTrip, new_number: str) -> None:
+        if not trip.train_number:
+            # Fresh train number, nothing really there
+            trip.train_number = new_number
+
+        elif trip.train_number != new_number:
+
+            if "/" in trip.train_number:
+                pass
+
+            elif "/" in new_number:
+                trip.train_number = new_number
+
+            else:
+                # Basic assumption that SKM numbers are 5-digit
+                assert re.match(r"[0-9]{5}", trip.train_number)
+                assert re.match(r"[0-9]{5}", new_number)
+
+                # The numbers should differ by one, and the bigger should be odd
+                numbers = [int(trip.train_number), int(new_number)]
+                numbers.sort()
+                assert numbers[0] % 2 == 0
+                assert numbers[0] + 1 == numbers[1]
+
+                trip.train_number = f"{numbers[0]}/{numbers[1] % 10}"
+
     def _reset_route_vars(self) -> None:
         """Resets per-route variables"""
         self.route_name = ""
@@ -183,11 +211,12 @@ class Converter:
                 headsign=headsign,
                 train_dates=potential_active_dates,
                 calendar_start=self.calendar_start,
+                is_last=stopt is trip.stops[-1],
             ))
 
             if platform_entry:
                 stopt.platform = platform_entry.platform
-                trip.train_number = platform_entry.number
+                self._reconcile_train_numbers(trip, platform_entry.number)
 
         if not trip.train_number:
             raise ValueError(f"No train number for: {trip.id}")
@@ -358,8 +387,7 @@ class Converter:
             self.route_id = route.id
 
             # Ignore Koleje Mazowieckie & Warszawska Kolej Dojazdowa routes
-            # if self.route_id.startswith("R") or self.route_id.startswith("WKD"):
-            if self.route_id not in {"S1", "S2", "S3"}:
+            if self.route_id.startswith("R") or self.route_id.startswith("WKD"):
                 self.parser.skip_to_section("WK", end=True)
                 continue
 
