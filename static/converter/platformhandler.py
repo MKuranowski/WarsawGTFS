@@ -19,8 +19,10 @@ STATION_HAFAS_IDS: Dict[str, str] = {
     "7903": "5100172",  # Warszawa Gdańska
     "1907": "5101981",  # Legionowo
     "2918": "5102637",  # Otwock
-    # "33472": "5103999",  # Warszawa Główna (no SKM trains)
-    # "36228": "5104322",  # Zielonka (no SKM trains)
+    "2914": "5103424",  # Sulejowek-Milosna
+    "1907": "5101981",  # Legionowo
+    "1908": "5100323",  # Legionowo-Piaski
+    "4905": "5100330",  # Pruszkow
 }
 
 STA_NAMES: Dict[str, str] = {
@@ -93,9 +95,7 @@ class PlatformHandler:
         self.departures.clear()
 
         for ztm_id, hafas_id in STATION_HAFAS_IDS.items():
-            # temporary server while https://mkuran.pl/other/rail_platforms is broken
-            r = s.get("http://ginga.ydns.eu/cgi-bin/rail_platforms",
-                      params={"hafas_code": hafas_id})
+            r = s.get(f"https://mkuran.pl/other/rail-platforms/{hafas_id}.json")
             r.raise_for_status()
             data = r.json()
 
