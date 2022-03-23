@@ -1,6 +1,6 @@
 # cSpell: words hafas
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 import logging
 import requests
 from math import inf
@@ -228,9 +228,15 @@ class PlatformHandler:
             .replace("(", "").replace(")", "").replace(" ", "")
 
         h, m, s = map(int, query.gtfs_time.split(":"))
-        h %= 24  # Wrap around past-24 departures
+        days_offset, h = divmod(h, 24)  # Wrap around past-24 departures
         query.time = (h * 3600 + m * 60 + s)
 
+        # Apply day_offset
+        if days_offset:
+            delta = timedelta(days=days_offset)
+            query.train_dates = {i + delta for i in query.train_dates}
+
+        # Make the query
         result = self.do_get_entry(query, dep=not query.is_last)
 
         if result is None:
