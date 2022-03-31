@@ -31,10 +31,12 @@ def normalize_stop_name(name: str) -> str:
                .replace("pl.", "Pl.")   \
                .replace("os.", "Os.")   \
                .replace("ks.", "Ks.")   \
+               .replace("św.", "Św.")   \
                .replace("Ak ", "AK ")   \
                .replace("Ch ", "CH ")   \
                .replace("gen.", "Gen.") \
                .replace("rondo ", "Rondo ") \
+               .replace("most ", "Most ") \
                .rstrip()
 
     return name
