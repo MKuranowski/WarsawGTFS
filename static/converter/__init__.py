@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from logging import getLogger
 from typing import IO, Dict, List, Literal, Mapping, Optional, Set, Union, cast
 
-from ..const import DIR_SHAPE_ERR, DIR_SINGLE_FEED, HEADERS
+from ..const import DIR_SHAPE_ERR, DIR_SINGLE_FEED, HEADERS, RAIL_DIRECTION_STOPS
 from ..downloader import FileInfo
 from ..fares import add_fare_info
 from ..metro import append_metro_schedule
@@ -156,6 +156,18 @@ class Converter:
 
                 trip.train_number = f"{numbers[0]}/{numbers[1] % 10}"
 
+    @staticmethod
+    def _normalize_train_direction(trip: ZTMTrip) -> Literal["0", "1"]:
+        station_to_idx = {stoptime.stop[:4]: idx for idx, stoptime in enumerate(trip.stops)}
+
+        for sta1, sta2 in RAIL_DIRECTION_STOPS:
+            sta1_idx = station_to_idx.get(sta1)
+            sta2_idx = station_to_idx.get(sta2)
+            if sta1_idx is not None and sta2_idx is not None:
+                return "0" if sta2_idx > sta1_idx else "1"
+
+        raise ValueError(f"Unable to normalize train's direction id ({trip.id}")
+
     def _reset_route_vars(self) -> None:
         """Resets per-route variables"""
         self.route_name = ""
@@ -288,7 +300,9 @@ class Converter:
             wheelchair = "2" if trip.id in self.inaccessible_trips else "1"
 
             # Direction
-            if variant_id in self.variant_direction:
+            if self.route_type == "2":
+                direction = self._normalize_train_direction(trip)
+            elif variant_id in self.variant_direction:
                 direction = self.variant_direction[variant_id]
             else:
                 direction = get_trip_direction(

@@ -40,6 +40,21 @@ ACTIVE_RAIL_STATIONS = {
     "7903", "5908", "5907", "5904", "5903", "5902", "1913", "1914", "1915",
 }
 
+# Pairs of stops that determine the direction_id of a train.
+# If train calls at pair[0] before pair[1] - it shall have direction_id = 0;
+# else if train calls at pair[1] before pair[0] - it shall have direction_id = 1.
+RAIL_DIRECTION_STOPS = [
+    ("4900", "2900"),  # W-wa Zachodnia      → W-wa Wschodnia
+    ("5902", "7903"),  # W-wa Zachodnia p. 9 → W-wa Gdańska
+    ("4905", "4900"),  # Pruszków            → W-wa Zachodnia  (S1 specific)
+    ("2900", "2904"),  # W-wa Wschodnia      → W-wa Wawer      (S1 specific)
+    ("3901", "2900"),  # W-wa Służewiec      → W-wa Zachodnia  (S2 specific)
+    ("2900", "2910"),  # W-wa Wschodnia      → W-wa Rembertów  (S2 specific)
+    ("7903", "1907"),  # W-wa Gdańska        → Legionowo       (S9 specific)
+    ("2900", "1907"),  # W-wa Wschodnia      → Legionowo       (S3 specific)
+]
+
+
 # GTFS headers
 HEADERS = {
     "agency.txt": [
