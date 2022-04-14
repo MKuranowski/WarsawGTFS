@@ -162,7 +162,7 @@ class Parser:
         # regexp = re.compile(r"(\S{1,17})\s+(\d{6})\s+\w{2}\s+([0-9.]+)(\s+\w|)")
         self.skip_to_section("WK")
 
-        trip = ZTMTrip(id="", stops=[])
+        trip = ZTMTrip(id="", train_number="", stops=[])
 
         while (line := self.r.readline()):
             line = line.strip()
@@ -190,6 +190,7 @@ class Parser:
                 original_stop=line_split[1],
                 time=normal_time(line_split[3]),
                 flags=flags,  # type: ignore
+                platform="",
             )
 
             trip_id = route_id + "/" + line_split[0]
@@ -200,7 +201,7 @@ class Parser:
                 if trip.id and trip.stops:
                     yield trip
 
-                trip = ZTMTrip(id=trip_id, stops=[])
+                trip = ZTMTrip(id=trip_id, train_number="", stops=[])
 
             # append stop to active trip
             trip.stops.append(stopt)

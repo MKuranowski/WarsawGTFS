@@ -3,14 +3,16 @@ import json
 from functools import lru_cache
 from logging import getLogger
 from os.path import join
+from tempfile import NamedTemporaryFile
 from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
                     Set, Tuple)
 
 import requests
 
-from ..const import (GIST_MISSING_STOPS, GIST_RAIL_PLATFORMS, GIST_STOP_NAMES,
-                     HEADERS)
+from ..const import (ACTIVE_RAIL_STATIONS, GIST_MISSING_STOPS, GIST_STOP_NAMES,
+                     HEADERS, RAILWAY_MAP)
 from ..parser.dataobj import ZTMStop, ZTMStopGroup
+from .rail_stations import RailwayStation, RailwayStationLoader
 
 """
 Module reposible for handling handling stop data.
@@ -82,11 +84,18 @@ def get_missing_stops() -> Dict[str, Tuple[float, float]]:
 
 
 @lru_cache(maxsize=None)
-def get_rail_platforms() -> Dict[str, Dict[str, Any]]:
+def get_rail_platforms() -> Dict[str, RailwayStation]:
     """Gets info about railway stations from external gist"""
-    with requests.get(GIST_RAIL_PLATFORMS) as req:
-        req.raise_for_status()
-        return req.json()
+    with NamedTemporaryFile(mode="r+b") as f:
+        # Download the map
+        with requests.get(RAILWAY_MAP, stream=True) as req:
+            req.raise_for_status()
+            for chunk in req.iter_content():
+                f.write(chunk)
+
+        # Load the data
+        f.seek(0)
+        return RailwayStationLoader.load_all(f.name)
 
 
 @lru_cache(maxsize=None)
@@ -117,7 +126,7 @@ class StopHandler:
 
         # External data
         self.missing_stops: Dict[str, Tuple[float, float]] = {}
-        self.rail_platforms: Dict[str, Dict[str, Any]] = {}
+        self.rail_platforms: Dict[str, RailwayStation] = {}
         self._load_external()
 
     def _load_external(self) -> None:
@@ -200,101 +209,84 @@ class StopHandler:
                             virtual_stops: List[ZTMStop]) -> None:
         """Saves data about a stop group representing a railway station"""
         # Nop KM & WKD stations
-        # if group_id not in ACTIVE_RAIL_STATIONS:
-        #     for i in virtual_stops:
-        #         self.change[i.id] = None
-        #     return
+        if group_id not in ACTIVE_RAIL_STATIONS:
+            for i in virtual_stops:
+                self.change[i.id] = None
+            return
 
         # Load station info
-        station_data = self.rail_platforms.get(group_id, {})
+        station = self.rail_platforms.get(group_id)
 
-        # If this station is not in rail_platforms, average all stake positions
-        # In order to calculate an approx. position of the station
-        if not station_data:
-            avg_pos = avg_position(virtual_stops)
+        # If this station has no external data - throw an error
+        if not station:
+            raise ValueError(f"Missing railway station data for {group_id} ({group_name})")
 
-            if avg_pos:
-                station_lat, station_lon = avg_pos
+        unmatched_stakes: set[str] = set(stake.id for stake in virtual_stops)
 
-            # Halt processing if we have no geographical data
-            else:
-                for i in virtual_stops:
-                    self.change[i.id] = None
-                return
+        # Add hub entry
+        self.data[group_id] = {
+            "stop_id": group_id,
+            "stop_name": station.name,
+            "stop_lat": station.lat,
+            "stop_lon": station.lon,
+            "location_type": "1",
+            "parent_station": "",
+            "stop_IBNR": station.ibnr,
+            "stop_PKPPLK": station.pkpplk,
+            "wheelchair_boarding": station.wheelchair,
+        }
 
-        # Otherwise get the position from rail_platforms data
-        else:
-            station_lat, station_lon = map(float, station_data["pos"].split(","))
-            group_name = station_data["name"]
+        # Platforms
+        for platform in station.platforms:
+            platform_id = f"{group_id}p{platform.name}"
+            platform_name = f"{station.name} peron {platform.name}"
 
-        # Map every stake into one node
-        if (not station_data) or station_data["oneplatform"]:
-
-            self.data[group_id] = {
-                "stop_id": group_id,
-                "stop_name": group_name,
-                "stop_lat": station_lat,
-                "stop_lon": station_lon,
-                "zone_id": station_data.get("zone_id", ""),
-                "stop_IBNR": station_data.get("ibnr_code", ""),
-                "stop_PKPPLK": station_data.get("pkpplk_code", ""),
-                "wheelchair_boarding": station_data.get("wheelchair", "0"),
+            # Add platform entry
+            self.data[platform_id] = {
+                "stop_id": platform_id,
+                "stop_name": platform_name,
+                "stop_lat": platform.lat,
+                "stop_lon": platform.lon,
+                "location_type": "0",
+                "parent_station": group_id,
+                "stop_IBNR": station.ibnr,
+                "stop_PKPPLK": station.pkpplk,
+                "wheelchair_boarding": platform.wheelchair,
+                "platform_code": platform.name,
             }
 
-            for i in virtual_stops:
-                self.change[i.id] = group_id
+            # Add to self.parents
+            self.parents[platform_id] = group_id
 
-        # Process multi-platform station
-        else:
-            # Add hub entry
-            self.data[group_id] = {
-                "stop_id": group_id,
-                "stop_name": group_name,
-                "stop_lat": station_lat,
-                "stop_lon": station_lon,
-                "location_type": "1",
-                "parent_station": "",
-                "zone_id": station_data.get("zone_id", ""),
-                "stop_IBNR": station_data.get("ibnr_code", ""),
-                "stop_PKPPLK": station_data.get("pkpplk_code", ""),
-                "wheelchair_boarding": station_data.get("wheelchair", "0"),
+            # Map ZTM stake IDs to this platform
+            if platform.ztm_codes:
+                for ztm_code in platform.ztm_codes:
+                    unmatched_stakes.discard(ztm_code)
+                    self.change[ztm_code] = platform_id
+
+        # Special rule to match all stakes to a sole platform
+        if len(station.platforms) == 1:
+            sole_platform_id = f"{group_id}p{station.platforms[0].name}"
+            for ztm_stake in virtual_stops:
+                unmatched_stakes.discard(ztm_stake.id)
+                self.change[ztm_stake.id] = sole_platform_id
+
+        # Create a fake "unknown" platform
+        if unmatched_stakes:
+            unknown_platform_id = f"{group_id}pUnknown"
+            self.data[unknown_platform_id] = {
+                "stop_id": unknown_platform_id,
+                "stop_name": station.name,
+                "stop_lat": station.lat,
+                "stop_lon": station.lon,
+                "location_type": "0",
+                "parent_station": group_id,
+                "stop_IBNR": station.ibnr,
+                "stop_PKPPLK": station.pkpplk,
             }
 
-            # Platforms
-            for platform_id, platform_pos in station_data["platforms"].items():
-                platform_lat, platform_lon = map(float, platform_pos.split(","))
-                platform_code = platform_id.split("p")[1]
-                platform_name = f"{group_name} peron {platform_code}"
-
-                # Add platform entry
-                self.data[platform_id] = {
-                    "stop_id": platform_id,
-                    "stop_name": platform_name,
-                    "stop_lat": platform_lat,
-                    "stop_lon": platform_lon,
-                    "location_type": "0",
-                    "parent_station": group_id,
-                    "zone_id": station_data.get("zone_id", ""),
-                    "stop_IBNR": station_data.get("ibnr_code", ""),
-                    "stop_PKPPLK": station_data.get("pkpplk_code", ""),
-                    "wheelchair_boarding": station_data.get("wheelchair", "0"),
-                }
-
-                # Add to self.parents
-                self.parents[platform_id] = group_id
-
-            # Stops → Platforms
-            for stop in virtual_stops:
-
-                # Defined stake in rail_platforms
-                if stop.id in station_data["stops"]:
-                    self.change[stop.id] = station_data["stops"][stop.id]
-
-                # Unknown stake
-                elif stop.id not in {"491303", "491304"}:
-                    self.logger.warn(
-                        f"No platform defined for railway PR entry {group_name} {stop.id}"
-                    )
+            for unmatched_stake in unmatched_stakes:
+                self.change[unmatched_stake] = unknown_platform_id
 
     def load_group(self, group: ZTMStopGroup, stops: List[ZTMStop]) -> None:
         """Loads info about stops of a specific group"""
@@ -326,13 +318,23 @@ class StopHandler:
         else:
             self._load_normal_group(group.name, stops)
 
-    def get_id(self, original_id: Optional[str]) -> Optional[str]:
+    def get_id(self, original_id: Optional[str], known_railway_platform: Optional[str] = None) \
+            -> Optional[str]:
         """
         Should the stop_id be changed, provide the correct stop_id.
         If given stop_id has its position undefined returns None.
         """
         if original_id is None:
             return None
+
+        # Special case for explicit railway platforms
+        if known_railway_platform:
+            group_id = original_id[:4]
+            platform_id = f"{group_id}p{known_railway_platform}"
+            if platform_id not in self.data:
+                raise ValueError(f"Missing platform {known_railway_platform!r} at station"
+                                 f"{group_id} ({self.data[group_id]['stop_name']})")
+            return platform_id
 
         valid_id = self.change.get(original_id, original_id)
 
@@ -342,6 +344,13 @@ class StopHandler:
         elif valid_id in self.invalid:
             self.used_invalid.add(valid_id)
             return None
+
+        elif valid_id not in self.data:
+            assert valid_id[1:3] in {"90", "91", "92"}, \
+                "not loaded stakes should only happen for railway stations"
+
+            raise ValueError(f"Unmapped ZTM code {valid_id} at a railway station "
+                             f"({self.data[valid_id[:4]]['stop_name']})")
 
         else:
             return valid_id
@@ -391,7 +400,7 @@ class StopHandler:
             for stop_id, stop_data in self.data.items():
                 # Check if stop was used or (is a part of station and not a stop-child)
                 if stop_id in self.used or (stop_data.get("parent_station") in self.used
-                                            and stop_data.get("location_type") != "1"):
+                                            and stop_data.get("location_type") != "0"):
 
                     # Set the zone_id
                     if not stop_data.get("zone_id"):

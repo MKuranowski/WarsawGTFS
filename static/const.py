@@ -23,6 +23,8 @@ GIST_MISSING_STOPS = _BASE_GIST + "missing_stop_locations.json"
 GIST_RAIL_PLATFORMS = _BASE_GIST + "rail_platforms.json"
 GIST_STOP_NAMES = _BASE_GIST + "stop_names.json"
 
+RAILWAY_MAP = "https://raw.githubusercontent.com/MKuranowski/PLRailMap/master/plrailmap.osm"
+
 URL_METRO_GTFS = "https://mkuran.pl/gtfs/warsaw/metro.zip"
 
 # Logging attrivutes
@@ -37,6 +39,21 @@ ACTIVE_RAIL_STATIONS = {
     "4913", "1910", "1909", "1908", "1907", "1906", "1905", "1904", "1903", "1902", "1901",
     "7903", "5908", "5907", "5904", "5903", "5902", "1913", "1914", "1915",
 }
+
+# Pairs of stops that determine the direction_id of a train.
+# If train calls at pair[0] before pair[1] - it shall have direction_id = 0;
+# else if train calls at pair[1] before pair[0] - it shall have direction_id = 1.
+RAIL_DIRECTION_STOPS = [
+    ("4900", "2900"),  # W-wa Zachodnia      → W-wa Wschodnia
+    ("5902", "7903"),  # W-wa Zachodnia p. 9 → W-wa Gdańska
+    ("4905", "4900"),  # Pruszków            → W-wa Zachodnia  (S1 specific)
+    ("2900", "2904"),  # W-wa Wschodnia      → W-wa Wawer      (S1 specific)
+    ("3901", "2900"),  # W-wa Służewiec      → W-wa Zachodnia  (S2 specific)
+    ("2900", "2910"),  # W-wa Wschodnia      → W-wa Rembertów  (S2 specific)
+    ("7903", "1907"),  # W-wa Gdańska        → Legionowo       (S9 specific)
+    ("2900", "1907"),  # W-wa Wschodnia      → Legionowo       (S3 specific)
+]
+
 
 # GTFS headers
 HEADERS = {
@@ -78,10 +95,11 @@ HEADERS = {
     "trips.txt": [
         "route_id", "service_id", "trip_id", "trip_headsign", "direction_id",
         "shape_id", "exceptional", "wheelchair_accessible", "bikes_allowed",
+        "trip_short_name",
     ],
 
     "stop_times.txt": [
         "trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence",
-        "pickup_type", "drop_off_type", "shape_dist_traveled",
+        "pickup_type", "drop_off_type", "shape_dist_traveled", "platform",
     ],
 }
