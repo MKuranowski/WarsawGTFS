@@ -65,7 +65,7 @@ class PlatformLookupQuery:
     gtfs_time: str
     route: str
     headsign: str
-    train_dates: set[date]
+    train_dates: Set[date]
     calendar_start: date
     is_last: bool
     time: int = 0
