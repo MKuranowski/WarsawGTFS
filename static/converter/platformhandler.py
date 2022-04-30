@@ -32,6 +32,10 @@ STA_NAMES: Dict[str, str] = {
     "7903": "W-wa Gdańska",
     "1907": "Legionowo",
     "2918": "Otwock",
+    "2914": "Sulejówek Miłosna",
+    "1907": "Legionowo",
+    "1908": "Legionowo Piaski",
+    "4905": "Pruszków",
 }
 
 
@@ -217,8 +221,7 @@ class PlatformHandler:
             or self._scored_result(all_entries, query.calendar_start, f_route_id) \
             or self._scored_result(all_entries, query.calendar_start)
 
-    def get_entry(self, query: PlatformLookupQuery) \
-            -> Optional[PlatformEntry]:
+    def get_entry(self, query: PlatformLookupQuery) -> Optional[PlatformEntry]:
         if query.station_id not in STATION_HAFAS_IDS:
             return
 
@@ -241,8 +244,8 @@ class PlatformHandler:
 
         if result is None:
             raise ValueError(
-                f"No matching platform at {STA_NAMES[query.station_id]}, {query.gtfs_time}"
-                f"for a {query.route} train to {query.headsign}"
+                f"No matching platform at {STA_NAMES[query.station_id]}, {query.gtfs_time} "
+                f"for {query.route} train to {query.headsign}"
             )
 
         return result
