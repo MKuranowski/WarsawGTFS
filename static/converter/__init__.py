@@ -224,6 +224,7 @@ class Converter:
                 train_dates=potential_active_dates,
                 calendar_start=self.calendar_start,
                 is_last=stopt is trip.stops[-1],
+                matched_number=trip.train_number,
             ))
 
             if platform_entry:

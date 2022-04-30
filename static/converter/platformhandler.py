@@ -1,10 +1,11 @@
 # cSpell: words hafas
+import logging
 from dataclasses import dataclass
 from datetime import date, timedelta
-import logging
-import requests
 from math import inf
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+
+import requests
 
 ROMAN_TO_INT = {
     "I": "1", "II": "2", "III": "3", "IV": "4", "V": "5",
@@ -56,12 +57,6 @@ class PlatformEntry:
             (self.platform == other.platform or not self.platform or not other.platform)
 
 
-class PlatformEntryKey(NamedTuple):
-    """Key into stored PlatformEntries"""
-    station_id: str
-    time: int
-
-
 @dataclass
 class PlatformLookupQuery:
     """All required data to search for a matching PlatformEntry"""
@@ -72,13 +67,11 @@ class PlatformLookupQuery:
     train_dates: Set[date]
     calendar_start: date
     is_last: bool
+    matched_number: str = ""
     time: int = 0
 
-    def entry_key(self) -> PlatformEntryKey:
-        return PlatformEntryKey(self.station_id, self.time)
 
-
-PlatformEntries = Dict[PlatformEntryKey, List[PlatformEntry]]
+PlatformEntries = Dict[str, Dict[int, List[PlatformEntry]]]
 PlatformFilter = Callable[[PlatformEntry], bool]
 
 
@@ -104,11 +97,15 @@ class PlatformHandler:
             r.raise_for_status()
             data = r.json()
 
-            self.load_entries_into(data["arrivals"], ztm_id, self.arrivals)
-            self.load_entries_into(data["departures"], ztm_id, self.departures)
+            self.departures[ztm_id] = {}
+            self.arrivals[ztm_id] = {}
+
+            self.load_entries_into(data["arrivals"], ztm_id, self.arrivals[ztm_id])
+            self.load_entries_into(data["departures"], ztm_id, self.departures[ztm_id])
 
     @staticmethod
-    def load_entries_into(entries: Any, station_id: str, into: PlatformEntries) -> None:
+    def load_entries_into(entries: Any, station_id: str, into: Dict[int, List[PlatformEntry]]) \
+            -> None:
         for entry in entries:
             # Only care about SKM Warszawa trains
             if entry["number"][:3] != "SKW":
@@ -118,11 +115,8 @@ class PlatformHandler:
             h, _, m = entry["time"].partition(":")
             time = int(h) * 3600 + int(m) * 60
 
-            # Create a key
-            key = PlatformEntryKey(station_id, time)
-
             # Create the entry
-            into.setdefault(key, [])
+            into.setdefault(time, [])
             entry = PlatformEntry(
                 entry["number"].partition(" ")[2],
                 entry["name"],
@@ -133,7 +127,7 @@ class PlatformHandler:
             )
 
             # Check if there's a similar entry - if so, merge the `dates` attribute
-            for idx, existing_entry in enumerate(into[key]):
+            for idx, existing_entry in enumerate(into[time]):
                 if existing_entry.is_similar(entry):
                     # A similar entry is found.
                     # Some magic to handle merging of the `dates` attributes
@@ -154,7 +148,7 @@ class PlatformHandler:
 
             else:
                 # No similar entry - just insert it
-                into[key].append(entry)
+                into[time].append(entry)
 
     @staticmethod
     def _has_entry(entries: List[PlatformEntry]) -> Tuple[bool, Optional[PlatformEntry]]:
@@ -187,6 +181,35 @@ class PlatformHandler:
         filtered = [entry for entry in entries if all(filter(entry) for filter in filters)]
         return min(filtered, key=calculate_entry_score) if filtered else None
 
+    @staticmethod
+    def _inexact_result(entries: Dict[int, List[PlatformEntry]], query: PlatformLookupQuery) \
+            -> Optional[PlatformEntry]:
+        # This method is meant to catch weird edge case where the time between platform data
+        # is not exactly the same as the time in ZTM data.
+        # Matching however relies on having the train number.
+        if not query.matched_number:
+            return None
+
+        # Find matching platform_entries for the train number
+        entries_with_the_same_number = [
+            entry
+            for entries_at_time in entries.values()
+            for entry in entries_at_time
+            if entry.number == query.matched_number
+        ]
+
+        if not entries_with_the_same_number:
+            return None
+
+        if len(entries_with_the_same_number) == 1:
+            return entries_with_the_same_number[0]
+
+        # Last resort - filter by operating dates
+        f_dates: PlatformFilter = \
+            lambda i: i.dates is None or bool(i.dates.intersection(query.train_dates))
+        return PlatformHandler._scored_result(entries_with_the_same_number, query.calendar_start,
+                                              f_dates)
+
     def do_get_entry(self, query: PlatformLookupQuery, dep: bool) -> Optional[PlatformEntry]:
         # We extract all the possible entries, then try to narrow down the possibilities, with
         # the following filters:
@@ -195,14 +218,20 @@ class PlatformHandler:
         # 3. route_id & headsign
         # 4. route_id & headsign & operating_dates
         # 5. route_id & operating_dates
-
+        #
         # If those filters still didn't provide a single match, we try to select
         # an entry closest to calendar_start.
         # This is done on the outputs of the previous steps, in the following order:
         # 1. route_id & headsign & operating_dates
         # 2. route_id & headsign
         # 3. route_id
-        all_entries = (self.departures if dep else self.arrivals).get(query.entry_key(), [])
+        #
+        # However, there are still some edge cases where we get no matches,
+        # due to off-by-one errors in time (e.g. ZTM would publish 24:00:00,
+        # but PKP publishes 23:59). As a last resort, we filter by the following keys:
+        # 1. trip_short_name & abs(ztm.time - platform.time) < 5 mins
+        entries_at_station = (self.departures if dep else self.arrivals).get(query.station_id, {})
+        all_entries = entries_at_station.get(query.time, [])
 
         f_route_id: PlatformFilter = lambda i: i.route == query.route or not i.route
         f_headsign: PlatformFilter = lambda i: i.headsign == query.headsign
@@ -219,7 +248,8 @@ class PlatformHandler:
                                    f_dates) \
             or self._scored_result(all_entries, query.calendar_start, f_route_id, f_headsign) \
             or self._scored_result(all_entries, query.calendar_start, f_route_id) \
-            or self._scored_result(all_entries, query.calendar_start)
+            or self._scored_result(all_entries, query.calendar_start) \
+            or self._inexact_result(entries_at_station, query)
 
     def get_entry(self, query: PlatformLookupQuery) -> Optional[PlatformEntry]:
         if query.station_id not in STATION_HAFAS_IDS:
