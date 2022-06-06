@@ -129,8 +129,7 @@ class Converter:
 
     # Route data converters
 
-    @staticmethod
-    def _reconcile_train_numbers(trip: ZTMTrip, new_number: str) -> None:
+    def _reconcile_train_numbers(self, trip: ZTMTrip, new_number: str) -> None:
         if not trip.train_number:
             # Fresh train number, nothing really there
             trip.train_number = new_number
@@ -151,10 +150,14 @@ class Converter:
                 # The numbers should differ by one, and the bigger should be odd
                 numbers = [int(trip.train_number), int(new_number)]
                 numbers.sort()
-                assert numbers[0] % 2 == 0
-                assert numbers[0] + 1 == numbers[1]
 
-                trip.train_number = f"{numbers[0]}/{numbers[1] % 10}"
+                if numbers[0] % 2 == 0 or numbers[0] + 1 == numbers[1]:
+                    trip.train_number = f"{numbers[0]}/{numbers[1] % 10}"
+                else:
+                    self.logger.warn(
+                        f"Trip {trip.id} has incompatible train number matches: {numbers}"
+                    )
+
 
     @staticmethod
     def _normalize_train_direction(trip: ZTMTrip) -> Literal["0", "1"]:
