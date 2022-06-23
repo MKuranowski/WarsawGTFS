@@ -110,7 +110,7 @@ class Parser:
         Skips to next PR section and parses data from there.
         Yields ZTMStop objects.
         """
-        regexp = re.compile(r"(\d{4})(\d{2}).+Y=\s?([0-9Yy.]+)\s+X=\s?([0-9Xx.]+)"
+        regexp = re.compile(r"(\d{4})(\d{2}).+Y=\s*([0-9Yy.]+)\s+X=\s*([0-9Xx.]+)"
                             r"(?:\s+Pu=([0-9?]))?")
         self.skip_to_section("PR")
 
