@@ -158,7 +158,6 @@ class Converter:
                         f"Trip {trip.id} has incompatible train number matches: {numbers}"
                     )
 
-
     @staticmethod
     def _normalize_train_direction(trip: ZTMTrip) -> Literal["0", "1"]:
         station_to_idx = {stoptime.stop[:4]: idx for idx, stoptime in enumerate(trip.stops)}
