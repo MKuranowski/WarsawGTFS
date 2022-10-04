@@ -206,8 +206,9 @@ class Shaper:
                 # Iterate over every stop_position
                 for element in resp.json()["elements"]:
                     stop_ref = element.get("tags", {}).get("ref")
+                    no_bus = element.get("tags", {}).get("bus") == "no"
 
-                    if stop_ref:
+                    if stop_ref and not no_bus:
                         self.bus_cached_stop_lookup[stop_ref] = element["id"]
 
             # Cache stop_lookup
