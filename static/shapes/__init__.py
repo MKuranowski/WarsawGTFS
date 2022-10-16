@@ -11,8 +11,8 @@ from pyroutelib3 import Router, distHaversine
 
 from ..const import DIR_SHAPE_ERR, HEADERS
 from ..util import CsvWriter, ensure_dir_exists
-from .const import (BUS_ROUTER_SETTINGS, GIST_FORCE_VIA, GIST_OVERRIDE_RATIOS,
-                    OVERPASS_BUS_GRAPH, OVERPASS_STOPS_JSON, URL_OVERPASS,
+from .const import (BUS_ROUTER_SETTINGS, GIST_EXCLUDE_IDS, GIST_FORCE_VIA, GIST_OVERRIDE_RATIOS,
+                    OVERPASS_BUS_GRAPH, OVERPASS_EXCLUDED_WAY_IDS, OVERPASS_STOPS_JSON, URL_OVERPASS,
                     URL_TRAM_TRAIN_GRAPH)
 from .helpers import (_Pt, cache_retr, cache_save, simplify_line, time_limit,
                       total_length)
@@ -20,6 +20,11 @@ from .kdtree import KDTree
 
 # cSpell: words kdtree retr rnodes
 
+def get_excluded_ids() -> List[str]:
+    """Gets way ids that should be excluded from the graph"""
+    with requests.get(GIST_EXCLUDE_IDS) as req:
+        req.raise_for_status()
+        return [i["id"] for i in req.json()]
 
 def get_force_via() -> Dict[Tuple[str, str], Tuple[float, float]]:
     """Gets via points for some shapes between given stops"""
@@ -46,6 +51,7 @@ class Shaper:
         self.logger = getLogger("WarsawGTFS.Shaper")
 
         # External data
+        self.excluded_ids = get_excluded_ids()
         self.override_ratios = get_override_ratios()
         self.force_via = get_force_via()
 
@@ -131,7 +137,8 @@ class Shaper:
             buffer = io.BytesIO()
 
             # Make query to Overpass
-            with requests.get(URL_OVERPASS, params={"data": OVERPASS_BUS_GRAPH}) as resp:
+            overpass_request = OVERPASS_BUS_GRAPH.replace(OVERPASS_EXCLUDED_WAY_IDS, ", ".join(self.excluded_ids))
+            with requests.get(URL_OVERPASS, params={"data": overpass_request}) as resp:
                 resp.raise_for_status()
                 for chunk in resp.iter_content(1024 * 16):
                     buffer.write(chunk)

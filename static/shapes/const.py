@@ -1,6 +1,7 @@
 from ..const import _BASE_GIST
 
 # Shape-generation external data
+GIST_EXCLUDE_IDS = _BASE_GIST + "excluded_way_ids.json"
 GIST_OVERRIDE_RATIOS = _BASE_GIST + "shapes_override_ratios.json"
 GIST_FORCE_VIA = _BASE_GIST + "shapes_force_via.json"
 
@@ -29,8 +30,11 @@ _OVERPASS_QUERY_BOUND_POLY = " ".join([
     "52.4898 21.1421", "52.4934 20.9234"
 ])
 
+OVERPASS_EXCLUDED_WAY_IDS = "OVERPASS_EXCLUDED_WAY_IDS"
+
 OVERPASS_BUS_GRAPH = f'''
 [bbox:51.9144,20.4438,52.5007,21.4844][out:xml];
+way(id: {OVERPASS_EXCLUDED_WAY_IDS})->.excluded;
 (
     way["highway"="motorway"];
     way["highway"="motorway_link"];
@@ -49,6 +53,7 @@ OVERPASS_BUS_GRAPH = f'''
     way["highway"="service"];
 );
 way._(poly:"{_OVERPASS_QUERY_BOUND_POLY}");
+(._; - .excluded;)->._;
 >->.n;
 <->.r;
 (._;.n;.r;);
