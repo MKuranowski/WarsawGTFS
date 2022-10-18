@@ -94,5 +94,47 @@
     "to": "127709",
     "via": [52.3185531, 20.9522898],
     "comment": "314 for Tarchomin"
+  },
+  {
+    "from": "114603",
+    "to": "114902",
+    "via": [52.29401, 21.04852],
+    "comment": "Metro Kondratowicza 03 to Knapika 02 via Malborska"
+  },
+  {
+    "from": "114603",
+    "to": "117902",
+    "via": [52.29401, 21.04852],
+    "comment": "Metro Kondratowicza 03 to CH Targówek 02 via Malborska"
+  },
+  {
+    "from": "114901",
+    "to": "114602",
+    "via": [52.29401, 21.04852],
+    "comment": "Knapika 01 to Metro Kondratowicza 02 via Malborska"
+  },
+  {
+    "from": "147202",
+    "to": "123404",
+    "via": [52.30414, 21.08082],
+    "comment": "112 for CH Marki 04 via main road"
+  },
+  {
+    "from": "123404",
+    "to": "123403",
+    "via": [52.30431, 21.08287],
+    "comment": "112 for CH Marki 03 via main road"
+  },
+  {
+    "from": "434701",
+    "to": "401801",
+    "via": [52.0914, 20.81197],
+    "comment": "733 for Stoicka 01 via S8 Nadarzyn junction"
+  },
+  {
+    "from": "405501",
+    "to": "405301",
+    "via": [52.1207, 20.8685],
+    "comment": "703, 711 for Janki Małe 01 via viaduct over S7/S8 junction"
   }
 ]
