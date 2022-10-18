@@ -26,7 +26,7 @@ class CsvWriter(Protocol):
 @dataclass
 class ConversionOpts:
     """Toggles for the whole conversion process"""
-    __slots__ = ("target", "sync_time", "pub_name", "pub_url", "metro", "shapes")
+    __slots__ = ("target", "sync_time", "pub_name", "pub_url", "metro", "shapes", "simplify")
 
     target: str     # Where to put the created .zip file
     sync_time: str  # Time when data was downloaded (for attributions.txt)
@@ -34,6 +34,7 @@ class ConversionOpts:
     pub_url: str    # value for feed_publisher_url
     metro: bool     # whether to add metro schedules
     shapes: bool    # whether to generate shapes
+    simplify: bool  # whether to simplify generated shapes
 
 
 def normal_time(time: str, lessthen24: bool = False) -> str:

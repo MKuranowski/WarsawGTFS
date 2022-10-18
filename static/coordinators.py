@@ -55,7 +55,7 @@ def make_multiple(
         if opts.shapes:
             # Clear shape errors
             ensure_dir_exists(DIR_SHAPE_ERR, True)
-            shaper = Shaper()
+            shaper = Shaper(opts.simplify)
         else:
             shaper = None
 

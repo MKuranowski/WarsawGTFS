@@ -29,6 +29,12 @@ if __name__ == "__main__":
         "--shapes",
         action="store_true",
         help="generate shapes.txt for all trips")
+    
+    argprs.add_argument(
+        "-ns",
+        "--no-simplification",
+        action="store_true",
+        help="disable shape simplification (only valid with -s)")
 
     argprs.add_argument(
         "-d",
@@ -114,7 +120,8 @@ if __name__ == "__main__":
         pub_name=args.publisher_name,
         pub_url=args.publisher_url,
         metro=args.metro,
-        shapes=args.shapes
+        shapes=args.shapes,
+        simplify=not args.no_simplification
     )
 
     # Create GTFS
