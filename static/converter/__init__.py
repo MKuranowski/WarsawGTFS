@@ -476,7 +476,7 @@ class Converter:
                 if shaper_obj is None:
                     # Clear shape errors
                     ensure_dir_exists(DIR_SHAPE_ERR, True)
-                    shaper_obj = Shaper()
+                    shaper_obj = Shaper(opts.simplify_shapes)
                 shaper_obj.open(target_dir, clear_shape_errors)
             else:
                 shaper_obj = None
