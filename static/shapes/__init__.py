@@ -42,7 +42,7 @@ def get_override_ratios() -> Dict[Tuple[str, str], float]:
 
 
 class Shaper:
-    def __init__(self, simplify: bool) -> None:
+    def __init__(self, simplify: bool = True) -> None:
         self.simplify = simplify
         self.logger = getLogger("WarsawGTFS.Shaper")
 
@@ -385,7 +385,7 @@ class Shaper:
             status = too_long_msg
 
         # Simplify route using the RDP formula
-        if (self.simplify):
+        if self.simplify:
             route = simplify_line(route, 0.000006)
 
         # Dump shape generation errors
