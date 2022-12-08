@@ -168,7 +168,7 @@ class Converter:
             if sta1_idx is not None and sta2_idx is not None:
                 return "0" if sta2_idx > sta1_idx else "1"
 
-        raise ValueError(f"Unable to normalize train's direction id ({trip.id}")
+        raise ValueError(f"Unable to normalize train's direction id ({trip.id})")
 
     def _reset_route_vars(self) -> None:
         """Resets per-route variables"""

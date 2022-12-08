@@ -48,7 +48,7 @@ RAIL_DIRECTION_STOPS = [
     ("5902", "7903"),  # W-wa Zachodnia p. 9 → W-wa Gdańska
     ("4905", "4900"),  # Pruszków            → W-wa Zachodnia  (S1 specific)
     ("2900", "2904"),  # W-wa Wschodnia      → W-wa Wawer      (S1 specific)
-    ("3901", "2900"),  # W-wa Służewiec      → W-wa Zachodnia  (S2 specific)
+    ("3901", "4900"),  # W-wa Służewiec      → W-wa Zachodnia  (S2 specific)
     ("2900", "2910"),  # W-wa Wschodnia      → W-wa Rembertów  (S2 specific)
     ("7903", "1907"),  # W-wa Gdańska        → Legionowo       (S9 specific)
     ("2900", "1907"),  # W-wa Wschodnia      → Legionowo       (S3 specific)
