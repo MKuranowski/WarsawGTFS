@@ -39,6 +39,14 @@ STA_NAMES: Dict[str, str] = {
     "4905": "Pruszków",
 }
 
+# station_id, headsign -> platform
+FALLBACK_PLATFORMS: Dict[Tuple[str, str], str] = {
+    ("2918", "warszawawschodnia"): "2",
+    ("2918", "otwock"): "2",
+    ("2900", "warszawawschodnia"): "6",
+    ("2900", "otwock"): "7",
+}
+
 
 _logger = logging.getLogger("WarsawGTFS.Platforms")
 
@@ -272,6 +280,23 @@ class PlatformHandler:
         # Make the query
         result = self.do_get_entry(query, dep=not query.is_last)
 
+        # Try to use the fallback entry
+        if result is None and (query.station_id, query.headsign) in FALLBACK_PLATFORMS:
+            fallback_platform = FALLBACK_PLATFORMS[query.station_id, query.headsign]
+            _logger.error(
+                f"No matching platform at {STA_NAMES[query.station_id]}, {query.gtfs_time} "
+                f"for {query.route} train to {query.headsign} - "
+                f"using {fallback_platform} as a fallback"
+            )
+            result = PlatformEntry(
+                number="",
+                route=query.route,
+                headsign="",
+                platform=fallback_platform,
+                dates=None,
+            )
+
+        # If the result is still None - throw an error
         if result is None:
             raise ValueError(
                 f"No matching platform at {STA_NAMES[query.station_id]}, {query.gtfs_time} "

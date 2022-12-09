@@ -231,10 +231,11 @@ class Converter:
 
             if platform_entry:
                 stopt.platform = platform_entry.platform
-                self._reconcile_train_numbers(trip, platform_entry.number)
+                if platform_entry.number:
+                    self._reconcile_train_numbers(trip, platform_entry.number)
 
         if not trip.train_number:
-            raise ValueError(f"No train number for: {trip.id}")
+            self.logger.error(f"No train number for: {trip.id}")
 
     def _get_variants(self) -> None:
         """Loads data about variants of a route. Exhausts self.parse.parse_tr."""
