@@ -406,8 +406,7 @@ class Converter:
 
             # Ignore Koleje Mazowieckie & Warszawska Kolej Dojazdowa routes
             if self.route_id.startswith("R") or self.route_id.startswith("WKD"):
-                self.parser.skip_to_section("WK", end=True)
-                continue
+                raise ValueError(f"Unexpected non-ZTM railway route: {self.route_id}")
 
             self.routes.append(self.route_id)
             self.logger.debug(f"Parsing schedules (LL) - {self.route_id}")

@@ -31,15 +31,6 @@ URL_METRO_GTFS = "https://mkuran.pl/gtfs/warsaw/metro.zip"
 LOGGING_STYLE = "{"
 LOGGING_FMT = "[{levelname}] {name}: {message}"
 
-# List of rail stops used by S× lines. Other rail stops are ignored.
-ACTIVE_RAIL_STATIONS = {
-    "4900", "4901", "7900", "7901", "7902", "2901", "2900", "2918", "2917", "2916", "2915",
-    "2909", "2908", "2907", "2906", "2905", "2904", "2903", "2902", "4902", "4903", "4923",
-    "4904", "4905", "2914", "2913", "2912", "2911", "2910", "4919", "3901", "4918", "4917",
-    "4913", "1910", "1909", "1908", "1907", "1906", "1905", "1904", "1903", "1902", "1901",
-    "7903", "5908", "5907", "5904", "5903", "5902", "1913", "1914", "1915",
-}
-
 # Pairs of stops that determine the direction_id of a train.
 # If train calls at pair[0] before pair[1] - it shall have direction_id = 0;
 # else if train calls at pair[1] before pair[0] - it shall have direction_id = 1.

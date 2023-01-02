@@ -9,8 +9,7 @@ from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
 
 import requests
 
-from ..const import (ACTIVE_RAIL_STATIONS, GIST_MISSING_STOPS, GIST_STOP_NAMES,
-                     HEADERS, RAILWAY_MAP)
+from ..const import GIST_MISSING_STOPS, GIST_STOP_NAMES, HEADERS, RAILWAY_MAP
 from ..parser.dataobj import ZTMStop, ZTMStopGroup
 from .rail_stations import RailwayStation, RailwayStationLoader
 
@@ -208,12 +207,6 @@ class StopHandler:
     def _load_railway_group(self, group_id: str, group_name: str,
                             virtual_stops: List[ZTMStop]) -> None:
         """Saves data about a stop group representing a railway station"""
-        # Nop KM & WKD stations
-        if group_id not in ACTIVE_RAIL_STATIONS:
-            for i in virtual_stops:
-                self.change[i.id] = None
-            return
-
         # Load station info
         station = self.rail_platforms.get(group_id)
 
