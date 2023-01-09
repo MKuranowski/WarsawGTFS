@@ -45,6 +45,7 @@ FALLBACK_PLATFORMS: Dict[Tuple[str, str], str] = {
     ("2918", "otwock"): "2",
     ("2900", "warszawawschodnia"): "6",
     ("2900", "otwock"): "7",
+    ("4905", "pruszków"): "1",
 }
 
 
