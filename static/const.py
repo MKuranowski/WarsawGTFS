@@ -43,6 +43,8 @@ RAIL_DIRECTION_STOPS = [
     ("2900", "2910"),  # W-wa Wschodnia      → W-wa Rembertów  (S2 specific)
     ("7903", "1907"),  # W-wa Gdańska        → Legionowo       (S9 specific)
     ("2900", "1907"),  # W-wa Wschodnia      → Legionowo       (S3 specific)
+    ("7903", "1905"),  # W-wa Gdańska        → W-wa Płudy      (S3 specific)
+    ("1907", "1910"),  # Legionowo           → Wieliszew       (S30 specific)
 ]
 
 
