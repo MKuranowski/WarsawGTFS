@@ -1,6 +1,6 @@
 module github.com/MKuranowski/WarsawGTFS
 
-go 1.17
+go 1.19
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown v1.3.6
