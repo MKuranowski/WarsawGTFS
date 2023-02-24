@@ -10,9 +10,10 @@ import (
 	"sync"
 	"time"
 
-	util "github.com/MKuranowski/WarsawGTFS/realtime/util"
+	"github.com/MKuranowski/WarsawGTFS/realtime/util"
 	gtfsrt "github.com/MobilityData/gtfs-realtime-bindings/golang/gtfs"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/proto"
 )
 
 // Alert contains an internal representation of an alert, which is also marshallable to JSON
@@ -234,29 +235,20 @@ func (ac *AlertContainer) SaveJSON(target string) (err error) {
 
 // SavePB marshalls the container into a GTFS-Realtime protocol buffer file
 func (ac *AlertContainer) SavePB(target string, humanReadable bool) (err error) {
-	// Open target file
-	f, err := os.Create(target)
+	// Marshall to GTFS-RT
+	var b []byte
+	if humanReadable {
+		b, err = prototext.Marshal(ac.AsProto())
+	} else {
+		b, err = proto.Marshal(ac.AsProto())
+	}
+
+	// Check for marshall errors
 	if err != nil {
 		return
 	}
-	defer f.Close()
 
-	// Marshall to GTFS-RT
-	if humanReadable {
-		// Human-readable format
-		err = proto.MarshalText(f, ac.AsProto())
-		if err != nil {
-			return
-		}
-	} else {
-		// Binary format
-		var b []byte
-		b, err = proto.Marshal(ac.AsProto())
-		if err != nil {
-			return
-		}
-		f.Write(b)
-	}
-
+	// Write to target file
+	err = os.WriteFile(target, b, 0o666)
 	return
 }

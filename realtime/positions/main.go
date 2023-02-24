@@ -3,7 +3,7 @@ package positions
 // cSpell: words cenkalti
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -11,12 +11,6 @@ import (
 	"github.com/MKuranowski/WarsawGTFS/realtime/util"
 	"github.com/cenkalti/backoff/v4"
 )
-
-// CalculateLastStopTime sets the LastStopTime object on a brigadeEntry
-func (b brigadeEntry) SetLastStopTime() (err error) {
-	b.LastStopTime, err = newCompareTimeFromGtfs(b.LastStopTimepoint)
-	return
-}
 
 // Options represent options for creating positions GTFS-Realtime
 type Options struct {
@@ -110,7 +104,7 @@ func (rr *brigadesResource) Update() error {
 		defer newData.Close()
 
 		// Read brigades.json
-		rawData, err := ioutil.ReadAll(newData)
+		rawData, err := io.ReadAll(newData)
 		if err != nil {
 			return err
 		}

@@ -2,7 +2,7 @@ package alerts
 
 import (
 	"encoding/xml"
-	"io/ioutil"
+	"io"
 
 	"github.com/MKuranowski/WarsawGTFS/realtime/util"
 )
@@ -65,7 +65,7 @@ func getRss(client exclusiveHTTPClient, url string, assignItemType string) (*rss
 	}
 
 	// Read the response
-	content, err := ioutil.ReadAll(resp.Body)
+	content, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

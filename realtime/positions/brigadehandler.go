@@ -2,8 +2,9 @@ package positions
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/MKuranowski/WarsawGTFS/realtime/util"
@@ -34,7 +35,7 @@ func readURL(client *http.Client, url string) (buff []byte, err error) {
 	}
 
 	// Read the content
-	buff, err = ioutil.ReadAll(resp.Body)
+	buff, err = io.ReadAll(resp.Body)
 	return
 }
 
@@ -74,7 +75,7 @@ func loadBrigades(source string, client *http.Client) (m map[string][]*brigadeEn
 	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
 		dataRaw, err = readURL(client, source)
 	} else {
-		dataRaw, err = ioutil.ReadFile(source)
+		dataRaw, err = os.ReadFile(source)
 	}
 
 	if err != nil {

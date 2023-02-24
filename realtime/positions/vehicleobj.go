@@ -2,13 +2,13 @@ package positions
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"time"
 
 	"github.com/MKuranowski/WarsawGTFS/realtime/util"
 	gtfsrt "github.com/MobilityData/gtfs-realtime-bindings/golang/gtfs"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/proto"
 )
 
 // Vehicle is an object for representing a single vehicle position
@@ -221,7 +221,7 @@ func (vc *VehicleContainer) SaveJSON(target string) (err error) {
 		return
 	}
 
-	err = ioutil.WriteFile(target, buff, 0o666)
+	err = os.WriteFile(target, buff, 0o666)
 	return
 }
 
@@ -237,30 +237,21 @@ func (vc *VehicleContainer) AsProto() *gtfsrt.FeedMessage {
 
 // SavePB marshalls the container into a GTFS-Realtime protocol buffer file
 func (vc *VehicleContainer) SavePB(target string, humanReadable bool) (err error) {
-	// Open target file
-	f, err := os.Create(target)
+	// Marshall to GTFS-RT
+	var b []byte
+	if humanReadable {
+		b, err = prototext.Marshal(vc.AsProto())
+	} else {
+		b, err = proto.Marshal(vc.AsProto())
+	}
+
+	// Check for marshall errors
 	if err != nil {
 		return
 	}
-	defer f.Close()
 
-	// Marshall to GTFS-RT
-	if humanReadable {
-		// Human-readable format
-		err = proto.MarshalText(f, vc.AsProto())
-		if err != nil {
-			return
-		}
-	} else {
-		// Binary format
-		var b []byte
-		b, err = proto.Marshal(vc.AsProto())
-		if err != nil {
-			return
-		}
-		f.Write(b)
-	}
-
+	// Write to target file
+	err = os.WriteFile(target, b, 0o666)
 	return
 }
 

@@ -3,7 +3,7 @@ package positions
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -66,7 +66,7 @@ func (api *VehicleAPI) Get(apiVehType string) ([]*APIVehicleEntry, error) {
 	}
 
 	// Read the response
-	respRaw, err := ioutil.ReadAll(resp.Body)
+	respRaw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
