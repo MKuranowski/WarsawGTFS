@@ -24,6 +24,7 @@ STATION_HAFAS_IDS: Dict[str, str] = {
     "1907": "5101981",  # Legionowo
     "1908": "5100323",  # Legionowo-Piaski
     "4905": "5100330",  # Pruszkow
+    "3901": "5104157",  # Warszawa Sluzewiec
 }
 
 STA_NAMES: Dict[str, str] = {
