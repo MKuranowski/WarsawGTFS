@@ -50,6 +50,8 @@ RAIL_DIRECTION_STOPS = [
     ("3901", "4917"),  # W-wa Służewiec      → W-wa Rakowiec   (S2+S4 specific)
 ]
 
+RAIL_STATION_ID_MIDDLES = frozenset({"90", "91", "92", "93"})
+
 
 # GTFS headers
 HEADERS = {

@@ -9,7 +9,8 @@ from typing import (Any, Callable, Dict, Iterable, List, Optional, Sequence,
 
 import requests
 
-from ..const import GIST_MISSING_STOPS, GIST_STOP_NAMES, HEADERS, RAILWAY_MAP
+from ..const import (GIST_MISSING_STOPS, GIST_STOP_NAMES, HEADERS,
+                     RAIL_STATION_ID_MIDDLES, RAILWAY_MAP)
 from ..parser.dataobj import ZTMStop, ZTMStopGroup
 from .rail_stations import RailwayStation, RailwayStationLoader
 
@@ -48,7 +49,7 @@ def should_town_be_added_to_name(group: ZTMStopGroup) -> bool:
     # List of conditions that, if true, mean town name shouldn't be added
     do_not_add_conditions: Set[Callable[[ZTMStopGroup], bool]] = {
         lambda g: g.town_code == "--",  # Stops in Warsaw
-        lambda g: g.id[1:3] in {"90", "91", "92"},  # Railway stations
+        lambda g: g.id[1:3] in RAIL_STATION_ID_MIDDLES,  # Railway stations
         lambda g: "PKP" in g.name,  # Stops near train stations
         lambda g: "WKD" in g.name,  # Stops near WKD stations
         lambda g: g.town.casefold() in g.name.casefold(),  # Town name is already in stop name
@@ -305,7 +306,7 @@ class StopHandler:
         self._find_missing_positions(stops)
 
         # Parse stakes
-        if group.id[1:3] in {"90", "91", "92"}:
+        if group.id[1:3] in RAIL_STATION_ID_MIDDLES:
             self._load_railway_group(group.id, group.name, stops)
 
         else:
@@ -339,7 +340,7 @@ class StopHandler:
             return None
 
         elif valid_id not in self.data:
-            assert valid_id[1:3] in {"90", "91", "92"}, \
+            assert valid_id[1:3] in RAIL_STATION_ID_MIDDLES, \
                 "not loaded stakes should only happen for railway stations"
 
             raise ValueError(f"Unmapped ZTM code {valid_id} at a railway station "
