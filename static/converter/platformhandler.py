@@ -42,6 +42,7 @@ STA_NAMES: Dict[str, str] = {
 
 # station_id, headsign -> platform
 FALLBACK_PLATFORMS: Dict[Tuple[str, str], str] = {
+    ("4900", "piaseczno"): "",
     ("2918", "warszawawschodnia"): "2",
     ("2918", "otwock"): "2",
     ("2900", "warszawawschodnia"): "6",
