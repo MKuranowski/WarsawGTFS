@@ -50,6 +50,8 @@ FALLBACK_PLATFORMS: Dict[Tuple[str, str], str] = {
     ("4905", "pruszków"): "1",
     ("2918", "warszawawawer"): "1",
     ("2914", "sulejówekmiłosna"): "2",
+    ("1908", "piaseczno"): "1",
+    ("1907", "piaseczno"): "",
 }
 
 
