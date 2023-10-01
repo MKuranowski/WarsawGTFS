@@ -49,7 +49,7 @@ Produced GTFS feed has additional columns not included in standard GTFS specific
 ## Realtime GTFS script
 
 These scripts are written in [go](https://golang.org/) and as such require the `go` command to be available.
-You can run the main `warsawgtfs_realtime.go` script with `go run warsawgtfs_realtime.go` or by compiling it first with `go build`.
+You can run the main `warsawgtfs_realtime.go` script with `go run warsawgtfs_realtime.go` or by compiling it first with `go build warsawgtfs_realtime.go`.
 
 There are several dependencies required by this project, all listed in the `go.mod` file.
 AFAIK they should be downloaded automatically when running/compiling the project.
