@@ -282,6 +282,8 @@ class StopHandler:
             for unmatched_stake in unmatched_stakes:
                 self.change[unmatched_stake] = unknown_platform_id
 
+            self.parents[unknown_platform_id] = group_id
+
     def load_group(self, group: ZTMStopGroup, stops: List[ZTMStop]) -> None:
         """Loads info about stops of a specific group"""
         # Fix name "Kampinoski Pn" town name
