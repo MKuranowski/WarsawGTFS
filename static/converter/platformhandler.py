@@ -38,11 +38,11 @@ STA_NAMES: Dict[str, str] = {
     "1907": "Legionowo",
     "1908": "Legionowo Piaski",
     "4905": "Pruszków",
+    "3901": "W-wa Służewiec",
 }
 
 # station_id, headsign -> platform
 FALLBACK_PLATFORMS: Dict[Tuple[str, str], str] = {
-    ("4900", "piaseczno"): "",
     ("2918", "warszawawschodnia"): "2",
     ("2918", "otwock"): "2",
     ("2900", "warszawawschodnia"): "6",
@@ -51,7 +51,6 @@ FALLBACK_PLATFORMS: Dict[Tuple[str, str], str] = {
     ("2918", "warszawawawer"): "1",
     ("2914", "sulejówekmiłosna"): "2",
     ("1908", "piaseczno"): "1",
-    ("1907", "piaseczno"): "",
 }
 
 
@@ -305,7 +304,7 @@ class PlatformHandler:
 
         # If the result is still None - throw an error
         if result is None:
-            raise ValueError(
+            _logger.error(
                 f"No matching platform at {STA_NAMES[query.station_id]}, {query.gtfs_time} "
                 f"for {query.route} train to {query.headsign}"
             )
