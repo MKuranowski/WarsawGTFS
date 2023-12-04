@@ -87,8 +87,8 @@ class RailwayStationLoader(SAXContentHandler):
         handler = cls()
 
         # Load the file
-        with open(path, "rb") as stream:
-            sax_parse(stream, handler)
+
+        sax_parse(path, handler)
 
         # Post-process platforms
         stations_with_missing_platforms: list[str] = []

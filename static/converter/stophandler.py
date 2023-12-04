@@ -95,7 +95,7 @@ def get_rail_platforms() -> Dict[str, RailwayStation]:
 
         # Load the data
         f.seek(0)
-        return RailwayStationLoader.load_all(f.name)
+        return RailwayStationLoader.load_all(f)
 
 
 @lru_cache(maxsize=None)
