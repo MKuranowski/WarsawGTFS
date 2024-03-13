@@ -8,7 +8,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/microcosm-cc/bluemonday v1.0.22
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.33.0
 )
 
 require (
