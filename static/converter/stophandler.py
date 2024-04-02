@@ -115,6 +115,7 @@ class StopHandler:
         self.data: Dict[str, Dict[str, Any]] = {}
         self.parents: Dict[str, str] = {}
         self.zones: Dict[str, str] = {}
+        self.single_platform_stations: Dict[str, str] = {}
 
         # Invalid stop data
         self.invalid: Dict[str, ZTMStop] = {}
@@ -261,6 +262,7 @@ class StopHandler:
         # Special rule to match all stakes to a sole platform
         if len(station.platforms) == 1:
             sole_platform_id = f"{group_id}p{station.platforms[0].name}"
+            self.single_platform_stations[group_id] = sole_platform_id
             for ztm_stake in virtual_stops:
                 unmatched_stakes.discard(ztm_stake.id)
                 self.change[ztm_stake.id] = sole_platform_id
@@ -323,9 +325,17 @@ class StopHandler:
         if original_id is None:
             return None
 
+        group_id = original_id[:4]
+
+        # Special case for single-platform railway stations.
+        # This case precedes explicit railway platforms to fix invalid known_railway_platform.
+        # Sometime, at Pruszków, known_railway_platform is "2", even though Pruszków station
+        # contains exactly one platform ("1").
+        if (single_platform_id := self.single_platform_stations.get(group_id)):
+            return single_platform_id
+
         # Special case for explicit railway platforms
         if known_railway_platform:
-            group_id = original_id[:4]
             platform_id = f"{group_id}p{known_railway_platform}"
             if platform_id not in self.data:
                 raise ValueError(f"Missing platform {known_railway_platform!r} at station"
