@@ -41,6 +41,7 @@ RAIL_DIRECTION_STOPS = [
     ("2900", "2904"),  # W-wa Wschodnia      → W-wa Wawer      (S1 specific)
     ("2904", "2909"),  # W-wa Wawer          → W-wa Falenica   (S1 specific)
     ("2909", "2918"),  # W-wa Falenica       → Otwock          (S1 specific)
+    ("2916", "2918"),  # Józefów             → Otwock          (S1 specific)
     ("3901", "4900"),  # W-wa Służewiec      → W-wa Zachodnia  (S2+S4 specific)
     ("2900", "2910"),  # W-wa Wschodnia      → W-wa Rembertów  (S2 specific)
     ("7903", "1907"),  # W-wa Gdańska        → Legionowo       (S9 specific)
