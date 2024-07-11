@@ -99,6 +99,26 @@ This mode is enabled by the `-p` command line flag. Here are all available optio
 - `-loop DURATION`: if positive (e.g. `30s`), updates the files every DURATION. defaults to `0s`, loop mode disabled.
 - `-checkdata DURATION`: when in loop-mode, decides how often should the `-brigades-file` be checked for changes. defaults to `30m`.
 
+## Docker
+There is supported dockerization of generate Warsaw GTFS file.
+
+Create a Docker image from a Dockerfile located in the current directory with command below
+
+```
+docker build -t warsaw-gtfs .
+```
+
+* `docker build`: This is the command to build a Docker image from a Dockerfile. The docker build command reads the Dockerfile in the specified location and assembles a Docker image according to its instructions.
+* `-t warsaw-gtfs`: The -t flag is used to tag the image with a name. In this case, the image is being tagged with the name warsaw-gtfs. Tags are used to identify images, and they typically include a name and optionally a version or other identifier (e.g., warsaw-gtfs:latest).
+
+Create and start a new container from the warsaw-gtfs Docker image, with a specific volume mount.
+```
+docker run -v $(pwd)/gtfs:/app/gtfs warsaw-gtfs 
+```
+
+* `docker run`: This command creates and starts a new container from a specified Docker image. If the image is not available locally, Docker will attempt to pull it from a Docker registry.
+* `-v $(pwd)/gtfs:/app/gtfs` flag `-v` tells Docker to mount the gtfs directory from the host machine's current working directory to the /app/gtfs directory inside the container where results are stored. Replace `$(pwd)/gtfs` by directory where you expect store the results.
+* `warsaw-gtfs`: This is the name of the Docker image from which the container will be created. The warsaw-gtfs image was built and tagged in the previous docker build command.
 
 ## License
 
