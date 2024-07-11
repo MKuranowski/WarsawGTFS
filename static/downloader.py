@@ -1,14 +1,15 @@
+import fnmatch
 import ftplib
 import json
 import logging
 import os
 import re
-import py7zr
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from operator import itemgetter
 from typing import Dict, List, Optional, Set, Tuple
 
+import py7zr
 from pytz import timezone
 
 from .const import DIR_CONVERTED, DIR_DOWNLOAD, FTP_ADDR
@@ -221,6 +222,14 @@ def get_and_decompress(ftp: ftplib.FTP, i: FileInfo) -> None:
     _logger.debug(f"Decompressing file for version {i.version}")
     with py7zr.SevenZipFile(archive_local_path, mode='r') as warsaw_timetable_7z:
         warsaw_timetable_7z.extractall(DIR_DOWNLOAD)
+
+    num_txt_files = len(fnmatch.filter(os.listdir(DIR_DOWNLOAD), '*.TXT'))
+
+    if num_txt_files == 0:
+        raise FileNotFoundError(f"schedule file for ver {i.version!r} found but archive {i.path!r} is empty")
+
+    if num_txt_files > 1:
+        raise FileNotFoundError(f"schedule file for ver {i.version!r} found but archive {i.path!r} has {num_txt_files} TXT files. Required 1 TXT file.")
 
     if not os.path.isfile(txt_local_path):
         raise FileNotFoundError(f"no schedule file for ver {i.version!r} found inside "
