@@ -212,7 +212,7 @@ def get_and_decompress(ftp: ftplib.FTP, i: FileInfo) -> None:
     """
     # Download the 7z file into DIR_DOWNLOAD
     archive_local_path = os.path.join(DIR_DOWNLOAD, i.path)
-    txt_local_path = os.path.join(DIR_DOWNLOAD, (i.version + ".txt"))
+    txt_local_path = os.path.join(DIR_DOWNLOAD, (i.version + ".TXT"))
 
     _logger.debug(f"Downloading file for version {i.version}")
     with open(archive_local_path, mode="wb") as f:
