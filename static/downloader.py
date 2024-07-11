@@ -3,12 +3,12 @@ import json
 import logging
 import os
 import re
+import py7zr
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from operator import itemgetter
 from typing import Dict, List, Optional, Set, Tuple
 
-import libarchive.public
 from pytz import timezone
 
 from .const import DIR_CONVERTED, DIR_DOWNLOAD, FTP_ADDR
@@ -219,28 +219,12 @@ def get_and_decompress(ftp: ftplib.FTP, i: FileInfo) -> None:
 
     # Open the 7z file and decompress the txt file
     _logger.debug(f"Decompressing file for version {i.version}")
-    with libarchive.public.file_reader(str(archive_local_path)) as arch:
+    with py7zr.SevenZipFile(archive_local_path, mode='r') as warsaw_timetable_7z:
+        warsaw_timetable_7z.extractall(DIR_DOWNLOAD)
 
-        # Iterate over each file inside the archive
-        for arch_file in arch:
-            name = arch_file.pathname.upper()
-
-            # Assert the file inside the archive is the TXT file we're looking for
-            if name != f"{i.version}.TXT":
-                continue
-
-            # Open the target txt file
-            with open(txt_local_path, mode="wb") as f:
-                # Decompress the TXT file block by block and save it to the reader
-                for block in arch_file.get_blocks():
-                    f.write(block)
-
-            # only one TXT file should be inside the archive
-            break
-
-        else:
-            raise FileNotFoundError(f"no schedule file for ver {i.version!r} found inside "
-                                    f"archive {i.path!r}")
+    if not os.path.isfile(txt_local_path):
+        raise FileNotFoundError(f"no schedule file for ver {i.version!r} found inside "
+                                f"archive {i.path!r}")
 
     # Modify given FileInfo
     i.path = txt_local_path
