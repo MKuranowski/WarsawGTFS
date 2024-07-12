@@ -1,5 +1,6 @@
 __pycache__/
 .vscode/
+.idea/
 .venv
 data_*
 !data_curated
