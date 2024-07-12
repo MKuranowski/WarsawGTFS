@@ -1,5 +1,5 @@
 coloredlogs
-libarchive
+py7zr
 pytz
 requests
 pyroutelib3 >= 1.7.0

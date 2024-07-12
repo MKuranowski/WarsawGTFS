@@ -1,3 +1,4 @@
+import fnmatch
 import ftplib
 import json
 import logging
@@ -8,7 +9,7 @@ from datetime import date, datetime, timedelta
 from operator import itemgetter
 from typing import Dict, List, Optional, Set, Tuple
 
-import libarchive.public
+import py7zr
 from pytz import timezone
 
 from .const import DIR_CONVERTED, DIR_DOWNLOAD, FTP_ADDR
@@ -210,8 +211,9 @@ def get_and_decompress(ftp: ftplib.FTP, i: FileInfo) -> None:
     - finfo.is_converted is False
     """
     # Download the 7z file into DIR_DOWNLOAD
+    txt_file_name = i.version + ".TXT"
     archive_local_path = os.path.join(DIR_DOWNLOAD, i.path)
-    txt_local_path = os.path.join(DIR_DOWNLOAD, (i.version + ".txt"))
+    txt_local_path = os.path.join(DIR_DOWNLOAD, txt_file_name)
 
     _logger.debug(f"Downloading file for version {i.version}")
     with open(archive_local_path, mode="wb") as f:
@@ -219,30 +221,16 @@ def get_and_decompress(ftp: ftplib.FTP, i: FileInfo) -> None:
 
     # Open the 7z file and decompress the txt file
     _logger.debug(f"Decompressing file for version {i.version}")
-    with libarchive.public.file_reader(str(archive_local_path)) as arch:
-
-        # Iterate over each file inside the archive
-        for arch_file in arch:
-            name = arch_file.pathname.upper()
-
-            # Assert the file inside the archive is the TXT file we're looking for
-            if name != f"{i.version}.TXT":
-                continue
-
-            # Open the target txt file
-            with open(txt_local_path, mode="wb") as f:
-                # Decompress the TXT file block by block and save it to the reader
-                for block in arch_file.get_blocks():
-                    f.write(block)
-
-            # only one TXT file should be inside the archive
-            break
-
+    with py7zr.SevenZipFile(archive_local_path, mode='r') as archive:
+        for file in archive.files:
+            if file.filename == txt_file_name:
+                archive.extract(path=DIR_DOWNLOAD, targets=[txt_file_name])
+                break
         else:
-            raise FileNotFoundError(f"no schedule file for ver {i.version!r} found inside "
-                                    f"archive {i.path!r}")
+            raise FileNotFoundError(f"{txt_file_name} not found in {i.path}")
 
     # Modify given FileInfo
+    assert os.path.exists(txt_local_path)
     i.path = txt_local_path
     i.is_converted = False
 
