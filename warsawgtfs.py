@@ -102,6 +102,103 @@ if __name__ == "__main__":
         metavar="URL",
         help="value of feed_publisher_url (--publisher-name is also required to create feed_info)")
 
+    # GTFS Route Color
+    argprs.add_argument(
+        "--bus-color",
+        default="880077",
+        type=str,
+        help="color of bus route (default: #880077)")
+
+    argprs.add_argument(
+        "--tram-color",
+        default="B60000",
+        type=str,
+        help="color of tram route (default: #B60000)")
+
+    argprs.add_argument(
+        "--night-bus-color",
+        default="000000",
+        type=str,
+        help="color of night bus route (default: #000000)")
+
+    argprs.add_argument(
+        "--bus-express-color",
+        default="B60000",
+        type=str,
+        help="color of tram route (default: #B60000)")
+
+    argprs.add_argument(
+        "--train-color",
+        default="009955",
+        type=str,
+        help="color of train route (default: #009955)")
+
+    argprs.add_argument(
+        "--zone-color",
+        default="006800",
+        type=str,
+        help="color of zone route (default: #006800)")
+
+    argprs.add_argument(
+        "--special-color",
+        default="B60000",
+        type=str,
+        help="color of zone route (default: #B60000)")
+
+    argprs.add_argument(
+        "--supplementary-color",
+        default="000088",
+        type=str,
+        help="color of zone route (default: #000088)")
+
+    # GTFS Route Text Color
+    argprs.add_argument(
+        "--bus-text-color",
+        default="FFFFFF",
+        type=str,
+        help="color of text bus route (default: #FFFFFF)")
+
+    argprs.add_argument(
+        "--tram-text-color",
+        default="FFFFFF",
+        help="color of text tram route (default: #FFFFFF)")
+
+    argprs.add_argument(
+        "--night-bus-text-color",
+        default="FFFFFF",
+        type=str,
+        help="color of text night bus route (default: #FFFFFF)")
+
+    argprs.add_argument(
+        "--bus-express-text-color",
+        default="FFFFFF",
+        type=str,
+        help="color of text tram route (default: #FFFFFF)")
+
+    argprs.add_argument(
+        "--train-text-color",
+        default="FFFFFF",
+        type=str,
+        help="color of text train route (default: #FFFFFF)")
+
+    argprs.add_argument(
+        "--zone-text-color",
+        default="FFFFFF",
+        type=str,
+        help="color of text zone route (default: #FFFFFF)")
+
+    argprs.add_argument(
+        "--special-text-color",
+        default="FFFFFF",
+        type=str,
+        help="color of text zone route (default: #FFFFFF)")
+
+    argprs.add_argument(
+        "--supplementary-text-color",
+        default="FFFFFF",
+        type=str,
+        help="color of text zone route (default: #FFFFFF)")
+
     # Parse command line options and print an ascii_art text
     args = argprs.parse_args()
     print(ASCII_ART)
@@ -122,6 +219,24 @@ if __name__ == "__main__":
         metro=args.metro,
         shapes=args.shapes,
         simplify_shapes=not args.no_shape_simplification,
+
+        bus_color=args.bus_color,
+        tram_color=args.tram_color,
+        bus_express_color=args.bus_express_color,
+        night_bus_color=args.night_bus_color,
+        train_color=args.train_color,
+        zone_color=args.zone_color,
+        special_color=args.special_color,
+        supplementary_color=args.supplementary_color,
+
+        bus_text_color=args.bus_text_color,
+        tram_text_color=args.tram_text_color,
+        bus_express_text_color=args.bus_express_text_color,
+        night_bus_text_color=args.night_bus_text_color,
+        train_text_color=args.train_text_color,
+        zone_text_color=args.zone_text_color,
+        special_text_color=args.special_text_color,
+        supplementary_text_color=args.supplementary_text_color
     )
 
     # Create GTFS

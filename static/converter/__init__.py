@@ -15,8 +15,7 @@ from ..parser.dataobj import ZTMStopTime, ZTMTrip, ZTMVariantStop
 from ..shapes import Shaper
 from ..util import (ConversionOpts, CsvWriter, clear_directory, compress,
                     ensure_dir_exists, prepare_tempdir)
-from .helpers import (DirStopsType, FileNamespace, get_proper_headsign,
-                      get_route_color_type, get_trip_direction, match_day_type)
+from .helpers import (DirStopsType, FileNamespace, get_proper_headsign, get_trip_direction, match_day_type)
 from .platformhandler import PlatformHandler, PlatformLookupQuery
 from .static_files import static_all
 from .stophandler import StopHandler
@@ -25,7 +24,7 @@ from .stophandler import StopHandler
 
 
 class Converter:
-    def __init__(self, version: str, parser: Parser, target_dir: str, start_date: date,
+    def __init__(self, opts: ConversionOpts, version: str, parser: Parser, target_dir: str, start_date: date,
                  shapes: Optional[Shaper] = None) -> None:
         """(Partially) inits the Converter.
         Since __init__ can't be asynchronous, caller has to also invoke converter.open_files():
@@ -36,6 +35,7 @@ class Converter:
         self.logger = getLogger(f"WarsawGTFS.{version}.Converter")
 
         # Data-related properties
+        self.opts = opts
         self.calendar_start = start_date
         self.calendars: Dict[date, List[str]] = {}
         self.routes: List[str] = []
@@ -413,8 +413,7 @@ class Converter:
 
             # Extarct basic route data
             route_sort_order += 1
-            self.route_type, route_color, route_txt_color = get_route_color_type(
-                self.route_id, route.desc)
+            self.route_type, route_color, route_txt_color = self.opts.get_route_color_type(self.route_id, route.desc)
 
             # Parse data from section TR
             self._get_variants()
@@ -482,7 +481,7 @@ class Converter:
                 shaper_obj = None
 
             # Create Converter instance
-            self = cls(finfo.version, parser, target_dir, finfo.start, shaper_obj)
+            self = cls(opts, finfo.version, parser, target_dir, finfo.start, shaper_obj)
             self.open_files()
 
             # Parse data from ZTM file

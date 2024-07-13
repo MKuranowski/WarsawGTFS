@@ -4,7 +4,7 @@ import os
 import zipfile
 from dataclasses import dataclass
 from tempfile import mkdtemp
-from typing import Any, Iterable, Optional, Protocol
+from typing import Any, Iterable, Optional, Protocol, Tuple
 
 import coloredlogs
 
@@ -27,7 +27,9 @@ class CsvWriter(Protocol):
 class ConversionOpts:
     """Toggles for the whole conversion process"""
     __slots__ = (
-        "target", "sync_time", "pub_name", "pub_url", "metro", "shapes", "simplify_shapes",
+        "target", "sync_time", "pub_name", "pub_url", "metro", "shapes", "simplify_shapes", "bus_color", "tram_color", "bus_express_color", "night_bus_color",
+        "train_color", "zone_color", "special_color", "supplementary_color", "bus_text_color", "tram_text_color", "bus_express_text_color", "night_bus_text_color",
+        "train_text_color", "zone_text_color", "special_text_color", "supplementary_text_color"
     )
 
     target: str     # Where to put the created .zip file
@@ -37,6 +39,44 @@ class ConversionOpts:
     metro: bool     # whether to add metro schedules
     shapes: bool    # whether to generate shapes
     simplify_shapes: bool  # whether to simplify generated shapes
+
+    bus_color: str
+    tram_color: str
+    bus_express_color: str
+    night_bus_color: str
+    train_color: str
+    zone_color: str
+    special_color: str
+    supplementary_color: str
+
+    bus_text_color: str
+    tram_text_color: str
+    bus_express_text_color: str
+    night_bus_text_color: str
+    train_text_color: str
+    zone_text_color: str
+    special_text_color: str
+    supplementary_text_color: str
+
+    def get_route_color_type(self, id: str, desc: str) -> Tuple[str, str, str]:
+        """Get route_type, route_color, route_text_color based on route's id and description."""
+        desc = desc.casefold()
+        if "kolei" in desc:
+            return "2", self.train_color, self.train_text_color
+        elif "tram" in desc:
+            return "0", self.tram_color, self.tram_text_color
+        elif "specjalna" in desc and id in {"W", "M"}:
+            return "0", self.special_color, self.special_text_color
+        elif "nocna" in desc:
+            return "3", self.night_bus_color, self.night_bus_text_color
+        elif "uzupełniająca" in desc:
+            return "3", self.supplementary_color, self.supplementary_text_color
+        elif "strefowa" in desc:
+            return "3", self.zone_color, self.zone_text_color
+        elif "ekspresowa" in desc or "przyspieszona" in desc:
+            return "3", self.bus_express_color, self.bus_express_text_color
+        else:
+            return "3", self.bus_color, self.bus_text_color
 
 
 def normal_time(time: str, lessthen24: bool = False) -> str:

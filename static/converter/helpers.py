@@ -34,28 +34,6 @@ DirStopsType = Dict[Literal["0", "1"], Set[str]]
 
 # Data conversion helpers
 
-
-def get_route_color_type(id: str, desc: str) -> Tuple[str, str, str]:
-    """Get route_type, route_color, route_text_color based on route's id and description."""
-    desc = desc.casefold()
-    if "kolei" in desc:
-        return "2", "009955", "FFFFFF"
-    elif "tram" in desc:
-        return "0", "B60000", "FFFFFF"
-    elif "specjalna" in desc and id in {"W", "M"}:
-        return "0", "B60000", "FFFFFF"
-    elif "nocna" in desc:
-        return "3", "000000", "FFFFFF"
-    elif "uzupełniająca" in desc:
-        return "3", "000088", "FFFFFF"
-    elif "strefowa" in desc:
-        return "3", "006800", "FFFFFF"
-    elif "ekspresowa" in desc or "przyspieszona" in desc:
-        return "3", "B60000", "FFFFFF"
-    else:
-        return "3", "880077", "FFFFFF"
-
-
 def get_trip_direction(trip_original_stops: Set[str], direction_stops: DirStopsType) \
         -> Literal["0", "1"]:
     """Guess the trip direction_id based on trip_original_stops, and
