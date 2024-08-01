@@ -50,7 +50,7 @@ func getSanitizePolicy() (p *bluemonday.Policy) {
 // getMarkdownConverter creates a default markdown converter from **sanitized** html to
 // a kinda-plaintext string.
 func getMarkdownConverter() (c *md.Converter) {
-	c = md.NewConverter("", true, &md.Options{HeadingStyle: "setext"})
+	c = md.NewConverter("", true, &md.Options{HeadingStyle: "setext", HorizontalRule: "-----"})
 
 	// Striketrough text should be deleted
 	c.Remove("s")
@@ -144,8 +144,8 @@ func getAlertDesc(doc *goquery.Document, alertType string) (htmlBody string, err
 		main.Find("div.is-style-small").Remove()
 	}
 
-	// Remove everything after <hr>
-	main.Find("hr").NextAll().AddBack().Remove()
+	// Remove everything after the last <hr> - usually links to related alerts
+	main.Find("hr:last-of-type").NextAll().AddBack().Remove()
 
 	// Assume there's only one main element in `main`
 	if main.Length() != 1 {
