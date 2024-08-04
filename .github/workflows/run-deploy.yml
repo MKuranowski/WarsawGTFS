@@ -1,3 +1,5 @@
+name: Deploy Docker
+
 on:
   workflow_dispatch:
 
@@ -7,3 +9,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
