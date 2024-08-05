@@ -20,7 +20,6 @@ FTP_ADDR = "rozklady.ztm.waw.pl"
 
 _BASE_GIST = "https://raw.githubusercontent.com/MKuranowski/WarsawGTFS/master/data_curated/"
 GIST_MISSING_STOPS = _BASE_GIST + "missing_stop_locations.json"
-GIST_RAIL_PLATFORMS = _BASE_GIST + "rail_platforms.json"
 GIST_STOP_NAMES = _BASE_GIST + "stop_names.json"
 
 RAILWAY_MAP = "https://raw.githubusercontent.com/MKuranowski/PLRailMap/master/plrailmap.osm"
@@ -50,8 +49,6 @@ RAIL_DIRECTION_STOPS = [
     ("1907", "1910"),  # Legionowo           → Wieliszew       (S30 specific)
     ("3901", "4917"),  # W-wa Służewiec      → W-wa Rakowiec   (S2+S4 specific)
 ]
-
-RAIL_STATION_ID_MIDDLES = frozenset({"90", "91", "92", "93"})
 
 
 # GTFS headers

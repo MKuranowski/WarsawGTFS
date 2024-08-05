@@ -95,3 +95,8 @@ def compress(directory: str = "gtfs", target: str = "gtfs.zip") -> None:
         for f in os.scandir(directory):
             if f.name.endswith(".txt"):
                 arch.write(f.path, arcname=f.name)
+
+
+def is_railway_station(id: str) -> bool:
+    """Returns True if the provided stop/stop group ID represents a railway station"""
+    return id[1:3] in {"90", "91", "92"} or id[:4] in {"1930"}
