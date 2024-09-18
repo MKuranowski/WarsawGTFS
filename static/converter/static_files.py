@@ -42,6 +42,8 @@ def static_attributions(target_dir: str, shapes: bool, download_time: str) -> No
             "organization_name,is_producer,is_operator,is_authority,is_data_source,"
             "attribution_url\n"
 
+            "Mikołaj Kuranowski,1,0,0,1,https://mkuran.pl/gtfs/\n"
+
             f'"Data provided by: ZTM Warszawa (retrieved {download_time})",0,0,1,1,'
             '"https://www.ztm.waw.pl/pliki-do-pobrania/dane-rozkladowe/"\n'
         )
