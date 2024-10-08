@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"flag"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -341,7 +342,7 @@ func main() {
 
 	// create the target directory
 	err = os.Mkdir(*flagTarget, 0o777)
-	if err != nil {
+	if err != nil && !errors.Is(err, fs.ErrExist) {
 		log.Fatalf("mkdir %s: %v", *flagTarget, err)
 	}
 
