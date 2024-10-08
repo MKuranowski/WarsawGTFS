@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -336,6 +337,12 @@ func main() {
 		modeFunc = singlePositions
 	case *flagBrigades:
 		modeFunc = singleBrigades
+	}
+
+	// create the target directory
+	err = os.Mkdir(*flagTarget, 0o777)
+	if err != nil {
+		log.Fatalf("mkdir %s: %v", *flagTarget, err)
 	}
 
 	// Execute the selected mode
