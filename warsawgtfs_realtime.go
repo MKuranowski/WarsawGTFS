@@ -22,7 +22,7 @@ import (
   ================ */
 
 // Default http client
-var client *http.Client = &http.Client{}
+var client *http.Client = http.DefaultClient
 
 // Default CLI flags
 var (
