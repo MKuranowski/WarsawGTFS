@@ -126,6 +126,12 @@
     "comment": "112 for CH Marki 03 via main road"
   },
   {
+    "from": "205202",
+    "to": "205201",
+    "via": [52.1594880, 21.2043491],
+    "comment": "146 to Falenica via Olecka"
+  },
+  {
     "from": "434701",
     "to": "401801",
     "via": [52.0914, 20.81197],
