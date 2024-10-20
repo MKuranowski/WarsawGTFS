@@ -57,7 +57,7 @@ func Create(api VehicleAPI, brigadeMap map[string][]*brigadeEntry, prevVehicles 
 	}
 
 	// 5. Export to GTFS-RT
-	if opts.JSONTarget != "" {
+	if opts.GtfsRtTarget != "" {
 		err = container.SavePB(opts.GtfsRtTarget, opts.HumanReadable)
 	}
 
