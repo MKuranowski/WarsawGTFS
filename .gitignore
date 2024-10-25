@@ -6,6 +6,7 @@ data_*
 !data_curated
 ignore*
 err_shapes
+errors
 *.json
 !data_curated/*.json
 *.zip

@@ -72,7 +72,7 @@ def ensure_dir_exists(path: str, clear: bool = False) -> bool:
     Returns False if directory was just created, True if it already exists.
     """
     try:
-        os.mkdir(path)
+        os.makedirs(path)
         return False
     except FileExistsError:
         if clear:

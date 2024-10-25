@@ -1,5 +1,6 @@
 import csv
 import json
+import os
 from functools import lru_cache
 from logging import getLogger
 from os.path import join
@@ -429,7 +430,8 @@ class StopHandler:
 
         # Dump missing stops info
         self.logger.info("Exporting missing_stops.json")
-        with open("missing_stops.json", "w") as f:
+        os.makedirs("errors", exist_ok=True)
+        with open("errors/missing_stops.json", "w") as f:
             json.dump(
                 {"missing": sorted(self.used_invalid), "unused": sorted(unused_missing)},
                 f,

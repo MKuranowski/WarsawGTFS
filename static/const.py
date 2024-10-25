@@ -9,7 +9,7 @@ Fare data is stored in fares/data.py.
 DIR_DOWNLOAD = "data_src"
 DIR_CONVERTED = "data_feeds"
 DIR_SINGLE_FEED = "data_gtfs"
-DIR_SHAPE_ERR = "err_shapes"
+DIR_SHAPE_ERR = "errors/shapes"
 DIR_SHAPE_CACHE = "data_shapes"
 
 # How long to keep Overpass data cached (in minutes)
