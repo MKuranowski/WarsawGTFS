@@ -3,19 +3,22 @@ package brigades
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/MKuranowski/WarsawGTFS/realtime/util"
 )
 
+var stopIdRegex = regexp.MustCompile(`^[0-9]{6}$`)
+
 // routeStopPair is a struct, for a (route_id, stop_id) pair
 type routeStopPair struct{ Route, Stop string }
 
 // mapTimeBrigade is an alias for a map from a timestamp to a brigade_id
-type mapTimeBrigade = map[string]string
+type mapTimeBrigade = map[uint32]string
 
 // invalidTTableAPIResp represents an invalid response from api.um.warszawa.pl
 type invalidTTableAPIResp struct{ text string }
@@ -59,6 +62,12 @@ func (api *ttableAPI) Get(rs routeStopPair) (mapTimeBrigade, bool, error) {
 		return ttb, true, nil
 	}
 
+	// Ignore invalid stop ids
+	if !stopIdRegex.MatchString(rs.Stop) {
+		logPrintf("Skipping call for R %s | S %s - weird stop ID", false, rs.Route, rs.Stop)
+		return nil, false, nil
+	}
+
 	// Prepare request
 	logPrintf("Making call for R %s | S %s", true, rs.Route, rs.Stop)
 	requestURL := api.BuildURL(rs)
@@ -83,7 +92,7 @@ func (api *ttableAPI) Get(rs routeStopPair) (mapTimeBrigade, bool, error) {
 	}
 
 	// Read the response
-	rawData, err := ioutil.ReadAll(resp.Body)
+	rawData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, false, err
 	}
@@ -106,18 +115,16 @@ func parseBrigadesResponse(rawData []byte, rs routeStopPair, forwardErrors bool)
 
 	// Unmarshall JSON
 	var decodedData struct {
-		Result []struct {
-			Values []struct {
-				Key   string
-				Value string
-			}
+		Result [][]struct {
+			Key   string
+			Value string
 		}
 	}
 
 	err = json.Unmarshal(rawData, &decodedData)
 	if err != nil {
-		logPrintf("Failed to parse API response: %s", false, string(rawData))
-		return
+		logPrintf("Failed to parse API response for R %s S %s: %s", false, rs.Route, rs.Stop, string(rawData))
+		return nil, nil
 	}
 
 	// Check if there actually is a timetable
@@ -136,7 +143,7 @@ func parseBrigadesResponse(rawData []byte, rs routeStopPair, forwardErrors bool)
 		var time string
 
 		// try to find matching fields
-		for _, value := range result.Values {
+		for _, value := range result {
 			if value.Key == "brygada" {
 				brigade = value.Value
 			} else if value.Key == "czas" {
@@ -156,7 +163,16 @@ func parseBrigadesResponse(rawData []byte, rs routeStopPair, forwardErrors bool)
 			}
 		}
 
-		mtb[time] = brigade
+		// parse the time field
+		seconds, err := util.ParseTimeToSeconds(time)
+		if err != nil {
+			logPrintf("Invalid time in API for R %s S %s: %q", false, rs.Route, rs.Stop, time)
+			if forwardErrors {
+				return nil, err
+			}
+		}
+
+		mtb[seconds] = brigade
 	}
 
 	return

@@ -84,3 +84,12 @@ func MissingColumnCheck(file string, required []string, row map[string]string) e
 
 	return nil
 }
+
+// InvalidTimeString is an error returned by [util.ParseTime] on invalid input strings
+type InvalidTimeString struct {
+	Input string
+}
+
+func (e InvalidTimeString) Error() string {
+	return fmt.Sprintf("invalid time string: %q", e.Input)
+}

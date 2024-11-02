@@ -1,12 +1,13 @@
 package brigades
 
 import (
+	"cmp"
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"io"
-	"sort"
+	"slices"
 	"strconv"
-	"strings"
 
 	"github.com/MKuranowski/WarsawGTFS/realtime/gtfs"
 	"github.com/MKuranowski/WarsawGTFS/realtime/util"
@@ -15,7 +16,6 @@ import (
 // tripData is a struct for holding information about a matched trip
 type tripData struct {
 	TripID            string     `json:"trip_id"`
-	TripTimeKey       string     `json:"-"`
 	RouteID           string     `json:"-"`
 	ServiceID         string     `json:"-"`
 	BrigadeID         string     `json:"-"`
@@ -30,17 +30,18 @@ type MatchedTripData map[string]*tripData
 
 // MarshalJSON marshals a MatchedTripData into JSON. This JSON has a different structure then
 // MatchedTripData - nested objects will be used:
-//   {
-//     "{ROUTE_ID}": {
-//       "{BRIGADE_ID}": [
-//         {
-//            "trip_id": "{TRIP_ID}",
-//            "last_stop_id": "{STOP_ID}",
-//            "last_stop_pos": [lat, lon], // an array of 2 floats
-//            "last_stop_timepoint": "HH:MM:SS"
-//         }
-//       ]
-//   }
+//
+//	{
+//	  "{ROUTE_ID}": {
+//	    "{BRIGADE_ID}": [
+//	      {
+//	         "trip_id": "{TRIP_ID}",
+//	         "last_stop_id": "{STOP_ID}",
+//	         "last_stop_pos": [lat, lon], // an array of 2 floats
+//	         "last_stop_timepoint": "HH:MM:SS"
+//	      }
+//	    ]
+//	}
 func (m MatchedTripData) MarshalJSON() ([]byte, error) {
 	// Distribute matched entries into a route_id → brigade_id → tripData map
 	jsonMap := make(map[string]map[string][]*tripData)
@@ -51,27 +52,14 @@ func (m MatchedTripData) MarshalJSON() ([]byte, error) {
 			jsonMap[t.RouteID] = make(map[string][]*tripData)
 		}
 
-		// Extract the list of this brigade's trips
-		tripList := jsonMap[t.RouteID][t.BrigadeID]
-		tripListLen := len(tripList)
+		jsonMap[t.RouteID][t.BrigadeID] = append(jsonMap[t.RouteID][t.BrigadeID], t)
+	}
 
-		// Insert while keeping the list sorted by trip times
-		insertIdx := sort.Search(
-			tripListLen, func(i int) bool { return tripList[i].TripTimeKey >= t.TripTimeKey })
-
-		if insertIdx < tripListLen {
-			// If insertIdx falls inside the tripList, first shift the list to make room
-			// for the new element, then save 't'
-			tripList = append(tripList, nil)
-			copy(tripList[insertIdx+1:], tripList[insertIdx:])
-			tripList[insertIdx] = t
-		} else {
-			// If insertIdx is at the end of tripList, simply append this trip
-			tripList = append(tripList, t)
+	// Sort each brigade by time
+	for _, brigades := range jsonMap {
+		for _, tripList := range brigades {
+			slices.SortFunc(tripList, func(a, b *tripData) int { return cmp.Compare(a.LastStopTimepoint, b.LastStopTimepoint) })
 		}
-
-		// Set back tripList to the main map
-		jsonMap[t.RouteID][t.BrigadeID] = tripList
 	}
 
 	// Marshall this map into JSON
@@ -171,13 +159,10 @@ func Match(api *ttableAPI, gtfs *gtfs.Gtfs, stopTimesReader io.Reader) (matches 
 
 		// Create the entry if it didn't exist
 		if !wasInserted {
-			tripIDParts := strings.Split(row.TripID, "/")
-
 			tripEntry = &tripData{
-				TripID:      row.TripID,
-				TripTimeKey: tripIDParts[len(tripIDParts)-1],
-				RouteID:     row.RouteID,
-				ServiceID:   row.ServiceID,
+				TripID:    row.TripID,
+				RouteID:   row.RouteID,
+				ServiceID: row.ServiceID,
 			}
 			matches[row.TripID] = tripEntry
 		}
@@ -194,6 +179,14 @@ func Match(api *ttableAPI, gtfs *gtfs.Gtfs, stopTimesReader io.Reader) (matches 
 			continue
 		}
 
+		// Parse the time field
+		var seconds uint32
+		seconds, err = util.ParseTimeToSeconds(row.Time)
+		if err != nil {
+			err = fmt.Errorf("invalid time in GTFS (T %s I %d): %q", row.TripID, row.Index, row.Time)
+			return
+		}
+
 		// Get time→brigade mapping for this route-stop pair
 		var mtb mapTimeBrigade
 		var apiFromCache bool
@@ -203,7 +196,7 @@ func Match(api *ttableAPI, gtfs *gtfs.Gtfs, stopTimesReader io.Reader) (matches 
 		}
 
 		// Find the brigadeId for this stop
-		brigadeID, ok := mtb[row.Time]
+		brigadeID, ok := mtb[seconds]
 		if !ok {
 			logPrintf(
 				"StopTimeEvent: T %s | R %s | S %s (from api: %t) ❌ NO MATCH FOR %s",

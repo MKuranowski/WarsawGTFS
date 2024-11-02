@@ -1,7 +1,10 @@
 package util
 
 import (
+	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	gtfsrt "github.com/MobilityData/gtfs-realtime-bindings/golang/gtfs"
@@ -62,4 +65,39 @@ func ZipStrings(a []string, b []string) (zipped map[string]string) {
 		zipped[elem] = b[idx]
 	}
 	return
+}
+
+// ParseTimeToSeconds parses a HH:MM[:SS] string into a single number representing a
+// total number of seconds.
+func ParseTimeToSeconds(x string) (uint32, error) {
+	parts := strings.Split(x, ":")
+	if len(parts) < 2 || len(parts) > 3 {
+		return 0, InvalidTimeString{x}
+	}
+
+	h, err := strconv.ParseUint(parts[0], 10, 8)
+	if err != nil {
+		return 0, InvalidTimeString{x}
+	}
+
+	m, err := strconv.ParseUint(parts[1], 10, 8)
+	if err != nil {
+		return 0, InvalidTimeString{x}
+	}
+
+	s := uint64(0)
+	if len(parts) == 3 {
+		s, err = strconv.ParseUint(parts[1], 10, 8)
+		if err != nil {
+			return 0, InvalidTimeString{x}
+		}
+	}
+
+	return uint32(h*3600 + m*60 + s), nil
+}
+
+func SecondsToString(totalSeconds uint32) string {
+	totalMinutes, s := totalSeconds/60, totalSeconds%60
+	h, m := totalMinutes/60, totalMinutes%60
+	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
 }
