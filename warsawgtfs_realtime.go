@@ -48,7 +48,7 @@ var (
 	flagApikey = flag.String(
 		"k",
 		"",
-		"apikey for api.um.warszawa.pl (for brigades and positions)")
+		"apikey for api.um.warszawa.pl (for brigades and positions), if empty/omitted - use WARSAW_APIKEY env variable")
 
 	flagGtfsFile = flag.String(
 		"gtfs-file",
@@ -100,6 +100,13 @@ var (
    FLAG PROCESSING
   ================= */
 
+func getApikey() string {
+	if *flagApikey == "" {
+		return os.Getenv("WARSAW_APIKEY")
+	}
+	return *flagApikey
+}
+
 // checkModes ensures exactly one of flagAlerts, flagBrigades or flagPositions is set
 func checkModes() error {
 	var modeCount uint8
@@ -136,7 +143,8 @@ func parseAlertsFlags() (o alerts.Options, err error) {
 // parsePositionsFlags parses flags to positions.Options
 func parsePositionsFlags() (o positions.Options, err error) {
 	// Ensure an apikey was provided
-	if *flagApikey == "" {
+	o.Apikey = getApikey()
+	if o.Apikey == "" {
 		err = errors.New("key for api.um.warszawa.pl needs to be provided")
 		return
 	}
@@ -144,7 +152,6 @@ func parsePositionsFlags() (o positions.Options, err error) {
 	// Set options
 	o.GtfsRtTarget = path.Join(*flagTarget, "positions.pb")
 	o.HumanReadable = *flagReadable
-	o.Apikey = *flagApikey
 	o.Brigades = *flagBrigadesFile
 	if *flagJSON {
 		o.JSONTarget = path.Join(*flagTarget, "positions.json")
@@ -155,13 +162,14 @@ func parsePositionsFlags() (o positions.Options, err error) {
 // parseBrigadesFlags parses flags to brigades.Options
 func parseBrigadesFlags() (o brigades.Options, err error) {
 	// Ensure apikey was provided
-	if *flagApikey == "" {
+	o.Apikey = getApikey()
+	if o.Apikey == "" {
 		err = errors.New("key for api.um.warszawa.pl needs to be provided")
 		return
 	}
+
 	// Create options struct
 	o.JSONTarget = path.Join(*flagTarget, "brigades.json")
-	o.Apikey = *flagApikey
 	o.ThrowAPIErrors = *flagStrict
 	return
 }
