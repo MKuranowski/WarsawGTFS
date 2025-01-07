@@ -2,8 +2,9 @@ from collections.abc import Iterable
 from typing import Any
 
 from impuls import DBConnection, Task, TaskRuntime
-from impuls.model import Route, Stop
+from impuls.model import Calendar, CalendarException, Route, Stop
 
+from .calendars import parse_calendar_exceptions, parse_calendars
 from .routes import parse_routes
 from .stops import parse_stops
 
@@ -27,7 +28,7 @@ class LoadJSON(Task):
         with r.db.transaction():
             self.load_stops(r.db, data)
             self.load_routes(r.db, data)
-        self.load_calendars(r.db, data["kalendarz"], data["typy_dni"])
+            self.load_calendars(r.db, data)
 
     def load_stops(self, db: DBConnection, data: Any) -> None:
         self.logger.debug("Loading stops")
@@ -37,9 +38,10 @@ class LoadJSON(Task):
         self.logger.debug("Loading routes")
         db.create_many(Route, parse_routes(data))
 
-    def load_calendars(self, db: DBConnection, days: Any, day_types: Any) -> None:
+    def load_calendars(self, db: DBConnection, data: Any) -> None:
         self.logger.debug("Loading calendars")
-        raise NotImplementedError
+        db.create_many(Calendar, parse_calendars(data))
+        db.create_many(CalendarException, parse_calendar_exceptions(data))
 
     def load_schedules(self, r: TaskRuntime) -> None:
         raise NotImplementedError
