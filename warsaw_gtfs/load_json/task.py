@@ -1,4 +1,3 @@
-from collections.abc import Iterable
 from typing import Any
 
 from impuls import DBConnection, Task, TaskRuntime
@@ -45,11 +44,3 @@ class LoadJSON(Task):
 
     def load_schedules(self, r: TaskRuntime) -> None:
         raise NotImplementedError
-
-    def check_for_duplicate_stops(self, stops: Iterable[Stop]) -> None:
-        seen = dict[str, Stop]()
-        for stop in stops:
-            if other := seen.get(stop.id):
-                self.logger.warning("duplicate stop %s: %s & %s", stop.id, stop, other)
-            else:
-                seen[stop.id] = stop
