@@ -1,5 +1,1 @@
-coloredlogs
-py7zr
-pytz
-requests
-pyroutelib3 >= 1.7.0, < 2
+impuls ~= 2.0
