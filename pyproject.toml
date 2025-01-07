@@ -1,0 +1,18 @@
+[build-system]
+requires = ["flit_core ~=3.2"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "WarsawGTFS"
+authors = [{name = "Mikołaj Kuranowski", email = "mkuranowski+pypackages@gmail.com"}]
+readme = "README.md"
+dynamic = ["version"]
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+
+[tool.pyright]
+typeCheckingMode = "strict"
