@@ -9,6 +9,7 @@ from .stop_times import parse_stop_times
 from .stops import parse_stops
 from .trips import parse_trips
 from .variants import parse_variant_stops, parse_variants
+from .vehicles import VehicleKind, parse_vehicle_kinds
 
 DB_SCHEMA_EXTENSION = """
 CREATE TABLE variants (
@@ -38,9 +39,11 @@ class LoadJSON(Task):
     def __init__(self) -> None:
         super().__init__()
         self.valid_stops = set[str]()
+        self.vehicle_kinds = dict[int, VehicleKind]()
 
     def clear(self) -> None:
         self.valid_stops.clear()
+        self.vehicle_kinds.clear()
 
     def execute(self, r: TaskRuntime) -> None:
         self.clear()
@@ -59,6 +62,7 @@ class LoadJSON(Task):
             self.load_stops(r.db, data)
             self.load_routes(r.db, data)
             self.load_calendars(r.db, data)
+            self.load_vehicle_kinds(data)
 
     def load_stops(self, db: DBConnection, data: Any) -> None:
         self.logger.debug("Loading stops")
@@ -75,6 +79,10 @@ class LoadJSON(Task):
         self.logger.debug("Loading calendars")
         db.create_many(Calendar, parse_calendars(data))
         db.create_many(CalendarException, parse_calendar_exceptions(data))
+
+    def load_vehicle_kinds(self, data: Any) -> None:
+        self.logger.debug("Loading vehicle kinds")
+        self.vehicle_kinds = parse_vehicle_kinds(data)
 
     def load_schedules(self, r: TaskRuntime) -> None:
         self.logger.info("Loading schedules")
@@ -99,7 +107,7 @@ class LoadJSON(Task):
 
     def load_trips(self, db: DBConnection, data: Any) -> None:
         self.logger.debug("Loading trips")
-        db.create_many(Trip, parse_trips(data))
+        db.create_many(Trip, parse_trips(data, self.vehicle_kinds))
 
     def load_stop_times(self, db: DBConnection, data: Any) -> None:
         self.logger.debug("Loading stop times")
