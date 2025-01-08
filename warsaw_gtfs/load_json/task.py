@@ -1,11 +1,13 @@
-from typing import Any
+from typing import Any, cast
 
 from impuls import DBConnection, Task, TaskRuntime
-from impuls.model import Calendar, CalendarException, Route, Stop
+from impuls.model import Calendar, CalendarException, Route, Stop, StopTime, Trip
 
 from .calendars import parse_calendar_exceptions, parse_calendars
 from .routes import parse_routes
+from .stop_times import parse_stop_times
 from .stops import parse_stops
+from .trips import parse_trips
 
 
 class LoadJSON(Task):
@@ -43,4 +45,20 @@ class LoadJSON(Task):
         db.create_many(CalendarException, parse_calendar_exceptions(data))
 
     def load_schedules(self, r: TaskRuntime) -> None:
-        raise NotImplementedError
+        self.logger.info("Loading schedules")
+        data = r.resources["rozklady.json"].json()
+        with r.db.transaction():
+            # self.load_variants()  # "warianty"
+            # self.load_variant_stops()  # "odcinki"
+            # self.load_shapes()  #  "ksztalt_trasy_GPS"
+            self.load_trips(r.db, data)  # "rozklady_jazdy"
+            self.load_stop_times(r.db, data)  # "kursy_przejazdy"
+
+    def load_trips(self, db: DBConnection, data: Any) -> None:
+        self.logger.debug("Loading trips")
+        db.create_many(Trip, parse_trips(data))
+
+    def load_stop_times(self, db: DBConnection, data: Any) -> None:
+        self.logger.debug("Loading stop times")
+        valid_stops = {cast(str, i[0]) for i in db.raw_execute("SELECT stop_id FROM stops", ())}
+        db.create_many(StopTime, (i for i in parse_stop_times(data) if i.stop_id in valid_stops))
