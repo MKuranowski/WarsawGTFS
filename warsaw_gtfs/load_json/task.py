@@ -5,6 +5,7 @@ from impuls.model import Calendar, CalendarException, Route, Stop, StopTime, Tri
 
 from .calendars import parse_calendar_exceptions, parse_calendars
 from .routes import parse_routes
+from .shapes import parse_shape_points, parse_shapes
 from .stop_times import parse_stop_times
 from .stops import parse_stops
 from .trips import parse_trips
@@ -88,11 +89,11 @@ class LoadJSON(Task):
         self.logger.info("Loading schedules")
         data = r.resources["rozklady.json"].json()  # FIXME: Don't load the entire JSON to memory
         with r.db.transaction():
-            self.load_variants(r.db, data)  # "warianty"
-            self.load_variant_stops(r.db, data)  # "odcinki"
-            # self.load_shapes()  #  "ksztalt_trasy_GPS"
-            self.load_trips(r.db, data)  # "rozklady_jazdy"
-            self.load_stop_times(r.db, data)  # "kursy_przejazdy"
+            self.load_variants(r.db, data)
+            self.load_variant_stops(r.db, data)
+            self.load_shapes(r.db, data)
+            self.load_trips(r.db, data)
+            self.load_stop_times(r.db, data)
 
     def load_variants(self, db: DBConnection, data: Any) -> None:
         self.logger.debug("Loading variants")
@@ -114,4 +115,12 @@ class LoadJSON(Task):
         db.create_many(
             StopTime,
             (i for i in parse_stop_times(data) if i.stop_id in self.valid_stops),
+        )
+
+    def load_shapes(self, db: DBConnection, data: Any) -> None:
+        self.logger.debug("Loading shapes")
+        db.raw_execute_many("INSERT INTO shapes (shape_id) VALUES (?)", parse_shapes(data))
+        db.raw_execute_many(
+            "INSERT INTO shape_points (shape_id, sequence, lat, lon) VALUES (?,?,?,?)",
+            parse_shape_points(data),
         )
