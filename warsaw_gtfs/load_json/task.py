@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 
 from impuls import DBConnection, Task, TaskRuntime
 from impuls.model import Calendar, CalendarException, Route, Stop, StopTime, Trip
@@ -39,11 +39,9 @@ CREATE TABLE variant_stops (
 class LoadJSON(Task):
     def __init__(self) -> None:
         super().__init__()
-        self.valid_stops = set[str]()
         self.vehicle_kinds = dict[int, VehicleKind]()
 
     def clear(self) -> None:
-        self.valid_stops.clear()
         self.vehicle_kinds.clear()
 
     def execute(self, r: TaskRuntime) -> None:
@@ -68,9 +66,6 @@ class LoadJSON(Task):
     def load_stops(self, db: DBConnection, data: Any) -> None:
         self.logger.debug("Loading stops")
         db.create_many(Stop, parse_stops(data))
-        self.valid_stops = {
-            cast(str, i[0]) for i in db.raw_execute("SELECT stop_id FROM stops", ())
-        }
 
     def load_routes(self, db: DBConnection, data: Any) -> None:
         self.logger.debug("Loading routes")
@@ -103,7 +98,7 @@ class LoadJSON(Task):
         self.logger.debug("Loading variant stops")
         db.raw_execute_many(
             "INSERT INTO variant_stops VALUES (?,?,?,?,?,?,?)",
-            (i for i in parse_variant_stops(data) if i[2] in self.valid_stops),
+            parse_variant_stops(data),
         )
 
     def load_trips(self, db: DBConnection, data: Any) -> None:
@@ -112,10 +107,7 @@ class LoadJSON(Task):
 
     def load_stop_times(self, db: DBConnection, data: Any) -> None:
         self.logger.debug("Loading stop times")
-        db.create_many(
-            StopTime,
-            (i for i in parse_stop_times(data) if i.stop_id in self.valid_stops),
-        )
+        db.create_many(StopTime, parse_stop_times(data))
 
     def load_shapes(self, db: DBConnection, data: Any) -> None:
         self.logger.debug("Loading shapes")

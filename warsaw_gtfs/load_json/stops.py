@@ -15,9 +15,7 @@ class Group(NamedTuple):
 
 def parse_stops(data: Any) -> Iterable[Stop]:
     groups = parse_groups(data)
-    return (
-        parse_stop(i, groups[i["id_przystanku"]]) for i in data["slupki"] if i["zajezdnia"] == 0
-    )
+    return (parse_stop(i, groups[i["id_przystanku"]]) for i in data["slupki"])
 
 
 def parse_stop(data: Any, group: Group) -> Stop:
@@ -32,7 +30,13 @@ def parse_stop(data: Any, group: Group) -> Stop:
         data["gps_n"],
         data["gps_e"],
         code=code,
-        extra_fields_json=compact_json({"stop_name_stem": group.name, "town_name": group.town}),
+        extra_fields_json=compact_json(
+            {
+                "stop_name_stem": group.name,
+                "town_name": group.town,
+                "depot": data["zajezdnia"],
+            }
+        ),
     )
 
 
