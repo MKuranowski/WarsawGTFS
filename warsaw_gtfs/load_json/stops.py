@@ -1,8 +1,9 @@
-import json
 from collections.abc import Iterable
 from typing import Any, NamedTuple
 
 from impuls.model import Stop
+
+from ..util import compact_json
 
 
 class Group(NamedTuple):
@@ -31,7 +32,7 @@ def parse_stop(data: Any, group: Group) -> Stop:
         data["gps_n"],
         data["gps_e"],
         code=code,
-        extra_fields_json=json.dumps({"stop_name_stem": group.name, "town_name": group.town}),
+        extra_fields_json=compact_json({"stop_name_stem": group.name, "town_name": group.town}),
     )
 
 
