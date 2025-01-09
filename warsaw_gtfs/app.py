@@ -4,6 +4,7 @@ from impuls import App, LocalResource, Pipeline, PipelineOptions
 from impuls.model import Agency
 from impuls.tasks import AddEntity, ExecuteSQL, RemoveUnusedEntities
 
+from .assign_missing_directions import AssignMissingDirections
 from .load_json import LoadJSON
 
 
@@ -66,6 +67,7 @@ class WarsawGTFS(App):
                     ),
                 ),
                 RemoveUnusedEntities(),
+                AssignMissingDirections(),
                 ExecuteSQL(
                     "SetTripDirection",
                     (
