@@ -2,7 +2,7 @@ from argparse import Namespace
 
 from impuls import App, LocalResource, Pipeline, PipelineOptions
 from impuls.model import Agency
-from impuls.tasks import AddEntity, ExecuteSQL
+from impuls.tasks import AddEntity, ExecuteSQL, RemoveUnusedEntities
 
 from .load_json import LoadJSON
 
@@ -55,9 +55,9 @@ class WarsawGTFS(App):
                     ),
                 ),
                 ExecuteSQL(
-                    "FlagUnavailableStopTimes",
+                    "DeleteUnavailableStopTimes",
                     (
-                        "UPDATE stop_times SET pickup_type = 1, drop_off_type = 1 "
+                        "DELETE FROM stop_times "
                         "WHERE (extra_fields_json ->> 'variant_id', stop_sequence) "
                         "IN (SELECT variant_id, stop_sequence FROM variant_stops "
                         "    WHERE is_not_available = 1)"
@@ -65,7 +65,7 @@ class WarsawGTFS(App):
                         "               WHERE extra_fields_json ->> 'depot' = 1)"
                     ),
                 ),
-                # TODO: missing variants.direction
+                RemoveUnusedEntities(),
                 ExecuteSQL(
                     "SetTripDirection",
                     (
@@ -81,7 +81,6 @@ class WarsawGTFS(App):
                     ),
                 ),
                 # TODO: make trips.direction_id consistent for trains (eastbound=0)
-                # TODO: drop inaccessible stops
                 # TODO: merge duplicate stops
                 # TODO: cleanup unused trips
                 # TODO: generate trip_headsign

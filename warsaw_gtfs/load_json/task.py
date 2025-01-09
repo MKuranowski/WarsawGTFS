@@ -26,7 +26,8 @@ CREATE TABLE variant_stops (
     variant_id TEXT NOT NULL REFERENCES variants(variant_id)
         ON DELETE CASCADE ON UPDATE CASCADE,
     stop_sequence INTEGER NOT NULL,
-    stop_id TEXT NOT NULL REFERENCES stops(stop_id),
+    stop_id TEXT NOT NULL REFERENCES stops(stop_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
     is_request INTEGER NOT NULL DEFAULT 0 CHECK (is_request IN (0, 1)),
     is_not_available INTEGER NOT NULL DEFAULT 0 CHECK (is_not_available IN (0, 1)),
     is_virtual INTEGER NOT NULL DEFAULT 0 CHECK (is_virtual IN (0, 1)),
