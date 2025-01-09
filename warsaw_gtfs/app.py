@@ -7,6 +7,7 @@ from impuls.tasks import AddEntity, ExecuteSQL, RemoveUnusedEntities
 from .assign_missing_directions import AssignMissingDirections
 from .load_json import LoadJSON
 from .merge_duplicate_stops import MergeDuplicateStops
+from .stabilize_ids import StabilizeIds
 
 
 class WarsawGTFS(App):
@@ -84,11 +85,7 @@ class WarsawGTFS(App):
                     ),
                 ),
                 MergeDuplicateStops(),
-                # TODO: stabilize ids:
-                #       routes: short_name
-                #       calendars: desc (?)
-                #       stops: code
-                #       trips: route:calendar:brigade:start_time
+                StabilizeIds(),
                 # TODO: make trips.direction_id consistent for trains (eastbound=0)
                 # TODO: generate trip_headsign
                 # TODO: generate route_long_name based on is_main variants
