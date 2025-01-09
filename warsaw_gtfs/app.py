@@ -27,13 +27,59 @@ class WarsawGTFS(App):
                     "DropNonSkmRailRoutes",
                     "DELETE FROM routes WHERE type = 2 AND short_name NOT LIKE 'S%'",
                 ),
-                # TODO: stop_times.variant_id -> trips.shape_id
-                # TODO: variant_stops.accessibility -> stops.wheelchair_accessible
-                # TODO: variant_stops.is_request, variant_stops.is_not_available, stops.depot
-                #       -> stop_times.pickup_type & drop_off_type
+                ExecuteSQL(
+                    "SetTripShapeIds",
+                    (
+                        "UPDATE trips SET shape_id = ("
+                        "  SELECT extra_fields_json ->> 'variant_id' "
+                        "  FROM stop_times"
+                        "  WHERE stop_times.trip_id = trips.trip_id"
+                        "  LIMIT 1)"
+                    ),
+                ),
+                ExecuteSQL(
+                    "SetStopAccessibility",
+                    (
+                        "UPDATE stops SET wheelchair_boarding = iif(stop_id IN "
+                        "(SELECT DISTINCT variant_stops.stop_id FROM variant_stops "
+                        "WHERE accessibility >= 6), 0, 1)"
+                    ),
+                ),
+                ExecuteSQL(
+                    "FlagRequestStopTimes",
+                    (
+                        "UPDATE stop_times SET pickup_type = 3, drop_off_type = 3 "
+                        "WHERE (extra_fields_json ->> 'variant_id', stop_sequence) "
+                        "IN (SELECT variant_id, stop_sequence FROM variant_stops "
+                        "    WHERE is_request = 1)"
+                    ),
+                ),
+                ExecuteSQL(
+                    "FlagUnavailableStopTimes",
+                    (
+                        "UPDATE stop_times SET pickup_type = 1, drop_off_type = 1 "
+                        "WHERE (extra_fields_json ->> 'variant_id', stop_sequence) "
+                        "IN (SELECT variant_id, stop_sequence FROM variant_stops "
+                        "    WHERE is_not_available = 1)"
+                        "OR stop_id IN (SELECT stop_id FROM stops"
+                        "               WHERE extra_fields_json ->> 'depot' = 1)"
+                    ),
+                ),
                 # TODO: missing variants.direction
-                # TODO: variants.direction -> trips.direction_id
-                # TODO: variants.is_exceptional -> trips.exceptional
+                ExecuteSQL(
+                    "SetTripDirection",
+                    (
+                        "UPDATE trips SET direction = (SELECT direction FROM variants "
+                        "WHERE variants.variant_id = trips.shape_id)"
+                    ),
+                ),
+                ExecuteSQL(
+                    "SetTripExceptional",
+                    (
+                        "UPDATE trips SET exceptional = (SELECT is_exceptional FROM variants "
+                        "WHERE variants.variant_id = trips.shape_id)"
+                    ),
+                ),
                 # TODO: make trips.direction_id consistent for trains (eastbound=0)
                 # TODO: drop inaccessible stops
                 # TODO: merge duplicate stops
