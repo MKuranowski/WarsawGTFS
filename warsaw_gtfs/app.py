@@ -6,6 +6,7 @@ from impuls.tasks import AddEntity, ExecuteSQL, RemoveUnusedEntities
 
 from .assign_missing_directions import AssignMissingDirections
 from .load_json import LoadJSON
+from .merge_duplicate_stops import MergeDuplicateStops
 
 
 class WarsawGTFS(App):
@@ -82,16 +83,15 @@ class WarsawGTFS(App):
                         "WHERE variants.variant_id = trips.shape_id)"
                     ),
                 ),
-                # TODO: make trips.direction_id consistent for trains (eastbound=0)
-                # TODO: merge duplicate stops
-                # TODO: cleanup unused trips
-                # TODO: generate trip_headsign
-                # TODO: generate route_long_name based on is_main variants
+                MergeDuplicateStops(),
                 # TODO: stabilize ids:
                 #       routes: short_name
                 #       calendars: desc (?)
                 #       stops: code
                 #       trips: route:calendar:brigade:start_time
+                # TODO: make trips.direction_id consistent for trains (eastbound=0)
+                # TODO: generate trip_headsign
+                # TODO: generate route_long_name based on is_main variants
                 # TODO: save & sort GTFS
             ],
             resources={
