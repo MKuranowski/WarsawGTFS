@@ -23,6 +23,26 @@ class WarsawGTFS(App):
                     ),
                 ),
                 LoadJSON(),
+                # TODO: drop KM/WKD trains
+                # TODO: stop_times.variant_id -> trips.shape_id
+                # TODO: variant_stops.accessibility -> stops.wheelchair_accessible
+                # TODO: variant_stops.is_request, variant_stops.is_not_available, stops.depot
+                #       -> stop_times.pickup_type & drop_off_type
+                # TODO: missing variants.direction
+                # TODO: variants.direction -> trips.direction_id
+                # TODO: variants.is_exceptional -> trips.exceptional
+                # TODO: make trips.direction_id consistent for trains (eastbound=0)
+                # TODO: drop inaccessible stops
+                # TODO: merge duplicate stops
+                # TODO: cleanup unused trips
+                # TODO: generate trip_headsign
+                # TODO: generate route_long_name based on is_main variants
+                # TODO: stabilize ids:
+                #       routes: short_name
+                #       calendars: desc (?)
+                #       stops: code
+                #       trips: route:calendar:brigade:start_time
+                # TODO: save & sort GTFS
             ],
             resources={
                 "rozklady.json": LocalResource("ignore_rozklady.json"),
@@ -30,3 +50,6 @@ class WarsawGTFS(App):
             },
             options=options,
         )
+
+    # TODO: MultiFile with pulling data from ZTM
+    # TODO: Pull metro & add extra "skm-only" export
