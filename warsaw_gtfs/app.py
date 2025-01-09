@@ -2,7 +2,7 @@ from argparse import Namespace
 
 from impuls import App, LocalResource, Pipeline, PipelineOptions
 from impuls.model import Agency
-from impuls.tasks import AddEntity
+from impuls.tasks import AddEntity, ExecuteSQL
 
 from .load_json import LoadJSON
 
@@ -23,7 +23,10 @@ class WarsawGTFS(App):
                     ),
                 ),
                 LoadJSON(),
-                # TODO: drop KM/WKD trains
+                ExecuteSQL(
+                    "DropNonSkmRailRoutes",
+                    "DELETE FROM routes WHERE type = 2 AND short_name NOT LIKE 'S%'",
+                ),
                 # TODO: stop_times.variant_id -> trips.shape_id
                 # TODO: variant_stops.accessibility -> stops.wheelchair_accessible
                 # TODO: variant_stops.is_request, variant_stops.is_not_available, stops.depot
