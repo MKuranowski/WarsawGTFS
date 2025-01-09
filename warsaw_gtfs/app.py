@@ -5,6 +5,7 @@ from impuls.model import Agency
 from impuls.tasks import AddEntity, ExecuteSQL, RemoveUnusedEntities
 
 from .assign_missing_directions import AssignMissingDirections
+from .fix_rail_direction_id import FixRailDirectionID
 from .load_json import LoadJSON
 from .merge_duplicate_stops import MergeDuplicateStops
 from .stabilize_ids import StabilizeIds
@@ -86,7 +87,7 @@ class WarsawGTFS(App):
                 ),
                 MergeDuplicateStops(),
                 StabilizeIds(),
-                # TODO: make trips.direction_id consistent for trains (eastbound=0)
+                FixRailDirectionID(),
                 # TODO: generate trip_headsign
                 # TODO: generate route_long_name based on is_main variants
                 # TODO: save & sort GTFS
