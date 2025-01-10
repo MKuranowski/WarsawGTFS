@@ -2,13 +2,16 @@ from argparse import Namespace
 
 from impuls import App, LocalResource, Pipeline, PipelineOptions
 from impuls.model import Agency
-from impuls.tasks import AddEntity, ExecuteSQL, RemoveUnusedEntities
+from impuls.tasks import AddEntity, ExecuteSQL, RemoveUnusedEntities, SaveGTFS
 
 from .assign_missing_directions import AssignMissingDirections
 from .fix_rail_direction_id import FixRailDirectionID
+from .generate_route_long_names import GenerateRouteLongNames
+from .gtfs import GTFS_HEADERS
 from .load_json import LoadJSON
 from .merge_duplicate_stops import MergeDuplicateStops
 from .stabilize_ids import StabilizeIds
+from .update_trip_headsigns import UpdateTripHeadsigns
 
 
 class WarsawGTFS(App):
@@ -87,10 +90,24 @@ class WarsawGTFS(App):
                 ),
                 MergeDuplicateStops(),
                 StabilizeIds(),
+                ExecuteSQL(
+                    "FixDoubleSpacesInStopNames",
+                    r"UPDATE stops SET name = re_sub('\s{2,}', ' ', name) WHERE name LIKE '%  %'",
+                ),
                 FixRailDirectionID(),
-                # TODO: generate trip_headsign
-                # TODO: generate route_long_name based on is_main variants
-                # TODO: save & sort GTFS
+                UpdateTripHeadsigns(),
+                GenerateRouteLongNames(),
+                ExecuteSQL(
+                    "MoveStopCodeToName",
+                    (
+                        "UPDATE stops SET "
+                        "  name = concat(name, ' ', extra_fields_json ->> 'code_within_group'), "
+                        "  code = '' "
+                        "WHERE SUBSTR(stop_id, 2, 2) NOT IN ('90', '91', '92') "
+                        "  AND stop_id NOT LIKE '1930%'"
+                    ),
+                ),
+                SaveGTFS(GTFS_HEADERS, "gtfs.zip"),
             ],
             resources={
                 "rozklady.json": LocalResource("ignore_rozklady.json"),
