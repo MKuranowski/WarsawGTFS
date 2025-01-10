@@ -14,6 +14,7 @@ from zipfile import ZipFile
 from zoneinfo import ZoneInfo
 
 import requests
+from impuls.errors import InputNotModified
 from impuls.model import Date
 from impuls.multi_file import IntermediateFeed, IntermediateFeedProvider, prune_outdated_feeds
 from impuls.resource import FETCH_CHUNK_SIZE, ConcreteResource
@@ -117,6 +118,14 @@ class ZTMFileProvider(IntermediateFeedProvider["ZTMResource"]):
         resource = ZTMResource(version, lookup_file.name, schedules_file.name)
         return IntermediateFeed(resource, version + ".zip", version, Date.from_ymd_str(version))
 
+    def single(self) -> IntermediateFeed["ZTMResource"]:
+        all_files = self.get_all_files()
+        grouped = self.group_files_by_version(all_files)
+        version = self.for_day.isoformat()
+        feed = self.to_latest_feed(version, grouped[version])
+        assert feed
+        return feed
+
 
 class ZTMResource(ConcreteResource):
     def __init__(
@@ -148,7 +157,7 @@ class ZTMResource(ConcreteResource):
     def fetch(self, conditional: bool) -> Iterator[bytes]:
         self.update_last_modified()
         if conditional and self.last_modified < self.fetch_time:
-            return
+            raise InputNotModified
         self.fetch_time = datetime.now(TZ)
 
         with TemporaryFile(prefix=f"impuls-warsaw-{self.version}-", suffix=".zip") as f:
