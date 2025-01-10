@@ -1,7 +1,11 @@
+import json
+from collections.abc import Mapping
 from typing import Any
+from zipfile import ZipFile
 
 from impuls import DBConnection, Task, TaskRuntime
 from impuls.model import Calendar, CalendarException, Route, Stop, StopTime, Trip
+from impuls.resource import ManagedResource
 
 from .calendars import parse_calendar_exceptions, parse_calendars
 from .routes import parse_routes
@@ -38,8 +42,9 @@ CREATE TABLE variant_stops (
 
 
 class LoadJSON(Task):
-    def __init__(self) -> None:
+    def __init__(self, resource_name: str) -> None:
         super().__init__()
+        self.resource_name = resource_name
         self.vehicle_kinds = dict[int, VehicleKind]()
 
     def clear(self) -> None:
@@ -57,7 +62,7 @@ class LoadJSON(Task):
 
     def load_lookup_tables(self, r: TaskRuntime) -> None:
         self.logger.info("Loading lookup tables")
-        data = r.resources["slowniki.json"].json()
+        data = self.load_json(r.resources, "slowniki.json")
         with r.db.transaction():
             self.load_stops(r.db, data)
             self.load_routes(r.db, data)
@@ -83,7 +88,8 @@ class LoadJSON(Task):
 
     def load_schedules(self, r: TaskRuntime) -> None:
         self.logger.info("Loading schedules")
-        data = r.resources["rozklady.json"].json()  # FIXME: Don't load the entire JSON to memory
+        # TODO: Don't load the entire JSON to memory
+        data = self.load_json(r.resources, "rozklady.json")
         with r.db.transaction():
             self.load_variants(r.db, data)
             self.load_variant_stops(r.db, data)
@@ -117,3 +123,8 @@ class LoadJSON(Task):
             "INSERT INTO shape_points (shape_id, sequence, lat, lon) VALUES (?,?,?,?)",
             parse_shape_points(data),
         )
+
+    def load_json(self, resources: Mapping[str, ManagedResource], name: str) -> Any:
+        with ZipFile(resources[self.resource_name].stored_at, mode="r") as arch:
+            with arch.open(name, mode="r") as f:
+                return json.load(f)

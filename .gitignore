@@ -4,6 +4,7 @@ __pycache__
 .vscode
 .idea
 .venv
+.env
 
 _impuls_workspace
 data_rt

@@ -1,9 +1,11 @@
 from argparse import Namespace
 
-from impuls import App, LocalResource, Pipeline, PipelineOptions
+from impuls import App, PipelineOptions
 from impuls.model import Agency
+from impuls.multi_file import MultiFile
 from impuls.tasks import AddEntity, ExecuteSQL, RemoveUnusedEntities, SaveGTFS
 
+from .api import ZTMFileProvider, ZTMResource
 from .assign_missing_directions import AssignMissingDirections
 from .fix_rail_direction_id import FixRailDirectionID
 from .generate_route_long_names import GenerateRouteLongNames
@@ -15,9 +17,11 @@ from .update_trip_headsigns import UpdateTripHeadsigns
 
 
 class WarsawGTFS(App):
-    def prepare(self, args: Namespace, options: PipelineOptions) -> Pipeline:
-        return Pipeline(
-            tasks=[
+    def prepare(self, args: Namespace, options: PipelineOptions) -> MultiFile[ZTMResource]:
+        return MultiFile(
+            options=options,
+            intermediate_provider=ZTMFileProvider(),
+            intermediate_pipeline_tasks_factory=lambda feed: [
                 AddEntity(
                     task_name="AddAgency",
                     entity=Agency(
@@ -29,7 +33,7 @@ class WarsawGTFS(App):
                         phone="+48 22 19 115",
                     ),
                 ),
-                LoadJSON(),
+                LoadJSON(feed.resource_name),
                 ExecuteSQL(
                     "DropNonSkmRailRoutes",
                     "DELETE FROM routes WHERE type = 2 AND short_name NOT LIKE 'S%'",
@@ -94,6 +98,8 @@ class WarsawGTFS(App):
                     "FixDoubleSpacesInStopNames",
                     r"UPDATE stops SET name = re_sub('\s{2,}', ' ', name) WHERE name LIKE '%  %'",
                 ),
+                # TODO: Fix stop names (e.g. spaces around dashes, not just double spaces)
+                # TODO: Merge virtual stops
                 FixRailDirectionID(),
                 UpdateTripHeadsigns(),
                 GenerateRouteLongNames(),
@@ -107,14 +113,13 @@ class WarsawGTFS(App):
                         "  AND stop_id NOT LIKE '1930%'"
                     ),
                 ),
+                # TODO: Fix shapes
+            ],
+            final_pipeline_tasks_factory=lambda _: [
+                # TODO: Extend schedules
+                # TODO: Add attributions & feed info
+                # TODO: Add metro schedules
+                # TODO: Export skm-only GTFS
                 SaveGTFS(GTFS_HEADERS, "gtfs.zip"),
             ],
-            resources={
-                "rozklady.json": LocalResource("ignore_rozklady.json"),
-                "slowniki.json": LocalResource("ignore_slowniki.json"),
-            },
-            options=options,
         )
-
-    # TODO: MultiFile with pulling data from ZTM
-    # TODO: Pull metro & add extra "skm-only" export
