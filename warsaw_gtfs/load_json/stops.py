@@ -21,12 +21,9 @@ def parse_stops(data: Any) -> Iterable[Stop]:
 def parse_stop(data: Any, group: Group) -> Stop:
     code_within_group = data["nazwa_slupka"]
     code = f"{group.code}{code_within_group}"
-    name = (
-        f"{group.full_name} {code_within_group}" if not is_railway(group.code) else group.full_name
-    )
     return Stop(
         str(data["id_slupka"]),
-        name,
+        group.full_name,
         data["gps_n"],
         data["gps_e"],
         code=code,
@@ -35,6 +32,7 @@ def parse_stop(data: Any, group: Group) -> Stop:
                 "stop_name_stem": group.name,
                 "town_name": group.town,
                 "depot": data["zajezdnia"],
+                "code_within_group": code_within_group,
             }
         ),
     )
