@@ -3,7 +3,7 @@ from typing import Any, NamedTuple
 
 from impuls.model import Stop
 
-from ..util import compact_json
+from ..util import compact_json, is_railway_stop
 
 
 class Group(NamedTuple):
@@ -59,7 +59,7 @@ def should_add_town_name(code: str, name: str, town: str) -> bool:
         return False
 
     # No for railway stops
-    if is_railway(code):
+    if is_railway_stop(code):
         return False
 
     # No for stops close to railway stations
@@ -78,7 +78,3 @@ def should_add_town_name(code: str, name: str, town: str) -> bool:
 
     # Default to yes, to prevent ambiguous names like "Cmentarz"
     return True
-
-
-def is_railway(code: str) -> bool:
-    return code[1:3] in {"90", "91", "92"} or code == "1930"

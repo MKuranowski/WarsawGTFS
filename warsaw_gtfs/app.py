@@ -13,6 +13,7 @@ from .generate_route_long_names import GenerateRouteLongNames
 from .gtfs import GTFS_HEADERS
 from .load_json import LoadJSON
 from .merge_duplicate_stops import MergeDuplicateStops
+from .merge_virtual_stops import MergeVirtualStops
 from .stabilize_ids import StabilizeIds
 from .update_trip_headsigns import UpdateTripHeadsigns
 
@@ -99,7 +100,7 @@ def create_intermediate_pipeline(
             r"UPDATE stops SET name = re_sub('\s{2,}', ' ', name) WHERE name LIKE '%  %'",
         ),
         # TODO: Fix stop names (e.g. spaces around dashes, not just double spaces)
-        # TODO: Merge virtual stops
+        MergeVirtualStops(),
         FixRailDirectionID(),
         UpdateTripHeadsigns(),
         GenerateRouteLongNames(),
