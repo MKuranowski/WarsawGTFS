@@ -31,7 +31,7 @@ def parse_stop(data: Any, group: Group) -> Stop:
             {
                 "stop_name_stem": group.name,
                 "town_name": group.town,
-                "depot": data["zajezdnia"],
+                "depot": str(data["zajezdnia"]),
                 "code_within_group": code_within_group,
             }
         ),
