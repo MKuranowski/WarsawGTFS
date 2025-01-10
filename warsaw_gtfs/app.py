@@ -5,9 +5,11 @@ from impuls.model import Agency, Date
 from impuls.multi_file import IntermediateFeed, MultiFile
 from impuls.resource import Resource
 from impuls.tasks import AddEntity, ExecuteSQL, RemoveUnusedEntities, SaveGTFS
+from impuls.tools import polish_calendar_exceptions
 
 from .api import ZTMFileProvider, ZTMResource
 from .assign_missing_directions import AssignMissingDirections
+from .extend_calendars import ExtendSchedules
 from .fix_rail_direction_id import FixRailDirectionID
 from .generate_route_long_names import GenerateRouteLongNames
 from .gtfs import GTFS_HEADERS
@@ -125,7 +127,7 @@ def create_intermediate_pipeline(
 
 def create_final_pipeline(feeds: list[IntermediateFeed[LocalResource]]) -> list[Task]:
     return [
-        # TODO: Extend schedules
+        ExtendSchedules(),
         # TODO: Add attributions & feed info
         # TODO: Add metro schedules
         # TODO: Export skm-only GTFS
@@ -154,7 +156,10 @@ class WarsawGTFS(App):
             feed = ZTMFileProvider(args.single).single()
             return Pipeline(
                 tasks=create_intermediate_pipeline(feed, save_gtfs=True),
-                resources={feed.resource_name: feed.resource},
+                resources={
+                    feed.resource_name: feed.resource,
+                    "calendar_exceptions.csv": polish_calendar_exceptions.RESOURCE,
+                },
                 options=options,
             )
         else:
@@ -163,4 +168,7 @@ class WarsawGTFS(App):
                 intermediate_provider=ZTMFileProvider(),
                 intermediate_pipeline_tasks_factory=create_intermediate_pipeline,
                 final_pipeline_tasks_factory=create_final_pipeline,
+                additional_resources={
+                    "calendar_exceptions.csv": polish_calendar_exceptions.RESOURCE,
+                },
             )
