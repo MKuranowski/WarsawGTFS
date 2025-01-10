@@ -9,6 +9,7 @@ class StabilizeIds(Task):
         super().__init__()
 
     def execute(self, r: TaskRuntime) -> None:
+        # TODO: This is too slow. Stops take 2 minutes, trips 30 seconds to stabilize
         with r.db.transaction():
             self.stabilize_route_ids(r.db)
             self.stabilize_stop_ids(r.db)
