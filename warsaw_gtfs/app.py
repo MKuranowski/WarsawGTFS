@@ -120,7 +120,7 @@ def create_intermediate_pipeline(
     ]
 
     if save_gtfs:
-        tasks.append(SaveGTFS(GTFS_HEADERS, "gtfs.zip"))
+        tasks.append(SaveGTFS(GTFS_HEADERS, "gtfs.zip", ensure_order=True))
 
     return tasks
 
@@ -131,7 +131,7 @@ def create_final_pipeline(feeds: list[IntermediateFeed[LocalResource]]) -> list[
         # TODO: Add attributions & feed info
         # TODO: Add metro schedules
         # TODO: Export skm-only GTFS
-        SaveGTFS(GTFS_HEADERS, "gtfs.zip"),
+        SaveGTFS(GTFS_HEADERS, "gtfs.zip", ensure_order=True),
     ]
 
 
