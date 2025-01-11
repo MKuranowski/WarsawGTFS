@@ -22,7 +22,7 @@ def parse_variant(data: Any) -> SQLRow:
         (data["nazwa_wariantu"] or "").upper(),
         direction,
         data["war_glowny"] or 0,
-        data["war_dojazd"] or 0,
+        data["war_dojazd"] or data["war_kurs_skrocony"] or 0,
     )
 
 
