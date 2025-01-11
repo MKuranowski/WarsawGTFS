@@ -46,7 +46,8 @@ def get_most_prominent_variant(db: DBConnection, route: str, direction: int) -> 
         (
             "SELECT variant_id FROM variants "
             "WHERE route_id = ? AND direction = ? AND is_exceptional = 0 "
-            "ORDER BY is_main * 1000000 + (SELECT COUNT(*) FROM trips WHERE shape_id = variant_id)"
+            "ORDER BY is_main * 1000000"
+            "  + (SELECT COUNT(*) FROM trips WHERE shape_id = variant_id) DESC LIMIT 1"
         ),
         (route, direction),
     ).one()
