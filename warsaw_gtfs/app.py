@@ -112,7 +112,7 @@ def create_intermediate_pipeline(
                 "IN (SELECT variant_id, stop_sequence FROM variant_stops "
                 "    WHERE is_not_available = 1)"
                 "OR stop_id IN (SELECT stop_id FROM stops"
-                "               WHERE extra_fields_json ->> 'depot' = 1)"
+                "               WHERE extra_fields_json ->> 'depot' = '1')"
             ),
         ),
         RemoveUnusedEntities(),
