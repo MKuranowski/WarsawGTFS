@@ -1,2 +1,2 @@
-impuls ~= 2.0
+impuls ~= 2.1
 requests ~= 2.32
