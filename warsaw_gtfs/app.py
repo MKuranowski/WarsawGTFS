@@ -1,4 +1,7 @@
 from argparse import ArgumentParser, Namespace
+from datetime import datetime
+from functools import partial
+from zoneinfo import ZoneInfo
 
 from impuls import App, LocalResource, Pipeline, PipelineOptions, Task
 from impuls.model import Agency, Attribution, Date, FeedInfo
@@ -16,8 +19,11 @@ from .gtfs import GTFS_HEADERS
 from .load_json import LoadJSON
 from .merge_duplicate_stops import MergeDuplicateStops
 from .merge_virtual_stops import MergeVirtualStops
+from .set_feed_version import SetFeedVersion
 from .stabilize_ids import StabilizeIds
 from .update_trip_headsigns import UpdateTripHeadsigns
+
+TZ = ZoneInfo("Europe/Warsaw")
 
 
 def create_intermediate_pipeline(
@@ -155,13 +161,18 @@ def create_intermediate_pipeline(
     return tasks
 
 
-def create_final_pipeline(feeds: list[IntermediateFeed[LocalResource]]) -> list[Task]:
-    return [
-        ExtendSchedules(),
-        # TODO: Add metro schedules
-        # TODO: Export skm-only GTFS
-        SaveGTFS(GTFS_HEADERS, "gtfs.zip", ensure_order=True),
-    ]
+def create_final_pipeline(
+    feeds: list[IntermediateFeed[LocalResource]],
+    force_feed_version: str = "",
+) -> list[Task]:
+    tasks = list[Task]()
+    tasks.append(ExtendSchedules())
+    if force_feed_version:
+        tasks.append(SetFeedVersion(force_feed_version))
+    # TODO: Add metro schedules
+    # TODO: Export skm-only GTFS
+    tasks.append(SaveGTFS(GTFS_HEADERS, "gtfs.zip", ensure_order=True))
+    return tasks
 
 
 class WarsawGTFS(App):
@@ -192,11 +203,15 @@ class WarsawGTFS(App):
                 options=options,
             )
         else:
+            feed_version = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
             return MultiFile(
                 options=options,
                 intermediate_provider=ZTMFileProvider(),
                 intermediate_pipeline_tasks_factory=create_intermediate_pipeline,
-                final_pipeline_tasks_factory=create_final_pipeline,
+                final_pipeline_tasks_factory=partial(
+                    create_final_pipeline,
+                    force_feed_version=feed_version,
+                ),
                 additional_resources={
                     "calendar_exceptions.csv": polish_calendar_exceptions.RESOURCE,
                 },

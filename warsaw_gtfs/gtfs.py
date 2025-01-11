@@ -7,6 +7,21 @@ GTFS_HEADERS = {
         "agency_lang",
         "agency_phone",
     ),
+    "attributions.txt": (
+        "attribution_id",
+        "organization_name",
+        "attribution_url",
+        "is_producer",
+        "is_operator",
+        "is_authority",
+        "is_data_source",
+    ),
+    "feed_info.txt": (
+        "feed_publisher_name",
+        "feed_publisher_url",
+        "feed_lang",
+        "feed_version",
+    ),
     "calendar_dates.txt": (
         "date",
         "service_id",

@@ -124,6 +124,7 @@ class ZTMFileProvider(IntermediateFeedProvider["ZTMResource"]):
         version = self.for_day.isoformat()
         feed = self.to_latest_feed(version, grouped[version])
         assert feed
+        feed.resource.update_last_modified()
         return feed
 
 
