@@ -1,7 +1,7 @@
 from argparse import ArgumentParser, Namespace
 
 from impuls import App, LocalResource, Pipeline, PipelineOptions, Task
-from impuls.model import Agency, Date
+from impuls.model import Agency, Attribution, Date, FeedInfo
 from impuls.multi_file import IntermediateFeed, MultiFile
 from impuls.resource import Resource
 from impuls.tasks import AddEntity, ExecuteSQL, RemoveUnusedEntities, SaveGTFS
@@ -34,6 +34,36 @@ def create_intermediate_pipeline(
                 timezone="Europe/Warsaw",
                 lang="pl",
                 phone="+48 22 19 115",
+            ),
+        ),
+        AddEntity(
+            task_name="AddZTMAttribution",
+            entity=Attribution(
+                id="0",
+                organization_name="Data provided by: Zarząd Transportu Miejskiego w Warszawie",
+                is_operator=True,
+                is_authority=True,
+                is_data_source=True,
+                url="https://ztm.waw.pl",
+            ),
+        ),
+        AddEntity(
+            task_name="AddMKuranAttribution",
+            entity=Attribution(
+                id="1",
+                organization_name="GTFS provided by: Mikołaj Kuranowski",
+                is_authority=True,
+                is_data_source=True,
+                url="https://mkuran.pl/gtfs/",
+            ),
+        ),
+        AddEntity(
+            task_name="AddFeedInfo",
+            entity=FeedInfo(
+                "Mikołaj Kuranowski",
+                "https://mkuran.pl/gtfs/",
+                lang="pl",
+                version=feed.resource.last_modified.strftime("%Y-%m-%d_%H-%M-%S"),
             ),
         ),
         LoadJSON(feed.resource_name),
@@ -128,7 +158,6 @@ def create_intermediate_pipeline(
 def create_final_pipeline(feeds: list[IntermediateFeed[LocalResource]]) -> list[Task]:
     return [
         ExtendSchedules(),
-        # TODO: Add attributions & feed info
         # TODO: Add metro schedules
         # TODO: Export skm-only GTFS
         SaveGTFS(GTFS_HEADERS, "gtfs.zip", ensure_order=True),
