@@ -15,10 +15,14 @@ class Group(NamedTuple):
 
 def parse_stops(data: Any) -> Iterable[Stop]:
     groups = parse_groups(data)
-    return (parse_stop(i, groups[i["id_przystanku"]]) for i in data["slupki"])
+    streets = parse_streets(data)
+    return (
+        parse_stop(i, groups[i["id_przystanku"]], streets.get(i["id_ulicy"]) or "")
+        for i in data["slupki"]
+    )
 
 
-def parse_stop(data: Any, group: Group) -> Stop:
+def parse_stop(data: Any, group: Group, street_name: str) -> Stop:
     code_within_group = data["nazwa_slupka"]
     code = f"{group.code}{code_within_group}"
     return Stop(
@@ -31,6 +35,7 @@ def parse_stop(data: Any, group: Group) -> Stop:
             {
                 "stop_name_stem": group.name,
                 "town_name": group.town,
+                "street_name": street_name,
                 "depot": str(data["zajezdnia"]),
                 "code_within_group": code_within_group,
             }
@@ -51,6 +56,10 @@ def parse_group(data: Any) -> Group:
     else:
         full_name = name
     return Group(code, full_name, name, town or "Warszawa")
+
+
+def parse_streets(data: Any) -> dict[int, str]:
+    return {i["id_ulicy"]: i["nazwa"] for i in data["ulice"]}
 
 
 def should_add_town_name(code: str, name: str, town: str) -> bool:
