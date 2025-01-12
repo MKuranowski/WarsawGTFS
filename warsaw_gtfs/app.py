@@ -152,6 +152,13 @@ def create_intermediate_pipeline(
                 "  AND stop_id NOT LIKE '1930%'"
             ),
         ),
+        ExecuteSQL(
+            "RemoveExtraTripShortName",
+            (
+                "UPDATE trips SET short_name = '' WHERE route_id NOT IN "
+                "(SELECT route_id FROM routes WHERE type = 2)"
+            ),
+        ),
         # TODO: Fix shapes
     ]
 
