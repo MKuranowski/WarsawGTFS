@@ -95,7 +95,7 @@ def parse_route(data: Any, desc: RouteDescription, used_ids: set[str]) -> tuple[
     name = data["nazwa"].strip()
     type = desc.type()
     color, text_color = desc.color(name)
-    id = find_non_conflicting_id(used_ids, name, separator="_")
+    id = find_non_conflicting_id(used_ids, name)
     used_ids.add(id)
     return data["id_linii"], Route(id, "0", name, "", type, color, text_color)
 

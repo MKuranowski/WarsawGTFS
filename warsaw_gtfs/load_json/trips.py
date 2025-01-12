@@ -47,12 +47,15 @@ def parse_trip(
     route_id, calendar_id = schedule
     brigade = data["brygada_kursu"] or ""
     departure_time = data["o24"][0:2] + data["o24"][3:5]  # extract HHMM from HH:MM:SS
+
+    route_name = route_id.partition(":")[0]
+    calendar_name = calendar_id.partition(":")[0]
     id = find_non_conflicting_id(
         used_ids,
-        f"{route_id}:{calendar_id}:{brigade}:{departure_time}",
-        separator="_",
+        f"{route_name}:{calendar_name}:{brigade}:{departure_time}",
     )
     used_ids.add(id)
+
     if vehicle_kind := vehicle_kinds.get(job.vehicle_kind):
         fleet_type, accessible = vehicle_kind
     else:

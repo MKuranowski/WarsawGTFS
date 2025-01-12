@@ -141,16 +141,6 @@ def create_intermediate_pipeline(
         UpdateTripHeadsigns(),
         GenerateRouteLongNames(),
         ExecuteSQL(
-            "MoveStopCodeToName",
-            (
-                "UPDATE stops SET "
-                "  name = concat(name, ' ', extra_fields_json ->> 'code_within_group'), "
-                "  code = '' "
-                "WHERE SUBSTR(stop_id, 2, 2) NOT IN ('90', '91', '92') "
-                "  AND stop_id NOT LIKE '1930%'"
-            ),
-        ),
-        ExecuteSQL(
             "RemoveExtraTripShortName",
             (
                 "UPDATE trips SET short_name = '' WHERE route_id NOT IN "
