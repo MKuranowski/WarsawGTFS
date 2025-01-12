@@ -28,15 +28,15 @@ def parse_stops(data: Any) -> Iterable[tuple[int, Stop]]:
 
 
 def parse_stop(data: Any, group: Group, street_name: str, used_ids: set[str]) -> tuple[int, Stop]:
-    code_within_group = data["nazwa_slupka"]
-    id = find_non_conflicting_id(used_ids, f"{group.code}{code_within_group}", separator="_")
+    code = "" if is_railway_stop(group.code) else data["nazwa_slupka"]
+    id = find_non_conflicting_id(used_ids, f"{group.code}{code}")
     used_ids.add(id)
     return data["id_slupka"], Stop(
         id,
         group.full_name,
         data["gps_n"],
         data["gps_e"],
-        code=code_within_group,
+        code=code,
         extra_fields_json=compact_json(
             {
                 "stop_name_stem": group.name,

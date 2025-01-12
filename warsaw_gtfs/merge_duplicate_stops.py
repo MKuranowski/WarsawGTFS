@@ -23,14 +23,23 @@ class MergeDuplicateStops(Task):
         for code in self.find_duplicate_codes(r.db):
             self.merge_duplicates(r.db, code)
 
-    def find_duplicate_codes(self, db: DBConnection) -> list[str]:
-        return [
-            cast(str, i[0])
-            for i in db.raw_execute("SELECT code FROM stops GROUP BY code HAVING COUNT(*) > 1")
-        ]
+    def find_duplicate_codes(self, db: DBConnection) -> set[str]:
+        return {
+            cast(str, i[0]).partition(":")[0]
+            for i in db.raw_execute("SELECT stop_id FROM stops WHERE stop_id LIKE '%:%'")
+        }
 
     def merge_duplicates(self, db: DBConnection, code: str) -> None:
-        stops = list(db.typed_out_execute("SELECT * FROM stops WHERE code = ?", Stop, (code,)))
+        assert "%" not in code
+        assert "_" not in code
+
+        stops = list(
+            db.typed_out_execute(
+                "SELECT * FROM stops WHERE substr(stop_id, 1, ?) = ? ORDER BY stop_id",
+                Stop,
+                (len(code), code),
+            )
+        )
         duplicates = self.resolve_duplicates(stops)
         self.execute_merge(db, duplicates)
 

@@ -12,7 +12,7 @@ def parse_calendars(data: Any) -> Iterable[tuple[int, Calendar]]:
 
 
 def parse_calendar(data: Any, used_ids: set[str]) -> tuple[int, Calendar]:
-    id = find_non_conflicting_id(used_ids, data["nazwa"], separator="_")
+    id = find_non_conflicting_id(used_ids, data["nazwa"])
     used_ids.add(id)
     return data["id_typu_dnia"], Calendar(id=id, desc=data["nazwa"])
 
