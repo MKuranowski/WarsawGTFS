@@ -2,6 +2,7 @@ from collections.abc import Iterable
 from typing import Any, NamedTuple
 
 from impuls.model import Stop
+from impuls.tools.strings import find_non_conflicting_id
 
 from ..util import compact_json, is_railway_stop
 
@@ -13,31 +14,35 @@ class Group(NamedTuple):
     town: str
 
 
-def parse_stops(data: Any) -> Iterable[Stop]:
+def parse_stops(data: Any) -> Iterable[tuple[int, Stop]]:
     groups = parse_groups(data)
     streets = parse_streets(data)
-    return (
-        parse_stop(i, groups[i["id_przystanku"]], streets.get(i["id_ulicy"]) or "")
-        for i in data["slupki"]
-    )
+    used_ids = set[str]()
+    for stop in data["slupki"]:
+        yield parse_stop(
+            stop,
+            groups[stop["id_przystanku"]],
+            streets.get(stop["id_ulicy"]) or "",
+            used_ids,
+        )
 
 
-def parse_stop(data: Any, group: Group, street_name: str) -> Stop:
+def parse_stop(data: Any, group: Group, street_name: str, used_ids: set[str]) -> tuple[int, Stop]:
     code_within_group = data["nazwa_slupka"]
-    code = f"{group.code}{code_within_group}"
-    return Stop(
-        str(data["id_slupka"]),
+    id = find_non_conflicting_id(used_ids, f"{group.code}{code_within_group}", separator="_")
+    used_ids.add(id)
+    return data["id_slupka"], Stop(
+        id,
         group.full_name,
         data["gps_n"],
         data["gps_e"],
-        code=code,
+        code=code_within_group,
         extra_fields_json=compact_json(
             {
                 "stop_name_stem": group.name,
                 "town_name": group.town,
                 "street_name": street_name,
                 "depot": str(data["zajezdnia"]),
-                "code_within_group": code_within_group,
             }
         ),
     )

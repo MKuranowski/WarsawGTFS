@@ -20,7 +20,6 @@ from .load_json import LoadJSON
 from .merge_duplicate_stops import MergeDuplicateStops
 from .merge_virtual_stops import MergeVirtualStops
 from .set_feed_version import SetFeedVersion
-from .stabilize_ids import StabilizeIds
 from .update_trip_headsigns import UpdateTripHeadsigns
 
 TZ = ZoneInfo("Europe/Warsaw")
@@ -132,7 +131,6 @@ def create_intermediate_pipeline(
             ),
         ),
         MergeDuplicateStops(),
-        StabilizeIds(),
         ExecuteSQL(
             "FixDoubleSpacesInStopNames",
             r"UPDATE stops SET name = re_sub('\s{2,}', ' ', name) WHERE name LIKE '%  %'",

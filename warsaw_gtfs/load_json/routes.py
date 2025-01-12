@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any
 
 from impuls.model import Route
+from impuls.tools.strings import find_non_conflicting_id
 
 
 class RouteDescription(Enum):
@@ -83,17 +84,20 @@ class RouteDescription(Enum):
         raise RuntimeError(f"unexpected {self}")
 
 
-def parse_routes(data: Any) -> Iterable[Route]:
+def parse_routes(data: Any) -> Iterable[tuple[int, Route]]:
     descriptions = parse_route_descriptions(data["typy_linii"])
-    return (parse_route(i, descriptions[i["id_typu_linii"]]) for i in data["linie"])
+    used_ids = set[str]()
+    for route in data["linie"]:
+        yield parse_route(route, descriptions[route["id_typu_linii"]], used_ids)
 
 
-def parse_route(data: Any, desc: RouteDescription) -> Route:
-    id = str(data["id_linii"])
+def parse_route(data: Any, desc: RouteDescription, used_ids: set[str]) -> tuple[int, Route]:
     name = data["nazwa"].strip()
     type = desc.type()
     color, text_color = desc.color(name)
-    return Route(id, "0", name, "", type, color, text_color)
+    id = find_non_conflicting_id(used_ids, name, separator="_")
+    used_ids.add(id)
+    return data["id_linii"], Route(id, "0", name, "", type, color, text_color)
 
 
 def parse_route_descriptions(data: Any) -> dict[int, RouteDescription]:
