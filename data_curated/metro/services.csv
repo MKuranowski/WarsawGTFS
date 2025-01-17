@@ -1,0 +1,5 @@
+calendar_id,monday,tuesday,wednesday,thursday,friday,saturday,sunday,exceptions
+PcM,1,1,1,1,0,0,0,
+PtM,0,0,0,0,1,0,0,
+SbM,0,0,0,0,0,1,0,
+NdM,0,0,0,0,0,0,1,

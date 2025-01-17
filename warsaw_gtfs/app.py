@@ -10,6 +10,7 @@ from impuls.resource import Resource
 from impuls.tasks import AddEntity, ExecuteSQL, RemoveUnusedEntities, SaveGTFS
 from impuls.tools import polish_calendar_exceptions
 
+from .add_metro import AddMetro
 from .api import ZTMFileProvider, ZTMResource
 from .assign_missing_directions import AssignMissingDirections
 from .extend_calendars import ExtendSchedules
@@ -164,7 +165,7 @@ def create_final_pipeline(
     tasks.append(ExtendSchedules())
     if force_feed_version:
         tasks.append(SetFeedVersion(force_feed_version))
-    # TODO: Add metro schedules
+    tasks.append(AddMetro())
     # TODO: Export skm-only GTFS
     tasks.append(SaveGTFS(GTFS_HEADERS, "gtfs.zip", ensure_order=True))
     return tasks
@@ -187,13 +188,24 @@ class WarsawGTFS(App):
         args: Namespace,
         options: PipelineOptions,
     ) -> Pipeline | MultiFile[ZTMResource]:
+        resources = {
+            "calendar_exceptions.csv": polish_calendar_exceptions.RESOURCE,
+            "metro_routes.csv": LocalResource("data_curated/metro/routes.csv"),
+            "metro_schedules.csv": LocalResource("data_curated/metro/schedules.csv"),
+            "metro_services.csv": LocalResource("data_curated/metro/services.csv"),
+            "metro_stops.csv": LocalResource("data_curated/metro/stops.csv"),
+            "metro_variant_stops.csv": LocalResource("data_curated/metro/variant_stops.csv"),
+            "metro_variants.csv": LocalResource("data_curated/metro/variants.csv"),
+            "tram_rail_shapes.osm": LocalResource("data_curated/tram_rail_shapes.osm"),
+        }
+
         if args.single:
             feed = ZTMFileProvider(args.single).single()
             return Pipeline(
                 tasks=create_intermediate_pipeline(feed, save_gtfs=True),
                 resources={
+                    **resources,
                     feed.resource_name: feed.resource,
-                    "calendar_exceptions.csv": polish_calendar_exceptions.RESOURCE,
                 },
                 options=options,
             )
@@ -207,7 +219,5 @@ class WarsawGTFS(App):
                     create_final_pipeline,
                     force_feed_version=feed_version,
                 ),
-                additional_resources={
-                    "calendar_exceptions.csv": polish_calendar_exceptions.RESOURCE,
-                },
+                additional_resources=resources,
             )
