@@ -3,11 +3,11 @@ package positions
 // cSpell: words cenkalti
 
 import (
-	"io"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/MKuranowski/WarsawGTFS/realtime/gtfs"
 	"github.com/MKuranowski/WarsawGTFS/realtime/util"
 	"github.com/cenkalti/backoff/v4"
 )
@@ -18,7 +18,6 @@ type Options struct {
 	JSONTarget    string
 	HumanReadable bool
 	Apikey        string
-	Brigades      string
 }
 
 // Create auto-magically creates realtime feeds with position data.
@@ -65,9 +64,9 @@ func Create(api VehicleAPI, brigadeMap map[string][]*brigadeEntry, prevVehicles 
 }
 
 // Main auto-magically creates vehicle position data
-func Main(client *http.Client, opts Options) (err error) {
-	// Load brigades.json
-	brigadeMap, err := loadBrigades(opts.Brigades, client)
+func Main(client *http.Client, gtfsFile *gtfs.Gtfs, opts Options) (err error) {
+	// Load brigades from gtfs
+	brigadeMap, err := loadBrigades(gtfsFile)
 	if err != nil {
 		return
 	}
@@ -90,27 +89,33 @@ type brigadesResource struct {
 // Update automatically updates the RouteMap if the Resource has changed
 func (rr *brigadesResource) Update() error {
 	// Check for GTFS updates
+	// TODO: SHOULD ALSO FORCE REFRESH AFTER 3AM
 	shouldUpdate, err := rr.Resource.Check()
 	if err != nil {
 		return err
 	} else if shouldUpdate || rr.BrigadeMap == nil {
-		log.Println("brigades.json changed, reloading")
+		log.Println("gtfs changed, reloading")
 
-		// Try to fetch updated brigades.json
-		newData, err := rr.Resource.Fetch()
+		// Fetch the new GTFS
+		gtfsContent, err := rr.Resource.Fetch()
 		if err != nil {
 			return err
 		}
-		defer newData.Close()
+		defer gtfsContent.Close()
 
-		// Read brigades.json
-		rawData, err := io.ReadAll(newData)
+		// Load the new GTFS
+		gtfsFile, err := gtfs.NewGtfsFromReader(gtfsContent)
+		if err != nil {
+			return err
+		}
+		defer gtfsFile.Close()
+		err = gtfsFile.LoadAll()
 		if err != nil {
 			return err
 		}
 
 		// Re-load brigades
-		rr.BrigadeMap, err = makeBrigades(rawData)
+		rr.BrigadeMap, err = loadBrigades(gtfsFile)
 		if err != nil {
 			return err
 		}
@@ -119,11 +124,11 @@ func (rr *brigadesResource) Update() error {
 }
 
 // Loop automatically updates the GTFS-RT Positions files
-func Loop(client *http.Client, jsonResource util.Resource, sleepTime time.Duration, opts Options) (err error) {
+func Loop(client *http.Client, gtfsResource util.Resource, sleepTime time.Duration, opts Options) (err error) {
 	// Automatic wrapper around the resource
 	var prevPositions map[string]*Vehicle
 	api := VehicleAPI{Key: opts.Apikey, Client: client}
-	br := brigadesResource{Resource: jsonResource}
+	br := brigadesResource{Resource: gtfsResource}
 
 	// Backoff shit
 	backoff := &backoff.ExponentialBackOff{
