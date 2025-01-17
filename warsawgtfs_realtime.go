@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/MKuranowski/WarsawGTFS/realtime/alerts"
-	"github.com/MKuranowski/WarsawGTFS/realtime/brigades"
 	"github.com/MKuranowski/WarsawGTFS/realtime/gtfs"
 	"github.com/MKuranowski/WarsawGTFS/realtime/positions"
 	"github.com/MKuranowski/WarsawGTFS/realtime/util"
@@ -34,12 +33,7 @@ var (
 		false,
 		"create GTFS-Realtime alerts")
 
-	flagBrigades = flag.Bool(
-		"b",
-		false,
-		"create brigades.json (required for positions)")
-
-	flagPostions = flag.Bool(
+	flagPositions = flag.Bool(
 		"p",
 		false,
 		"create GTFS-Realtime vehicle positions")
@@ -48,17 +42,12 @@ var (
 	flagApikey = flag.String(
 		"k",
 		"",
-		"apikey for api.um.warszawa.pl (for brigades and positions), if empty/omitted - use WARSAW_APIKEY env variable")
+		"apikey for api.um.warszawa.pl (for positions), if empty/omitted - use WARSAW_APIKEY env variable")
 
 	flagGtfsFile = flag.String(
 		"gtfs-file",
 		"https://mkuran.pl/gtfs/warsaw.zip",
-		"path/URL to static Warsaw GTFS (for alerts and brigades)")
-
-	flagBrigadesFile = flag.String(
-		"brigades-file",
-		"https://mkuran.pl/gtfs/warsaw/brigades.json",
-		"path/URL to file brigades.json (for positions)")
+		"path/URL to static Warsaw GTFS (for alerts and positions)")
 
 	// Output options
 	flagTarget = flag.String(
@@ -69,7 +58,7 @@ var (
 	flagJSON = flag.Bool(
 		"json",
 		false,
-		"also save JSON files alongside GTFS-Relatime feeds")
+		"also save JSON files alongside GTFS-Realtime feeds")
 
 	flagReadable = flag.Bool(
 		"readable",
@@ -86,14 +75,13 @@ var (
 	flagLoop = flag.Duration(
 		"loop",
 		time.Duration(0),
-		"alerts/positions: instead of running once and exiting, "+
+		"instead of running once and exiting, "+
 			"update the output file every given duration (alerts/positions only)")
 
 	flagDataCheck = flag.Duration(
 		"checkdata",
-		time.Duration(30*60*1_000_000_000), // 30 minutes in ns
-		"alerts/brigades: how often check if the -gtfs-file has changed,\n"+
-			"positions: how often check if the -brigades-file has changed")
+		30*time.Minute,
+		"how often check if the -gtfs-file has changed")
 )
 
 /* ================
@@ -114,15 +102,12 @@ func checkModes() error {
 	if *flagAlerts {
 		modeCount++
 	}
-	if *flagBrigades {
-		modeCount++
-	}
-	if *flagPostions {
+	if *flagPositions {
 		modeCount++
 	}
 
 	if modeCount != 1 {
-		return errors.New("exactly one of the -a, -b or -p flags has to be provided")
+		return errors.New("exactly one of the -a or -p flags has to be provided")
 	}
 	return nil
 }
@@ -152,25 +137,9 @@ func parsePositionsFlags() (o positions.Options, err error) {
 	// Set options
 	o.GtfsRtTarget = path.Join(*flagTarget, "positions.pb")
 	o.HumanReadable = *flagReadable
-	o.Brigades = *flagBrigadesFile
 	if *flagJSON {
 		o.JSONTarget = path.Join(*flagTarget, "positions.json")
 	}
-	return
-}
-
-// parseBrigadesFlags parses flags to brigades.Options
-func parseBrigadesFlags() (o brigades.Options, err error) {
-	// Ensure apikey was provided
-	o.Apikey = getApikey()
-	if o.Apikey == "" {
-		err = errors.New("key for api.um.warszawa.pl needs to be provided")
-		return
-	}
-
-	// Create options struct
-	o.JSONTarget = path.Join(*flagTarget, "brigades.json")
-	o.ThrowAPIErrors = *flagStrict
 	return
 }
 
@@ -247,7 +216,7 @@ func loopPositions() error {
 	if err != nil {
 		return err
 	}
-	res := wrapInResource(*flagBrigadesFile)
+	res := wrapInResource(*flagGtfsFile)
 	return positions.Loop(client, res, *flagLoop, opts)
 }
 
@@ -284,29 +253,16 @@ func singlePositions() error {
 		return err
 	}
 
-	// Make positions
-	log.Println("Creating positions")
-	return positions.Main(client, opts)
-}
-
-// singleBrigades prepares options for creating brigades and then creates them
-func singleBrigades() error {
-	// Get options
-	opts, err := parseBrigadesFlags()
-	if err != nil {
-		return err
-	}
-
-	// Get GTFS route map
+	// Get GTFS
 	gtfsFile, err := loadGtfs(false)
 	if err != nil {
 		return err
 	}
-	defer gtfsFile.Close()
+	gtfsFile.Close()
 
-	// Make brigades
-	log.Println("Creating brigades")
-	return brigades.Main(client, gtfsFile, opts)
+	// Make positions
+	log.Println("Creating positions")
+	return positions.Main(client, gtfsFile, opts)
 }
 
 /* ============
@@ -334,7 +290,7 @@ func main() {
 	// loop mode enabled
 	case *flagAlerts && loopMode:
 		modeFunc = loopAlerts
-	case *flagPostions && loopMode:
+	case *flagPositions && loopMode:
 		modeFunc = loopPositions
 	case loopMode:
 		modeFunc = func() error { return errors.New("loop mode is available only for alerts/positions") }
@@ -342,10 +298,8 @@ func main() {
 	// single pass
 	case *flagAlerts:
 		modeFunc = singleAlerts
-	case *flagPostions:
+	case *flagPositions:
 		modeFunc = singlePositions
-	case *flagBrigades:
-		modeFunc = singleBrigades
 	}
 
 	// create the target directory

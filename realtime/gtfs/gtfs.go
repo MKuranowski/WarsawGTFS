@@ -4,8 +4,8 @@ import (
 	"archive/zip"
 	"encoding/csv"
 	"errors"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"sort"
@@ -22,9 +22,17 @@ type ReaderAtCloser interface {
 	io.Closer
 }
 
-type routeServicePair struct {
-	Route   string
-	Service string
+type StopTime struct {
+	StopID    string
+	Timepoint string
+	Sequence  int16
+}
+
+type TripData struct {
+	Route        string
+	Service      string
+	Brigade      string
+	LastStopTime StopTime
 }
 
 // Gtfs is an object with access to GTFS data
@@ -32,7 +40,7 @@ type Gtfs struct {
 	Routes   map[string]sort.StringSlice // route_type → [route_id route_id ...]
 	Stops    map[string][2]float64       // stop_id → [stop_lat stop_lon]
 	Services map[string]bool             // service_id → true (if service is active on g.SyncTime)
-	Trips    map[string]routeServicePair // trip_id → [route_id service_id]
+	Trips    map[string]TripData         // trip_id → TripData
 
 	fileObj  ReaderAtCloser
 	ZipFile  *zip.Reader
@@ -46,7 +54,7 @@ func NewGtfsFromFile(fname string) (gtfs *Gtfs, err error) {
 		Routes:   make(map[string]sort.StringSlice),
 		Stops:    make(map[string][2]float64),
 		Services: make(map[string]bool),
-		Trips:    make(map[string]routeServicePair),
+		Trips:    make(map[string]TripData),
 	}
 
 	// Open the file
@@ -102,12 +110,12 @@ func NewGtfsFromReader(r io.Reader) (gtfs *Gtfs, err error) {
 		Routes:   make(map[string]sort.StringSlice),
 		Stops:    make(map[string][2]float64),
 		Services: make(map[string]bool),
-		Trips:    make(map[string]routeServicePair),
+		Trips:    make(map[string]TripData),
 		SyncTime: time.Now(),
 	}
 
 	// Make a tempfile
-	tempFile, err := ioutil.TempFile("", "warsawgtfsrt_*.zip")
+	tempFile, err := os.CreateTemp("", "warsawgtfsrt_*.zip")
 	if err != nil {
 		return
 	}
@@ -139,7 +147,7 @@ func NewGtfsFromReader(r io.Reader) (gtfs *Gtfs, err error) {
 	return
 }
 
-// Close closes the underlaying file object
+// Close closes the underlying file object
 func (g *Gtfs) Close() error {
 	return g.fileObj.Close()
 }
@@ -325,17 +333,98 @@ func (g *Gtfs) LoadTrips(file *zip.File) (err error) {
 
 		// Convert row to a map and assert all requires columns are there
 		row := util.ZipStrings(header, rowSlice)
-		tripID, has1 := row["trip_id"]
-		routeID, has2 := row["route_id"]
-		serviceID, has3 := row["service_id"]
 
-		if !has1 || !has2 || !has3 {
-			err = errors.New("trips.txt is missing trip_id or route_id or service_id columns")
-			return
+		tripID, ok := row["trip_id"]
+		if !ok {
+			return errors.New("trips.txt is missing the trip_id column")
+		}
+
+		routeID, ok := row["route_id"]
+		if !ok {
+			return errors.New("trips.txt is missing the route_id column")
+		}
+
+		serviceID, ok := row["service_id"]
+		if !ok {
+			return errors.New("trips.txt is missing the service_id column")
+		}
+
+		brigade, ok := row["brigade"]
+		if !ok {
+			return errors.New("trips.txt is missing the brigade column")
 		}
 
 		// Save data
-		g.Trips[tripID] = routeServicePair{routeID, serviceID}
+		g.Trips[tripID] = TripData{routeID, serviceID, brigade, StopTime{}}
+	}
+	return
+}
+
+// LoadStopTimes loads stop_times.txt from provided zip.File.
+// This must be called after LoadTrips() completes.
+func (g *Gtfs) LoadStopTimes(file *zip.File) (err error) {
+	if file == nil {
+		return errors.New("file stop_times.txt is missing")
+	}
+
+	fileReader, err := file.Open()
+	if err != nil {
+		return
+	}
+	defer fileReader.Close()
+
+	csvReader := csv.NewReader(fileReader)
+	header, err := csvReader.Read()
+
+	if err != nil {
+		return
+	}
+
+	for {
+		// Retrieve next row
+		rowSlice, errI := csvReader.Read()
+		err = errI
+		if err == io.EOF {
+			err = nil
+			break
+		} else if err != nil {
+			return
+		}
+
+		// Convert row to a map and assert all requires columns are there
+		row := util.ZipStrings(header, rowSlice)
+
+		tripID, ok := row["trip_id"]
+		if !ok {
+			return errors.New("stop_times.txt is missing the trip_id column")
+		}
+
+		stopID, ok := row["stop_id"]
+		if !ok {
+			return errors.New("stop_times.txt is missing the stop_id column")
+		}
+
+		departureTime := row["departure_time"]
+		if departureTime == "" {
+			return errors.New("stop_times.txt is missing a departure_time")
+		}
+
+		stopSequenceStr, ok := row["stop_sequence"]
+		if !ok {
+			return errors.New("stop_times.txt is missing the stop_sequence column")
+		}
+
+		stopSequence, err := strconv.ParseUint(stopSequenceStr, 10, 16)
+		if err != nil {
+			return fmt.Errorf("stop_times contains invalid stop_sequence: %q: %w", stopSequenceStr, err)
+		}
+
+		if t, ok := g.Trips[tripID]; ok {
+			if t.LastStopTime.Timepoint == "" || t.LastStopTime.Sequence < int16(stopSequence) {
+				t.LastStopTime = StopTime{stopID, departureTime, int16(stopSequence)}
+				g.Trips[tripID] = t
+			}
+		}
 	}
 	return
 }
@@ -384,7 +473,10 @@ func (g *Gtfs) LoadAll() error {
 		return err
 	}
 
-	return nil
+	// Load stop_times at last, as this must be done after LoadTrips completes
+	err := g.LoadStopTimes(g.GetZipFileByName("stop_times.txt"))
+
+	return err
 }
 
 // ListGtfsRoutes will automatically open the GTFS file from a given source,

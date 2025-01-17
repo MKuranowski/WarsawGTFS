@@ -1,86 +1,47 @@
 package positions
 
 import (
-	"encoding/json"
-	"io"
-	"net/http"
-	"os"
-	"strings"
+	"fmt"
 
-	"github.com/MKuranowski/WarsawGTFS/realtime/util"
+	"github.com/MKuranowski/WarsawGTFS/realtime/gtfs"
 )
 
-// brigadeEntry is an object represeting an object from brigades.json
+// brigadeEntry is an object representing an object from brigades.json
 type brigadeEntry struct {
-	TripID            string      `json:"trip_id"`
-	LastStopID        string      `json:"last_stop_id"`
-	LastStopPos       [2]float64  `json:"last_stop_latlon"`
-	LastStopTimepoint string      `json:"last_stop_timepoint"`
-	LastStopTime      compareTime `json:"-"`
-}
-
-// readURL gets given url and returns the content under that url
-func readURL(client *http.Client, url string) (buff []byte, err error) {
-	// Make the request
-	resp, err := client.Get(url)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	// Check response code
-	if resp.StatusCode <= 199 || resp.StatusCode >= 300 {
-		err = util.RequestError{URL: url, Status: resp.Status, StatusCode: resp.StatusCode}
-		return
-	}
-
-	// Read the content
-	buff, err = io.ReadAll(resp.Body)
-	return
-}
-
-// makeBrigades take a JSON file (as a []byte) and tries to create a map
-// from "V/route_id/brigade_id" to list of brigadeEntry
-func makeBrigades(raw []byte) (m map[string][]*brigadeEntry, err error) {
-	// Decode the JSON response
-	var dataJSON map[string]map[string][]*brigadeEntry
-	err = json.Unmarshal(raw, &dataJSON)
-
-	// Unload data from JSON
-	m = make(map[string][]*brigadeEntry)
-	for routeID, brigadeMaps := range dataJSON {
-		for brigadeID, brigadeEntries := range brigadeMaps {
-			// Create an entry in brigadeEntries
-			key := "V/" + routeID + "/" + brigadeID
-			m[key] = brigadeEntries
-
-			// Load the LastStopTime for every brigadeEntry
-			for _, be := range brigadeEntries {
-				be.LastStopTime, err = newCompareTimeFromGtfs(be.LastStopTimepoint)
-				if err != nil {
-					return
-				}
-			}
-		}
-	}
-	return
+	TripID            string
+	LastStopID        string
+	LastStopPos       [2]float64
+	LastStopTimepoint string
+	LastStopTime      compareTime
 }
 
 // loadBrigades creates a map from "V/route_id/brigade_id" to a list of brigadeEntry
-// from brigades.json file loaded from either a file or a http/https remote location
-func loadBrigades(source string, client *http.Client) (m map[string][]*brigadeEntry, err error) {
-	// Load data from the source
-	var dataRaw []byte
+// based on GTFS data.
+func loadBrigades(gtfsFile *gtfs.Gtfs) (m map[string][]*brigadeEntry, err error) {
+	m = make(map[string][]*brigadeEntry)
 
-	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
-		dataRaw, err = readURL(client, source)
-	} else {
-		dataRaw, err = os.ReadFile(source)
+	for id, data := range gtfsFile.Trips {
+		// Ignore inactive trips
+		if !gtfsFile.Services[data.Service] || data.LastStopTime.Timepoint == "" {
+			continue
+		}
+
+		lastStopTime, err := newCompareTimeFromGtfs(data.LastStopTime.Timepoint)
+		if err != nil {
+			return m, fmt.Errorf("invalid last stop timepoint: %q: %w", data.LastStopTime.Timepoint, err)
+		}
+
+		key := fmt.Sprintf("V/%s/%s", data.Route, data.Brigade)
+		entry := brigadeEntry{
+			TripID:            id,
+			LastStopID:        data.LastStopTime.StopID,
+			LastStopPos:       gtfsFile.Stops[data.LastStopTime.StopID],
+			LastStopTimepoint: data.LastStopTime.Timepoint,
+			LastStopTime:      lastStopTime,
+		}
+
+		m[key] = append(m[key], &entry)
 	}
 
-	if err != nil {
-		return
-	}
-
-	return makeBrigades(dataRaw)
+	return
 }
