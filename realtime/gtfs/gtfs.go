@@ -262,7 +262,7 @@ func (g *Gtfs) LoadStops(file *zip.File) (err error) {
 
 // LoadServices loads calendar_dates.txt from provided zip.File
 func (g *Gtfs) LoadServices(file *zip.File) (err error) {
-	expectedDate := g.SyncTime.Format("20060102")
+	expectedDate := util.ServiceDate(g.SyncTime.In(util.WarsawTimezone))
 	fileReader, err := file.Open()
 	if err != nil {
 		return

@@ -10,6 +10,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/MKuranowski/WarsawGTFS/realtime/alerts"
 	"github.com/MKuranowski/WarsawGTFS/realtime/gtfs"
@@ -186,10 +187,10 @@ func loadGtfs(routesOnly bool) (gtfsFile *gtfs.Gtfs, err error) {
 func wrapInResource(source string) (res util.Resource) {
 	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
 		res = &util.ResourceHTTP{
-			Client: client, URL: source, Peroid: *flagDataCheck,
+			Client: client, URL: source, Period: *flagDataCheck,
 		}
 	} else {
-		res = &util.ResourceLocal{Path: source, Peroid: *flagDataCheck}
+		res = &util.ResourceLocal{Path: source, Period: *flagDataCheck}
 	}
 	return
 }

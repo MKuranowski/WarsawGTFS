@@ -28,13 +28,14 @@ func parseLastModified(lm string) (t time.Time, err error) {
 type Resource interface {
 	Check() (bool, error)
 	Fetch() (io.ReadCloser, error)
+	LastCheck() time.Time
 }
 
 // ResourceLocal is a Resource located on the file system
 type ResourceLocal struct {
 	Path            string
 	Checktime       time.Time
-	Peroid          time.Duration
+	Period          time.Duration
 	FetchedModified time.Time
 }
 
@@ -43,7 +44,7 @@ type ResourceLocal struct {
 func (r *ResourceLocal) Check() (fetch bool, err error) {
 	// If the nextCheckTime (r.Checktime + r.Peroid) is in the future,
 	// abort any check and return false
-	if r.Checktime.Add(r.Peroid).After(time.Now().UTC()) {
+	if r.Checktime.Add(r.Period).After(time.Now().UTC()) {
 		return
 	}
 
@@ -63,6 +64,8 @@ func (r *ResourceLocal) Check() (fetch bool, err error) {
 
 // Fetch returns the ReadCloser with access to the underlaying file
 func (r *ResourceLocal) Fetch() (io.ReadCloser, error) {
+	r.Checktime = time.Now().UTC()
+
 	// Open the file
 	f, err := os.Open(r.Path)
 	if err != nil {
@@ -80,12 +83,14 @@ func (r *ResourceLocal) Fetch() (io.ReadCloser, error) {
 	return f, nil
 }
 
+func (r *ResourceLocal) LastCheck() time.Time { return r.Checktime }
+
 // ResourceHTTP is a Resource located on the internet, fetchable via HTTP/HTTPS
 type ResourceHTTP struct {
 	Client          *http.Client
 	URL             string
 	Checktime       time.Time
-	Peroid          time.Duration
+	Period          time.Duration
 	FetchedETag     string
 	FetchedModified time.Time
 }
@@ -95,7 +100,7 @@ type ResourceHTTP struct {
 func (r *ResourceHTTP) Check() (fetch bool, err error) {
 	// If the nextCheckTime (r.Checktime + r.Peroid) is in the future,
 	// abort any check and return false
-	if r.Checktime.Add(r.Peroid).After(time.Now().UTC()) {
+	if r.Checktime.Add(r.Period).After(time.Now().UTC()) {
 		return
 	}
 
@@ -130,6 +135,8 @@ func (r *ResourceHTTP) Check() (fetch bool, err error) {
 
 // Fetch returns the ReadCloser with access to the underlaying file
 func (r *ResourceHTTP) Fetch() (io.ReadCloser, error) {
+	r.Checktime = time.Now().UTC()
+
 	// Make the get request
 	resp, err := r.Client.Get(r.URL)
 	if err != nil {
@@ -151,3 +158,5 @@ func (r *ResourceHTTP) Fetch() (io.ReadCloser, error) {
 	// Return response content
 	return resp.Body, nil
 }
+
+func (r *ResourceHTTP) LastCheck() time.Time { return r.Checktime }

@@ -86,11 +86,22 @@ type brigadesResource struct {
 	BrigadeMap map[string][]*brigadeEntry
 }
 
+func (rr *brigadesResource) ShouldUpdate() (bool, error) {
+	// Force a refresh at 3:00, when a new service date begins operating
+	gotDate := util.ServiceDate(rr.Resource.LastCheck().In(util.WarsawTimezone))
+	expectedDate := util.ServiceDate(time.Now().In(util.WarsawTimezone))
+	if expectedDate != gotDate {
+		return true, nil
+	}
+
+	// Check if the GTFS has changed
+	return rr.Resource.Check()
+}
+
 // Update automatically updates the RouteMap if the Resource has changed
 func (rr *brigadesResource) Update() error {
 	// Check for GTFS updates
-	// TODO: SHOULD ALSO FORCE REFRESH AFTER 3AM
-	shouldUpdate, err := rr.Resource.Check()
+	shouldUpdate, err := rr.ShouldUpdate()
 	if err != nil {
 		return err
 	} else if shouldUpdate || rr.BrigadeMap == nil {

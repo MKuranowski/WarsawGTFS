@@ -10,6 +10,16 @@ import (
 	gtfsrt "github.com/MobilityData/gtfs-realtime-bindings/golang/gtfs"
 )
 
+var WarsawTimezone *time.Location
+
+func init() {
+	var err error
+	WarsawTimezone, err = time.LoadLocation("Europe/Warsaw")
+	if err != nil {
+		panic(fmt.Errorf("failed to load Europe/Warsaw timezone: %w", err))
+	}
+}
+
 // MakeTranslatedString takes a string and warps it into a gtfs-realtime TranslatedString object
 func MakeTranslatedString(s string) *gtfsrt.TranslatedString {
 	return &gtfsrt.TranslatedString{
@@ -100,4 +110,11 @@ func SecondsToString(totalSeconds uint32) string {
 	totalMinutes, s := totalSeconds/60, totalSeconds%60
 	h, m := totalMinutes/60, totalMinutes%60
 	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
+}
+
+func ServiceDate(t time.Time) string {
+	if t.Hour() < 3 {
+		t = t.AddDate(0, 0, -1)
+	}
+	return t.Format("20060102")
 }
