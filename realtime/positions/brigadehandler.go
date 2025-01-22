@@ -1,7 +1,9 @@
 package positions
 
 import (
+	"cmp"
 	"fmt"
+	"slices"
 
 	"github.com/MKuranowski/WarsawGTFS/realtime/gtfs"
 )
@@ -41,6 +43,12 @@ func loadBrigades(gtfsFile *gtfs.Gtfs) (m map[string][]*brigadeEntry, err error)
 		}
 
 		m[key] = append(m[key], &entry)
+	}
+
+	for _, brigades := range m {
+		slices.SortFunc(brigades, func(a, b *brigadeEntry) int {
+			return cmp.Compare(a.LastStopTimepoint, b.LastStopTimepoint)
+		})
 	}
 
 	return

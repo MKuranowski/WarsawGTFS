@@ -26,7 +26,7 @@ type Options struct {
 func Create(api VehicleAPI, brigadeMap map[string][]*brigadeEntry, prevVehicles map[string]*Vehicle, opts Options) (map[string]*Vehicle, error) {
 	// 0. Prepare a container
 	container := &VehicleContainer{}
-	container.SyncTime = time.Now()
+	container.SyncTime = time.Now().In(util.WarsawTimezone)
 	container.CompareSyncTime = newCompareTimeFromTime(container.SyncTime)
 
 	// 1. Get data from the api
