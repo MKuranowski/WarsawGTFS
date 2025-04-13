@@ -78,6 +78,10 @@ def create_intermediate_pipeline(
             "DELETE FROM routes WHERE type = 2 AND short_name NOT LIKE 'S%'",
         ),
         ExecuteSQL(
+            "DropKmRoutes",
+            "DELETE FROM ROUTES WHERE short_name LIKE 'R%'",
+        ),
+        ExecuteSQL(
             "SetTripShapeIds",
             (
                 "UPDATE trips SET shape_id = ("
