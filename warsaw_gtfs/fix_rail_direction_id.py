@@ -10,6 +10,7 @@ from impuls.task import Task, TaskRuntime
 # else if train calls at pair[1] before pair[0] - it shall have direction_id = 1.
 RAIL_DIRECTION_STOPS = [
     ("4900", "7900"),  # W-wa Zachodnia      → W-wa Centralna
+    ("4900", "2900"),  # W-wa Zachodnia      → W-wa Wschodnia
     ("5902", "7903"),  # W-wa Zachodnia p. 9 → W-wa Gdańska
     ("4902", "4900"),  # W-wa Włochy         → W-wa Zachodnia
     ("3901", "4917"),  # W-wa Służewiec      → W-wa Rakowiec
