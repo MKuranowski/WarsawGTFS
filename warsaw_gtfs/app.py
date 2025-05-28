@@ -13,6 +13,7 @@ from impuls.tools import polish_calendar_exceptions
 from .add_metro import AddMetro
 from .api import ZTMFileProvider, ZTMResource
 from .assign_missing_directions import AssignMissingDirections
+from .drop_hidden_variants import DropHiddenVariants
 from .extend_calendars import ExtendSchedules
 from .fix_rail_direction_id import FixRailDirectionID
 from .generate_route_long_names import GenerateRouteLongNames
@@ -141,6 +142,7 @@ def create_intermediate_pipeline(
             r"UPDATE stops SET name = re_sub('\s{2,}', ' ', name) WHERE name LIKE '%  %'",
         ),
         # TODO: Fix stop names (e.g. spaces around dashes, not just double spaces)
+        DropHiddenVariants(),
         MergeVirtualStops(),
         FixRailDirectionID(),
         UpdateTripHeadsigns(),
