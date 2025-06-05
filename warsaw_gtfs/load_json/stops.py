@@ -1,3 +1,4 @@
+import re
 from collections.abc import Iterable
 from typing import Any, NamedTuple
 
@@ -28,7 +29,7 @@ def parse_stops(data: Any) -> Iterable[tuple[int, Stop]]:
 
 
 def parse_stop(data: Any, group: Group, street_name: str, used_ids: set[str]) -> tuple[int, Stop]:
-    code = "" if is_railway_stop(group.code) else data["nazwa_slupka"]
+    code = "" if is_railway_stop(group.code) else clean_code(data["nazwa_slupka"])
     id = find_non_conflicting_id(used_ids, f"{group.code}{code}")
     used_ids.add(id)
     return data["id_slupka"], Stop(
@@ -92,3 +93,8 @@ def should_add_town_name(code: str, name: str, town: str) -> bool:
 
     # Default to yes, to prevent ambiguous names like "Cmentarz"
     return True
+
+
+def clean_code(x: str) -> str:
+    m = re.search(r"[0-9]{2}", x)
+    return m.group(0) if m else ""
