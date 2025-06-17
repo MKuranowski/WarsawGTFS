@@ -33,7 +33,15 @@ type exclusiveHTTPClient struct {
 func (client exclusiveHTTPClient) Get(url string) (resp *http.Response, err error) {
 	client.m.Lock()
 	defer client.m.Unlock()
-	return client.c.Get(url)
+
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Set("User-Agent", "Mozilla/5.0 (compatible; MSIE 7.0; Windows 95; Trident/5.1)")
+
+	return client.c.Do(request)
 }
 
 // allRssItems fetches urlImpediments and urlChanges and retrieves all
