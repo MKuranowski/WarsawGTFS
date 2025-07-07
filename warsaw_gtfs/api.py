@@ -57,6 +57,7 @@ class ZTMFileProvider(IntermediateFeedProvider["ZTMResource"]):
             "https://eta.ztm.waw.pl/timetable1",
             headers={"X-Api-Key": SECRET_KEY},
             auth=(SECRET_USER, SECRET_PASS),
+            verify=False,
         ) as r:
             r.raise_for_status()
             data = r.json()
@@ -210,6 +211,7 @@ class ZTMResource(ConcreteResource):
             headers={"X-Api-Key": SECRET_KEY},
             auth=(SECRET_USER, SECRET_PASS),
             stream=True,
+            verify=False,
         ) as r:
             r.raise_for_status()
             for chunk in r.iter_content(chunk_size=None, decode_unicode=False):
