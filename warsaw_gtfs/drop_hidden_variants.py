@@ -17,6 +17,10 @@ class DropHiddenVariants(Task):
             self.drop_variants(r.db, variant_ids_to_drop)
 
     def get_variants_to_drop(self, db: DBConnection) -> list[str]:
+        return self.get_short_hidden_variants(db) + self.get_virtual_variants(db)
+
+    def get_short_hidden_variants(self, db: DBConnection) -> list[str]:
+        # Drop TU-xxx variants with at most 2 stops
         variant_ids_to_drop = list[str]()
         result = db.raw_execute(
             "SELECT v.variant_id, v.route_id, v.code, count(*) "
@@ -42,6 +46,24 @@ class DropHiddenVariants(Task):
                 count,
             )
 
+        return variant_ids_to_drop
+
+    def get_virtual_variants(self, db: DBConnection) -> list[str]:
+        # Drop all TN-xxx variants
+        variant_ids_to_drop = list[str]()
+        route_ids = set[str]()
+        result = db.raw_execute("SELECT variant_id, route_id FROM variants WHERE code LIKE 'TN-%'")
+
+        for record in result:
+            variant_ids_to_drop.append(cast(str, record[0]))
+            route_ids.add(cast(str, record[1]))
+
+        self.logger.warning(
+            "Dropping %d TN variant(s) on %d route(s) (%s)",
+            len(variant_ids_to_drop),
+            len(route_ids),
+            sorted(route_ids),
+        )
         return variant_ids_to_drop
 
     def drop_trips(self, db: DBConnection, variant_ids: Iterable[str]) -> None:

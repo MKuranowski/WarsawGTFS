@@ -80,7 +80,7 @@ def create_intermediate_pipeline(
         ),
         ExecuteSQL(
             "DropKmRoutes",
-            "DELETE FROM ROUTES WHERE short_name LIKE 'R%'",
+            "DELETE FROM routes WHERE short_name LIKE 'R%'",
         ),
         ExecuteSQL(
             "SetTripShapeIds",
@@ -120,6 +120,7 @@ def create_intermediate_pipeline(
                 "               WHERE extra_fields_json ->> 'depot' = '1')"
             ),
         ),
+        DropHiddenVariants(),
         RemoveUnusedEntities(),
         AssignMissingDirections(),
         ExecuteSQL(
@@ -142,7 +143,6 @@ def create_intermediate_pipeline(
             r"UPDATE stops SET name = re_sub('\s{2,}', ' ', name) WHERE name LIKE '%  %'",
         ),
         # TODO: Fix stop names (e.g. spaces around dashes, not just double spaces)
-        DropHiddenVariants(),
         MergeVirtualStops(),
         FixRailDirectionID(),
         UpdateTripHeadsigns(),
