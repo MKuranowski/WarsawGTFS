@@ -1,3 +1,4 @@
 impuls ~= 2.2
 requests ~= 2.32
 pyroutelib3 ~= 2.0
+routx ~= 1.0.3
