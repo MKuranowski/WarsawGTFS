@@ -6,7 +6,7 @@ import routx
 from impuls import DBConnection, Task, TaskRuntime, selector
 from impuls.tools.types import StrPath
 
-from .generator import ShapeGenerator
+from .generator import ShapeGenerator, StopIdSequence
 
 
 class GenerateShapes(Task):
@@ -60,12 +60,25 @@ class GenerateShapes(Task):
                 shape = generator.generate_shape(stops)
                 r.db.raw_execute("INSERT INTO shapes (shape_id) VALUES (?)", (shape_id,))
                 r.db.raw_execute_many(
-                    "INSERT INTO shape_points (shape_id,sequence,lat,lon) VALUES (?,?,?,?)",
-                    ((shape_id, i, lat, lon) for i, (lat, lon) in enumerate(shape)),
+                    "INSERT INTO shape_points (shape_id, sequence, lat, lon, shape_dist_traveled) "
+                    "VALUES (?, ?, ?, ?, ?)",
+                    (
+                        (shape_id, i, lat, lon, dist)
+                        for i, (lat, lon, dist) in enumerate(shape.points)
+                    ),
                 )
                 r.db.raw_execute_many(
                     "UPDATE trips SET shape_id = ? WHERE trip_id = ?",
                     ((shape_id, trip_id) for trip_id in trips),
+                )
+                r.db.raw_execute_many(
+                    "UPDATE stop_times SET shape_dist_traveled = ? "
+                    "WHERE trip_id = ? AND stop_sequence = ?",
+                    (
+                        (dist, trip_id, seq)
+                        for seq, dist in shape.distances.items()
+                        for trip_id in trips
+                    ),
                 )
 
         self.logger.info("Shape generation complete")
@@ -74,13 +87,14 @@ class GenerateShapes(Task):
         self,
         db: DBConnection,
         trip_ids: Iterable[str],
-    ) -> defaultdict[tuple[str, ...], list[str]]:
-        trips_by_stops = defaultdict[tuple[str, ...], list[str]](list)
+    ) -> defaultdict[tuple[StopIdSequence, ...], list[str]]:
+        trips_by_stops = defaultdict[tuple[StopIdSequence, ...], list[str]](list)
         for trip_id in trip_ids:
             stops = tuple(
-                cast(str, i[0])
+                (cast(str, i[0]), cast(int, i[1]))
                 for i in db.raw_execute(
-                    "SELECT stop_id FROM stop_times WHERE trip_id = ? ORDER BY stop_sequence ASC",
+                    "SELECT stop_id, stop_sequence FROM stop_times "
+                    "WHERE trip_id = ? ORDER BY stop_sequence ASC",
                     (trip_id,),
                 )
             )
