@@ -1,9 +1,12 @@
+import json
 import logging
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from functools import lru_cache
 from itertools import pairwise, starmap
 from math import inf, nan
+from os import getenv
+from pathlib import Path
 from typing import NamedTuple, Self
 
 import routx
@@ -75,6 +78,14 @@ class ShapeGenerator:
         self.kd_tree = kd_tree
         self.failed_pairs = set[tuple[str, str]]()
 
+        self.shape_err_dir = (
+            Path(shape_err_dir)
+            if (shape_err_dir := getenv("WARSAWGTFS_SHAPE_ERR_DIR", "shape_errors"))
+            else None
+        )
+        if self.shape_err_dir:
+            self.shape_err_dir.mkdir(exist_ok=True)
+
     @lru_cache(maxsize=None)
     def stop_to_node(self, stop_id: str) -> int:
         lat, lon = self.stop_positions[stop_id]
@@ -107,9 +118,9 @@ class ShapeGenerator:
 
     def generate_leg_shape(self, r: LegRequest) -> LegResponse:
         fallback_shape = list(self._nodes_to_points((r.from_.node_id, r.to.node_id)))
-        shape = self._generate_leg_shape_unchecked(r.from_, r.to)
+        shape = self._generate_leg_shape_unchecked(r)
         if not shape:
-            return LegResponse.prepare(fallback_shape, r)  # TODO: report routx failure
+            return LegResponse.prepare(fallback_shape, r)
 
         if r.max_distance_ratio != inf:
             raise NotImplementedError("TODO: Check leg to crow-flies distance ratio")
@@ -139,21 +150,22 @@ class ShapeGenerator:
 
         return r
 
-    def _generate_leg_shape_unchecked(
-        self,
-        from_: MatchedStop,
-        to: MatchedStop,
-    ) -> list[LatLonDist]:
-        stop_pair = (from_.stop_id, to.stop_id)
+    def _generate_leg_shape_unchecked(self, r: LegRequest) -> list[LatLonDist]:
+        stop_pair = (r.from_.stop_id, r.to.stop_id)
         if stop_pair in self.failed_pairs:
             return []
         else:
             try:
-                nodes = self.graph.find_route(from_.node_id, to.node_id)
+                nodes = self.graph.find_route(r.from_.node_id, r.to.node_id)
                 return list(self._nodes_to_points(nodes))
             except routx.StepLimitExceeded:
                 self.failed_pairs.add(stop_pair)
                 self.logger.error("No route exists between stops %s and %s", *stop_pair)
+                self._report_failure(
+                    r,
+                    self._nodes_to_points((r.from_.node_id, r.to.node_id)),
+                    error="no_route",
+                )
                 return []
 
     def _nodes_to_points(self, nodes: Iterable[int]) -> Iterable[LatLonDist]:
@@ -165,3 +177,30 @@ class ShapeGenerator:
                 dist += routx.earth_distance(*prev_lat_lon, node.lat, node.lon)
             yield LatLonDist(node.lat, node.lon, dist)
             prev_lat_lon = node.lat, node.lon
+
+    def _report_failure(
+        self,
+        r: LegRequest,
+        s: Iterable[LatLonDist],
+        **properties: str | int | float,
+    ) -> None:
+        if self.shape_err_dir is None:
+            return
+
+        properties["from_stop_id"] = r.from_.stop_id
+        properties["from_node_id"] = r.from_.node_id
+        properties["to_stop_id"] = r.to.stop_id
+        properties["to_node_id"] = r.to.node_id
+
+        geojson = {
+            "type": "Feature",
+            "properties": properties,
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [[pt.lon, pt.lat] for pt in s],
+            },
+        }
+
+        file = self.shape_err_dir / f"{r.from_.stop_id}__{r.to.stop_id}.geojson"
+        with file.open("w", encoding="utf-8") as f:
+            json.dump(geojson, f, indent=2, ensure_ascii=False)

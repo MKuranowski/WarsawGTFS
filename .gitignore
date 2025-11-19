@@ -8,6 +8,7 @@ __pycache__
 
 _impuls_workspace
 data_rt
+shape_errors
 ignore*
 warsawgtfs_realtime
 gtfs.zip
