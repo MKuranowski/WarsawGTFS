@@ -1,7 +1,9 @@
 import logging
 from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
 from functools import lru_cache
-from itertools import pairwise
+from itertools import pairwise, starmap
+from math import inf
 
 import routx
 
@@ -10,13 +12,27 @@ import routx
 # TODO: Check that the shape of a leg is not unreasonably longer than a straight-line-path
 # TODO: Add support for force-via
 
-Pos = tuple[float, float]
+LatLon = tuple[float, float]
+
+
+@dataclass
+class MatchedStop:
+    stop_id: str
+    node_id: int
+
+
+@dataclass
+class LegRequest:
+    from_: MatchedStop
+    to: MatchedStop
+    force_via: LatLon | None = None
+    max_distance_ratio: float = inf
 
 
 class ShapeGenerator:
     def __init__(
         self,
-        stop_positions: Mapping[str, Pos],
+        stop_positions: Mapping[str, LatLon],
         graph: routx.Graph,
         kd_tree: routx.KDTree | None = None,
         logger: logging.Logger | None = None,
@@ -35,43 +51,52 @@ class ShapeGenerator:
             return self.kd_tree.find_nearest_node(lat, lon).id
         return self.graph.find_nearest_node(lat, lon).id
 
-    def generate_shape(self, stops: Iterable[str]) -> list[Pos]:
-        stops_and_nodes = self.match_stops_to_nodes(stops)
-        legs = self.generate_leg_shapes(stops_and_nodes)
+    def generate_shape(self, stops: Iterable[str]) -> list[LatLon]:
+        matched_stops = self.match_stops_to_nodes(stops)
+        leg_requests = self.generate_leg_requests(matched_stops)
+        legs = self.generate_leg_shapes(leg_requests)
         return list(self.flatten_shape(legs))
 
-    def match_stops_to_nodes(self, stops: Iterable[str]) -> Iterable[tuple[str, int]]:
-        for stop in stops:
-            yield stop, self.stop_to_node(stop)
+    def match_stops_to_nodes(self, stop_ids: Iterable[str]) -> Iterable[MatchedStop]:
+        return map(self.match_stop, stop_ids)
 
-    def generate_leg_shapes(
-        self,
-        stops_and_nodes: Iterable[tuple[str, int]],
-    ) -> Iterable[Iterable[Pos]]:
-        for (stop_a, node_a), (stop_b, node_b) in pairwise(stops_and_nodes):
-            yield self.generate_leg_shape(stop_a, node_a, stop_b, node_b)
+    def match_stop(self, stop_id: str) -> MatchedStop:
+        return MatchedStop(stop_id, self.stop_to_node(stop_id))
 
-    def generate_leg_shape(
-        self,
-        stop_a: str,
-        node_a: int,
-        stop_b: str,
-        node_b: int,
-    ) -> Iterable[Pos]:
-        if (stop_a, stop_b) in self.failed_pairs:
-            node_ids = [node_a, node_b]
-        try:
-            node_ids = self.graph.find_route(node_a, node_b)
-        except routx.StepLimitExceeded:
-            self.failed_pairs.add((stop_a, stop_b))
-            self.logger.error("No route exists between stops %s and %s", stop_a, stop_b)
-            node_ids = [node_a, node_b]
+    def generate_leg_requests(self, matched_stops: Iterable[MatchedStop]) -> Iterable[LegRequest]:
+        return starmap(self.generate_leg_request, pairwise(matched_stops))
 
-        for node_id in node_ids:
-            node = self.graph[node_id]
-            yield node.lat, node.lon
+    def generate_leg_request(self, from_: MatchedStop, to: MatchedStop) -> LegRequest:
+        # TODO: Add support for force-via
+        # TODO: Add support for ratio override
+        return LegRequest(from_, to)
 
-    def flatten_shape(self, legs: Iterable[Iterable[Pos]]) -> Iterable[Pos]:
+    def generate_leg_shapes(self, requests: Iterable[LegRequest]) -> Iterable[Iterable[LatLon]]:
+        return map(self.generate_leg_shape, requests)
+
+    def generate_leg_shape(self, r: LegRequest) -> Iterable[LatLon]:
+        if r.force_via is not None:
+            raise NotImplementedError("TODO: Add support for LegRequest.force_via")
+
+        stop_pair = (r.from_.stop_id, r.to.stop_id)
+        if stop_pair in self.failed_pairs:
+            node_ids = [r.from_.node_id, r.to.node_id]
+        else:
+            try:
+                node_ids = self.graph.find_route(r.from_.node_id, r.to.node_id)
+            except routx.StepLimitExceeded:
+                self.failed_pairs.add(stop_pair)
+                self.logger.error("No route exists between stops %s and %s", *stop_pair)
+                node_ids = [r.from_.node_id, r.to.node_id]
+
+            if r.max_distance_ratio != inf:
+                raise NotImplementedError("TODO: Check leg to crow-flies distance ratio")
+
+            for node_id in node_ids:
+                node = self.graph[node_id]
+                yield node.lat, node.lon
+
+    def flatten_shape(self, legs: Iterable[Iterable[LatLon]]) -> Iterable[LatLon]:
         for leg_idx, leg in enumerate(legs):
             for pt_idx, pt in enumerate(leg):
                 # Skip first point of every leg - it's the same as last point of previous leg -
