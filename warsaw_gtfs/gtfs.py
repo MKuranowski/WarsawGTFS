@@ -71,6 +71,7 @@ GTFS_HEADERS = {
         "departure_time",
         "pickup_type",
         "drop_off_type",
+        "shape_dist_traveled",
     ),
     "frequencies.txt": (
         "trip_id",
@@ -84,5 +85,6 @@ GTFS_HEADERS = {
         "shape_pt_sequence",
         "shape_pt_lat",
         "shape_pt_lon",
+        "shape_dist_traveled",
     ),
 }
