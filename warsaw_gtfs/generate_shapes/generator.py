@@ -12,7 +12,6 @@ from typing import NamedTuple, Self
 import routx
 
 # TODO: Check that the nodes matched with stops are within reasonable distance
-# TODO: Add support for force-via
 
 MAX_DISTANCE_RATIO = 3.5
 MAX_DISTANCE_RATIO_IN_SAME_GROUP = 7.0
@@ -33,10 +32,22 @@ class LatLonDist(NamedTuple):
 
 
 @dataclass
+class ForceViaPoint:
+    lat: float
+    lon: float
+    node_id: int = 0
+
+    def get_node_id(self, kd_tree: routx.KDTree) -> int:
+        if self.node_id == 0:
+            self.node_id = kd_tree.find_nearest_node(self.lat, self.lon).id
+        return self.node_id
+
+
+@dataclass
 class MatchedStop:
     stop_id: str
     node_id: int
-    stop_sequence: int | None
+    stop_sequence: int | None = None
 
 
 ShapeRequest = Iterable[StopIdSequence]
@@ -71,10 +82,11 @@ class ShapeGenerator:
         self,
         stop_positions: Mapping[str, LatLon],
         graph: routx.Graph,
-        kd_tree: routx.KDTree | None = None,
+        kd_tree: routx.KDTree,
         logger: logging.Logger | None = None,
         dump_errors: bool = False,
         ratio_overrides: Mapping[tuple[str, str], float] | None = None,
+        force_via: Mapping[tuple[str, str], LatLon] | None = None,
     ) -> None:
         self.logger = logger or logging.getLogger(type(self).__name__)
 
@@ -83,6 +95,10 @@ class ShapeGenerator:
         self.kd_tree = kd_tree
         self.failed_pairs = set[tuple[str, str]]()
         self.ratio_overrides = ratio_overrides or {}
+        self.force_via = {
+            stop_pair: ForceViaPoint(lat, lon)
+            for stop_pair, (lat, lon) in (force_via or {}).items()
+        }
 
         if dump_errors:
             self.shape_err_dir = Path(getenv("WARSAWGTFS_SHAPE_ERR_DIR", "shape_errors"))
@@ -112,15 +128,23 @@ class ShapeGenerator:
         return MatchedStop(stop_id, self.stop_to_node(stop_id), stop_sequence)
 
     def generate_leg_requests(self, matched_stops: Iterable[MatchedStop]) -> Iterable[LegRequest]:
-        return starmap(self.generate_leg_request, pairwise(matched_stops))
+        for a, b in pairwise(matched_stops):
+            yield from self.generate_leg_request(a, b)
 
-    def generate_leg_request(self, from_: MatchedStop, to: MatchedStop) -> LegRequest:
-        # TODO: Add support for force-via
-        return LegRequest(
-            from_,
-            to,
-            max_distance_ratio=self._get_max_distance_ratio(from_, to),
-        )
+    def generate_leg_request(self, from_: MatchedStop, to: MatchedStop) -> list[LegRequest]:
+        max_distance_ratio = self._get_max_distance_ratio(from_, to)
+        force_via = self.force_via.get((from_.stop_id, to.stop_id))
+        if force_via:
+            force_via_fake_stop = MatchedStop(
+                stop_id=f"via-{from_.stop_id}-{to.stop_id}",
+                node_id=force_via.get_node_id(self.kd_tree),
+            )
+            return [
+                LegRequest(from_, force_via_fake_stop, max_distance_ratio),
+                LegRequest(force_via_fake_stop, to, max_distance_ratio),
+            ]
+        else:
+            return [LegRequest(from_, to, max_distance_ratio)]
 
     def generate_leg_shapes(self, requests: Iterable[LegRequest]) -> Iterable[LegResponse]:
         return map(self.generate_leg_shape, requests)

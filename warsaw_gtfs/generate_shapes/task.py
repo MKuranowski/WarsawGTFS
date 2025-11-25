@@ -27,6 +27,7 @@ class GenerateShapes(Task):
         overwrite: bool = False,
         shape_id_prefix: str = "",
         ratio_override_resource: str = "",
+        force_via_resource: str = "",
         dump_errors: bool = False,
         task_name: str | None = None,
     ) -> None:
@@ -38,6 +39,7 @@ class GenerateShapes(Task):
         self.overwrite = overwrite
         self.shape_id_prefix = shape_id_prefix
         self.ratio_override_resource = ratio_override_resource
+        self.force_via_resource = force_via_resource
         self.dump_errors = dump_errors
 
     def execute(self, r: TaskRuntime) -> None:
@@ -164,6 +166,7 @@ class GenerateShapes(Task):
             kd_tree,
             logger=self.logger,
             ratio_overrides=self.load_ratio_overrides(resources),
+            force_via=self.load_force_via(resources),
             dump_errors=self.dump_errors,
         )
 
@@ -175,6 +178,16 @@ class GenerateShapes(Task):
             return {}
         return {
             (i["from"], i["to"]): i["ratio"] for i in resources[self.ratio_override_resource].json()
+        }
+
+    def load_force_via(
+        self,
+        resources: Mapping[str, ManagedResource],
+    ) -> dict[tuple[str, str], tuple[float, float]]:
+        if not self.force_via_resource:
+            return {}
+        return {
+            (i["from"], i["to"]): tuple(i["via"]) for i in resources[self.force_via_resource].json()
         }
 
     def load_stop_positions(
