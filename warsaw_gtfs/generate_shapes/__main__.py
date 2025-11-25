@@ -51,6 +51,7 @@ class GenerateShapesApp(impuls.App):
                     overwrite=True,
                     shape_id_prefix="3:",
                     ratio_override_resource="shapes_override_ratios.json",
+                    force_via_resource="shapes_force_via.json",
                     dump_errors=True,
                     task_name="GenerateBusShapes",
                 ),
@@ -65,6 +66,7 @@ class GenerateShapesApp(impuls.App):
                     ),
                     minimal_time_between=timedelta(days=7),
                 ),
+                "shapes_force_via.json": impuls.LocalResource("data_curated/shapes_force_via.json"),
                 "shapes_override_ratios.json": impuls.LocalResource(
                     "data_curated/shapes_override_ratios.json"
                 ),

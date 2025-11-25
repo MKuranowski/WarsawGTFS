@@ -3,25 +3,13 @@
     "from": "156101",
     "to": "128701",
     "via": [52.3242592, 21.048336],
-    "comment": "132 for Metro Marymont"
+    "comment": "204 for Metro Bródno"
   },
   {
-    "from": "186004",
-    "to": "197202",
-    "via": [52.3079589, 21.1589661],
-    "comment": "L44 for Kobyłka"
-  },
-  {
-    "from": "197201",
-    "to": "186001",
-    "via": [52.3083833, 21.1600277],
-    "comment": "L44 for Zielonka"
-  },
-  {
-    "from": "197403",
-    "to": "158301",
-    "via": [52.3040373, 21.1600344],
-    "comment": "L44 for Zielonka"
+    "from": "184801",
+    "to": "184901",
+    "via": [52.2966244, 21.1589383],
+    "comment": "L46 for Marki"
   },
   {
     "from": "202003",
@@ -30,10 +18,10 @@
     "comment": "305 for Strusia"
   },
   {
-    "from": "214302",
-    "to": "209701",
-    "via": [52.2302931, 21.0682496],
-    "comment": "E-1 for Metro Stadion"
+    "from": "201901",
+    "to": "226101",
+    "via": [52.2270351, 21.1539795],
+    "comment": "305 for Strusia"
   },
   {
     "from": "232102",
@@ -54,28 +42,10 @@
     "comment": "722 for Wiatraczna"
   },
   {
-    "from": "318501",
-    "to": "318502",
-    "via": [52.090058, 21.1219674],
-    "comment": "251 for Konstancin-J."
-  },
-  {
     "from": "423601",
     "to": "413801",
     "via": [52.1732054, 20.8394632],
     "comment": "717 for Dw. Zachodni"
-  },
-  {
-    "from": "600308",
-    "to": "600307",
-    "via": [52.2692854, 20.9863873],
-    "comment": "321 for CH Arkadia"
-  },
-  {
-    "from": "102502",
-    "to": "102504",
-    "via": [52.3463465, 20.9498118],
-    "comment": "900 for Chlubna"
   },
   {
     "from": "109702",
