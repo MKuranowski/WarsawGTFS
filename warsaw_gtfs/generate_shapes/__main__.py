@@ -1,4 +1,5 @@
 import argparse
+import logging
 from datetime import timedelta
 
 import impuls
@@ -6,11 +7,15 @@ import routx
 from impuls.model import Route
 from impuls.resource import TimeLimitedResource
 
+from ..curate_stop_positions import CurateStopPositions
 from ..gtfs import GTFS_HEADERS
 from .task import GenerateShapes
 
 
 class GenerateShapesApp(impuls.App):
+    def before_run(self) -> None:
+        logging.getLogger("routx.osm").setLevel(logging.ERROR)
+
     def prepare(
         self,
         args: argparse.Namespace,
@@ -19,6 +24,7 @@ class GenerateShapesApp(impuls.App):
         return impuls.Pipeline(
             tasks=[
                 impuls.tasks.LoadDB("ignore_shapes_base.db"),
+                CurateStopPositions("stop_positions.json"),
                 GenerateShapes(
                     routes=impuls.selector.Routes(type=Route.Type.RAIL),
                     osm_resource="tram_rail_shapes.osm",
@@ -62,6 +68,7 @@ class GenerateShapesApp(impuls.App):
                 "shapes_override_ratios.json": impuls.LocalResource(
                     "data_curated/shapes_override_ratios.json"
                 ),
+                "stop_positions.json": impuls.LocalResource("data_curated/stop_positions.json"),
             },
             options=options,
         )
