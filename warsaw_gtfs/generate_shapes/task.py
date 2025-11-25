@@ -1,12 +1,20 @@
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
+from math import inf
 from typing import cast
 
+import osmium
+import osmium.filter
+import osmium.osm
 import routx
 from impuls import DBConnection, Task, TaskRuntime, selector
 from impuls.resource import ManagedResource
+from impuls.tools.geo import earth_distance_m
+from impuls.tools.types import StrPath
 
 from .generator import ShapeGenerator, StopIdSequence
+
+MAX_DISTANCE_TO_OSM_STOP_POSITION_M = 100.0
 
 
 class GenerateShapes(Task):
@@ -148,10 +156,7 @@ class GenerateShapes(Task):
         kd_tree = routx.KDTree.build(graph)
 
         self.logger.debug("Building stop position lookup table")
-        stop_positions = {
-            cast(str, i[0]): (cast(float, i[1]), cast(float, i[2]))
-            for i in db.raw_execute("SELECT stop_id, lat, lon FROM stops")
-        }
+        stop_positions = self.load_stop_positions(db, osm_file_path)
 
         return ShapeGenerator(
             stop_positions,
@@ -171,3 +176,48 @@ class GenerateShapes(Task):
         return {
             (i["from"], i["to"]): i["ratio"] for i in resources[self.ratio_override_resource].json()
         }
+
+    def load_stop_positions(
+        self,
+        db: DBConnection,
+        osm_file: StrPath,
+    ) -> dict[str, tuple[float, float]]:
+        positions = self.load_stop_positions_from_db(db)
+        from_osm = set[str]()
+
+        for osm_stop_id, lat, lon in self.load_stop_positions_from_osm(osm_file):
+            original_position = positions.get(osm_stop_id)
+            dist = earth_distance_m(lat, lon, *original_position) if original_position else inf
+            if dist < MAX_DISTANCE_TO_OSM_STOP_POSITION_M:
+                from_osm.add(osm_stop_id)
+                positions[osm_stop_id] = lat, lon
+
+        self.logger.info(
+            "Overridden %d / %d (%.2f %%) stop positions from OSM",
+            len(from_osm),
+            len(positions),
+            100 * len(from_osm) / len(positions),
+        )
+        return positions
+
+    @staticmethod
+    def load_stop_positions_from_db(db: DBConnection) -> dict[str, tuple[float, float]]:
+        return {
+            cast(str, i[0]): (cast(float, i[1]), cast(float, i[2]))
+            for i in db.raw_execute("SELECT stop_id, lat, lon FROM stops")
+        }
+
+    @staticmethod
+    def load_stop_positions_from_osm(osm_file: StrPath) -> Iterable[tuple[str, float, float]]:
+        fp = (
+            osmium.FileProcessor(osm_file)
+            .with_filter(osmium.filter.EntityFilter(osmium.osm.NODE))
+            .with_filter(osmium.filter.TagFilter(("public_transport", "stop_position")))
+            .with_filter(osmium.filter.KeyFilter(("network")))
+        )
+        for node in fp:
+            assert isinstance(node, osmium.osm.Node)
+            networks = (node.tags.get("network") or "").split(";")
+            stop_id = node.tags.get("ref:wtp") or node.tags.get("ref") or ""
+            if "ZTM Warszawa" in networks and stop_id:
+                yield stop_id, node.lat, node.lon
