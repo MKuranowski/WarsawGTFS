@@ -12,8 +12,11 @@ from typing import NamedTuple, Self
 import routx
 
 # TODO: Check that the nodes matched with stops are within reasonable distance
-# TODO: Check that the shape of a leg is not unreasonably longer than a straight-line-path
 # TODO: Add support for force-via
+
+MAX_DISTANCE_RATIO = 3.5
+MAX_DISTANCE_RATIO_IN_SAME_GROUP = 7.0
+
 
 StopIdSequence = tuple[str, int]
 LatLon = tuple[float, float]
@@ -70,6 +73,8 @@ class ShapeGenerator:
         graph: routx.Graph,
         kd_tree: routx.KDTree | None = None,
         logger: logging.Logger | None = None,
+        dump_errors: bool = False,
+        ratio_overrides: Mapping[tuple[str, str], float] | None = None,
     ) -> None:
         self.logger = logger or logging.getLogger(type(self).__name__)
 
@@ -77,14 +82,15 @@ class ShapeGenerator:
         self.graph = graph
         self.kd_tree = kd_tree
         self.failed_pairs = set[tuple[str, str]]()
+        self.ratio_overrides = ratio_overrides or {}
 
-        self.shape_err_dir = (
-            Path(shape_err_dir)
-            if (shape_err_dir := getenv("WARSAWGTFS_SHAPE_ERR_DIR", "shape_errors"))
-            else None
-        )
-        if self.shape_err_dir:
+        if dump_errors:
+            self.shape_err_dir = Path(getenv("WARSAWGTFS_SHAPE_ERR_DIR", "shape_errors"))
             self.shape_err_dir.mkdir(exist_ok=True)
+            for f in self.shape_err_dir.glob("*.geojson"):
+                f.unlink()
+        else:
+            self.shape_err_dir = None
 
     @lru_cache(maxsize=None)
     def stop_to_node(self, stop_id: str) -> int:
@@ -110,20 +116,42 @@ class ShapeGenerator:
 
     def generate_leg_request(self, from_: MatchedStop, to: MatchedStop) -> LegRequest:
         # TODO: Add support for force-via
-        # TODO: Add support for ratio override
-        return LegRequest(from_, to)
+        return LegRequest(
+            from_,
+            to,
+            max_distance_ratio=self._get_max_distance_ratio(from_, to),
+        )
 
     def generate_leg_shapes(self, requests: Iterable[LegRequest]) -> Iterable[LegResponse]:
         return map(self.generate_leg_shape, requests)
 
     def generate_leg_shape(self, r: LegRequest) -> LegResponse:
+        stop_pair = (r.from_.stop_id, r.to.stop_id)
         fallback_shape = list(self._nodes_to_points((r.from_.node_id, r.to.node_id)))
         shape = self._generate_leg_shape_unchecked(r)
         if not shape:
             return LegResponse.prepare(fallback_shape, r)
 
         if r.max_distance_ratio != inf:
-            raise NotImplementedError("TODO: Check leg to crow-flies distance ratio")
+            crow_flies_distance = fallback_shape[-1].total_distance
+            shape_distance = shape[-1].total_distance
+            distance_ratio = shape_distance / crow_flies_distance if crow_flies_distance else 1.0
+            if distance_ratio > r.max_distance_ratio:
+                self.failed_pairs.add(stop_pair)
+                self.logger.error(
+                    "Shape between %s and %s is too long - ratio is %.3f (max allowed is %.3f)",
+                    *stop_pair,
+                    distance_ratio,
+                    r.max_distance_ratio,
+                )
+                self._report_failure(
+                    r,
+                    shape,
+                    error="too_long",
+                    ratio=round(distance_ratio, 4),
+                    max_ratio=r.max_distance_ratio,
+                )
+                return LegResponse.prepare(fallback_shape, r)
 
         return LegResponse.prepare(shape, r)
 
@@ -149,6 +177,19 @@ class ShapeGenerator:
                 r.distances[leg.to.stop_sequence] = dist_offset
 
         return r
+
+    def _get_max_distance_ratio(self, from_: MatchedStop, to: MatchedStop) -> float:
+        override_from_key = from_.stop_id.partition(":")[0]
+        override_to_key = to.stop_id.partition(":")[0]
+        override_key = (override_from_key, override_to_key)
+        if overridden := self.ratio_overrides.get(override_key):
+            return overridden
+
+        in_same_group = from_.stop_id[:4] == to.stop_id[:4]
+        if in_same_group:
+            return MAX_DISTANCE_RATIO_IN_SAME_GROUP
+
+        return MAX_DISTANCE_RATIO
 
     def _generate_leg_shape_unchecked(self, r: LegRequest) -> list[LatLonDist]:
         stop_pair = (r.from_.stop_id, r.to.stop_id)

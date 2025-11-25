@@ -1,10 +1,10 @@
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import cast
 
 import routx
 from impuls import DBConnection, Task, TaskRuntime, selector
-from impuls.tools.types import StrPath
+from impuls.resource import ManagedResource
 
 from .generator import ShapeGenerator, StopIdSequence
 
@@ -18,6 +18,8 @@ class GenerateShapes(Task):
         bbox: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
         overwrite: bool = False,
         shape_id_prefix: str = "",
+        ratio_override_resource: str = "",
+        dump_errors: bool = False,
         task_name: str | None = None,
     ) -> None:
         super().__init__(name=task_name)
@@ -27,10 +29,10 @@ class GenerateShapes(Task):
         self.bbox = bbox
         self.overwrite = overwrite
         self.shape_id_prefix = shape_id_prefix
+        self.ratio_override_resource = ratio_override_resource
+        self.dump_errors = dump_errors
 
     def execute(self, r: TaskRuntime) -> None:
-        osm_file_path = r.resources[self.osm_resource].stored_at
-
         # 1. Get trips to process
         self.logger.info("Getting trips to process")
         trip_ids = self.get_trip_ids_to_process(r.db)
@@ -43,14 +45,14 @@ class GenerateShapes(Task):
 
         # 3. Create the graph and k-d tree
         self.logger.info("Loading OSM data")
-        generator = self.create_generator(r.db, osm_file_path)
+        generator = self.create_generator(r.db, r.resources)
 
         # 4. Generate and save the shapes
         with r.db.transaction():
             for i, (stops, trips) in enumerate(trips_by_stops.items()):
                 if i % 100 == 0:
                     self.logger.info(
-                        "Generated %.2f (%d/%d) shapes",
+                        "Generated %.2f %% (%d/%d) shapes",
                         100 * i / len(trips_by_stops),
                         i,
                         len(trips_by_stops),
@@ -132,8 +134,13 @@ class GenerateShapes(Task):
                 shape_ids.add(shape_id)
         return shape_ids
 
-    def create_generator(self, db: DBConnection, osm_file_path: StrPath) -> ShapeGenerator:
+    def create_generator(
+        self,
+        db: DBConnection,
+        resources: Mapping[str, ManagedResource],
+    ) -> ShapeGenerator:
         self.logger.debug("Building routing graph")
+        osm_file_path = resources[self.osm_resource].stored_at
         graph = routx.Graph()
         graph.add_from_osm_file(osm_file_path, self.profile, bbox=self.bbox)
 
@@ -146,4 +153,21 @@ class GenerateShapes(Task):
             for i in db.raw_execute("SELECT stop_id, lat, lon FROM stops")
         }
 
-        return ShapeGenerator(stop_positions, graph, kd_tree, logger=self.logger)
+        return ShapeGenerator(
+            stop_positions,
+            graph,
+            kd_tree,
+            logger=self.logger,
+            ratio_overrides=self.load_ratio_overrides(resources),
+            dump_errors=self.dump_errors,
+        )
+
+    def load_ratio_overrides(
+        self,
+        resources: Mapping[str, ManagedResource],
+    ) -> dict[tuple[str, str], float]:
+        if not self.ratio_override_resource:
+            return {}
+        return {
+            (i["from"], i["to"]): i["ratio"] for i in resources[self.ratio_override_resource].json()
+        }

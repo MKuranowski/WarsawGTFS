@@ -25,6 +25,7 @@ class GenerateShapesApp(impuls.App):
                     profile=routx.OsmProfile.RAILWAY,
                     overwrite=True,
                     shape_id_prefix="2:",
+                    ratio_override_resource="shapes_override_ratios.json",
                     task_name="GenerateRailShapes",
                 ),
                 GenerateShapes(
@@ -33,6 +34,7 @@ class GenerateShapesApp(impuls.App):
                     profile=routx.OsmProfile.TRAM,
                     overwrite=True,
                     shape_id_prefix="0:",
+                    ratio_override_resource="shapes_override_ratios.json",
                     task_name="GenerateTramShapes",
                 ),
                 GenerateShapes(
@@ -42,6 +44,8 @@ class GenerateShapesApp(impuls.App):
                     bbox=(20.58, 51.92, 21.47, 52.5),
                     overwrite=True,
                     shape_id_prefix="3:",
+                    ratio_override_resource="shapes_override_ratios.json",
+                    dump_errors=True,
                     task_name="GenerateBusShapes",
                 ),
                 impuls.tasks.SaveGTFS(GTFS_HEADERS, "ignore_gtfs_shapes.zip", ensure_order=True),
@@ -54,6 +58,9 @@ class GenerateShapesApp(impuls.App):
                         "https://download.geofabrik.de/europe/poland/mazowieckie-latest.osm.pbf",
                     ),
                     minimal_time_between=timedelta(days=7),
+                ),
+                "shapes_override_ratios.json": impuls.LocalResource(
+                    "data_curated/shapes_override_ratios.json"
                 ),
             },
             options=options,
