@@ -15,14 +15,8 @@ from impuls.tools.geo import earth_distance_m
 from impuls.tools.types import StrPath
 
 from .config import GenerateConfig, GraphConfig, LoggingConfig
-from .generator import LatLon, ShapeGenerator, StopIdSequence
-
-TripStops = tuple[StopIdSequence, ...]
-TripIds = list[str]
-TripsByStops = Mapping[TripStops, TripIds]
-
-ForceVia = dict[tuple[str, str], LatLon]
-RatioOverrides = dict[tuple[str, str], float]
+from .generator import ShapeGenerator
+from .model import ForceVia, RatioOverrides, TripsByStops, TripStops
 
 
 class Task(ImpulsTask):
@@ -57,7 +51,7 @@ class Task(ImpulsTask):
         self.logger.info("Shape generation complete")
 
     def group_trips_by_stops(self, db: DBConnection, trip_ids: Iterable[str]) -> TripsByStops:
-        trips_by_stops = defaultdict[TripStops, TripIds](list)
+        trips_by_stops = defaultdict[TripStops, list[str]](list)
         for trip_id in trip_ids:
             stops = tuple(
                 (cast(str, i[0]), cast(int, i[1]))

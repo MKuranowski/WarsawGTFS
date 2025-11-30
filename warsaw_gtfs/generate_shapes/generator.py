@@ -1,81 +1,31 @@
 import json
 import logging
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass, field
 from functools import lru_cache
 from itertools import pairwise, starmap
-from math import inf, nan
+from math import inf
 from pathlib import Path
-from typing import NamedTuple, Self
 
 import routx
 
 from .config import LoggingConfig
+from .model import (
+    ForceVia,
+    ForceViaPoint,
+    LatLon,
+    LatLonDist,
+    LegRequest,
+    LegResponse,
+    MatchedStop,
+    RatioOverrides,
+    ShapeRequest,
+    ShapeResponse,
+)
 
 # TODO: Check that the nodes matched with stops are within reasonable distance
 
 MAX_DISTANCE_RATIO = 3.5
 MAX_DISTANCE_RATIO_IN_SAME_GROUP = 7.0
-
-
-StopIdSequence = tuple[str, int]
-LatLon = tuple[float, float]
-
-
-class LatLonDist(NamedTuple):
-    lat: float
-    lon: float
-    total_distance: float = nan
-
-    def with_distance_offset(self, offset: float) -> Self:
-        new_dist = round(self.total_distance + offset, 6)
-        return self._replace(total_distance=new_dist)
-
-
-@dataclass
-class ForceViaPoint:
-    lat: float
-    lon: float
-    node_id: int = 0
-
-    def get_node_id(self, kd_tree: routx.KDTree) -> int:
-        if self.node_id == 0:
-            self.node_id = kd_tree.find_nearest_node(self.lat, self.lon).id
-        return self.node_id
-
-
-@dataclass
-class MatchedStop:
-    stop_id: str
-    node_id: int
-    stop_sequence: int | None = None
-
-
-ShapeRequest = Iterable[StopIdSequence]
-
-
-@dataclass
-class ShapeResponse:
-    points: list[LatLonDist] = field(default_factory=list[LatLonDist])
-    distances: dict[int, float] = field(default_factory=dict[int, float])
-
-
-@dataclass
-class LegRequest:
-    from_: MatchedStop
-    to: MatchedStop
-    max_distance_ratio: float = inf
-
-
-@dataclass
-class LegResponse:
-    from_: MatchedStop
-    to: MatchedStop
-    points: list[LatLonDist]
-
-    @classmethod
-    def prepare(cls, points: list[LatLonDist], request: LegRequest) -> Self:
-        return cls(request.from_, request.to, points)
 
 
 class ShapeGenerator:
@@ -85,8 +35,8 @@ class ShapeGenerator:
         graph: routx.Graph,
         kd_tree: routx.KDTree,
         logger: logging.Logger | None = None,
-        ratio_overrides: Mapping[tuple[str, str], float] | None = None,
-        force_via: Mapping[tuple[str, str], LatLon] | None = None,
+        ratio_overrides: RatioOverrides | None = None,
+        force_via: ForceVia | None = None,
         logging_config: LoggingConfig = LoggingConfig(),
     ) -> None:
         self.logger = logger or logging.getLogger(type(self).__name__)
@@ -159,8 +109,8 @@ class ShapeGenerator:
             return LegResponse.prepare(fallback_shape, r)
 
         if r.max_distance_ratio != inf:
-            crow_flies_distance = fallback_shape[-1].total_distance
-            shape_distance = shape[-1].total_distance
+            crow_flies_distance = fallback_shape[-1].distance
+            shape_distance = shape[-1].distance
             distance_ratio = shape_distance / crow_flies_distance if crow_flies_distance else 1.0
             if distance_ratio > r.max_distance_ratio:
                 self.failed_pairs.add(stop_pair)
@@ -194,11 +144,11 @@ class ShapeGenerator:
             # Skip first point of every leg - it's the same as last point of previous leg -
             # except if it's the very first leg
             pts_offset = 0 if leg_idx == 0 else 1
-            assert leg.points[0].total_distance == 0.0
+            assert leg.points[0].distance == 0.0
             r.points.extend(pt.with_distance_offset(dist_offset) for pt in leg.points[pts_offset:])
 
             # Save the distance traveled to the leg.to stop
-            dist_offset = r.points[-1].total_distance
+            dist_offset = r.points[-1].distance
             if leg.to.stop_sequence is not None:
                 r.distances[leg.to.stop_sequence] = dist_offset
 
