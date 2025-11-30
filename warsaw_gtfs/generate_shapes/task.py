@@ -1,46 +1,41 @@
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from math import inf
-from typing import cast
+from typing import Any, cast
 
 import osmium
 import osmium.filter
 import osmium.osm
 import routx
-from impuls import DBConnection, Task, TaskRuntime, selector
+from impuls import DBConnection
+from impuls import Task as ImpulsTask
+from impuls import TaskRuntime
 from impuls.resource import ManagedResource
 from impuls.tools.geo import earth_distance_m
 from impuls.tools.types import StrPath
 
-from .generator import ShapeGenerator, StopIdSequence
+from .config import GenerateConfig, GraphConfig, LoggingConfig
+from .generator import LatLon, ShapeGenerator, StopIdSequence
 
-MAX_DISTANCE_TO_OSM_STOP_POSITION_M = 100.0
+TripStops = tuple[StopIdSequence, ...]
+TripIds = list[str]
+TripsByStops = Mapping[TripStops, TripIds]
+
+ForceVia = dict[tuple[str, str], LatLon]
+RatioOverrides = dict[tuple[str, str], float]
 
 
-class GenerateShapes(Task):
+class Task(ImpulsTask):
     def __init__(
         self,
-        routes: selector.Routes,
-        osm_resource: str,
-        profile: routx.OsmProfile | routx.OsmCustomProfile,
-        bbox: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
-        overwrite: bool = False,
-        shape_id_prefix: str = "",
-        ratio_override_resource: str = "",
-        force_via_resource: str = "",
-        dump_errors: bool = False,
-        task_name: str | None = None,
+        graph: GraphConfig,
+        gen: GenerateConfig,
+        logging: LoggingConfig = LoggingConfig(),
     ) -> None:
-        super().__init__(name=task_name)
-        self.routes = routes
-        self.osm_resource = osm_resource
-        self.profile = profile
-        self.bbox = bbox
-        self.overwrite = overwrite
-        self.shape_id_prefix = shape_id_prefix
-        self.ratio_override_resource = ratio_override_resource
-        self.force_via_resource = force_via_resource
-        self.dump_errors = dump_errors
+        super().__init__(name=logging.task_name)
+        self.graph = graph
+        self.gen = gen
+        self.logging = logging
 
     def execute(self, r: TaskRuntime) -> None:
         # 1. Get trips to process
@@ -49,7 +44,7 @@ class GenerateShapes(Task):
         trips_by_stops = self.group_trips_by_stops(r.db, trip_ids)
 
         # 2. (If overwrite) - Cleanup shapes
-        if self.overwrite:
+        if self.gen.overwrite:
             self.logger.info("Clearing any existing shapes")
             self.clean_overwritten_shapes(r.db, trip_ids)
 
@@ -58,49 +53,11 @@ class GenerateShapes(Task):
         generator = self.create_generator(r.db, r.resources)
 
         # 4. Generate and save the shapes
-        with r.db.transaction():
-            for i, (stops, trips) in enumerate(trips_by_stops.items()):
-                if i % 100 == 0:
-                    self.logger.info(
-                        "Generated %.2f %% (%d/%d) shapes",
-                        100 * i / len(trips_by_stops),
-                        i,
-                        len(trips_by_stops),
-                    )
-
-                shape_id = f"{self.shape_id_prefix}{i}"
-                shape = generator.generate_shape(stops)
-                r.db.raw_execute("INSERT INTO shapes (shape_id) VALUES (?)", (shape_id,))
-                r.db.raw_execute_many(
-                    "INSERT INTO shape_points (shape_id, sequence, lat, lon, shape_dist_traveled) "
-                    "VALUES (?, ?, ?, ?, ?)",
-                    (
-                        (shape_id, i, lat, lon, dist)
-                        for i, (lat, lon, dist) in enumerate(shape.points)
-                    ),
-                )
-                r.db.raw_execute_many(
-                    "UPDATE trips SET shape_id = ? WHERE trip_id = ?",
-                    ((shape_id, trip_id) for trip_id in trips),
-                )
-                r.db.raw_execute_many(
-                    "UPDATE stop_times SET shape_dist_traveled = ? "
-                    "WHERE trip_id = ? AND stop_sequence = ?",
-                    (
-                        (dist, trip_id, seq)
-                        for seq, dist in shape.distances.items()
-                        for trip_id in trips
-                    ),
-                )
-
+        self.generate_shapes(r.db, trips_by_stops, generator)
         self.logger.info("Shape generation complete")
 
-    def group_trips_by_stops(
-        self,
-        db: DBConnection,
-        trip_ids: Iterable[str],
-    ) -> defaultdict[tuple[StopIdSequence, ...], list[str]]:
-        trips_by_stops = defaultdict[tuple[StopIdSequence, ...], list[str]](list)
+    def group_trips_by_stops(self, db: DBConnection, trip_ids: Iterable[str]) -> TripsByStops:
+        trips_by_stops = defaultdict[TripStops, TripIds](list)
         for trip_id in trip_ids:
             stops = tuple(
                 (cast(str, i[0]), cast(int, i[1]))
@@ -114,9 +71,9 @@ class GenerateShapes(Task):
         return trips_by_stops
 
     def get_trip_ids_to_process(self, db: DBConnection) -> list[str]:
-        route_ids = list(self.routes.find_ids(db))
+        route_ids = list(self.gen.routes.find_ids(db))
         trip_query = "SELECT trip_id FROM trips WHERE route_id = ?"
-        if not self.overwrite:
+        if not self.gen.overwrite:
             trip_query += " AND shape_id IS NULL"
         return [
             cast(str, i[0])
@@ -150,9 +107,9 @@ class GenerateShapes(Task):
         resources: Mapping[str, ManagedResource],
     ) -> ShapeGenerator:
         self.logger.debug("Building routing graph")
-        osm_file_path = resources[self.osm_resource].stored_at
+        osm_file_path = resources[self.graph.osm_resource].stored_at
         graph = routx.Graph()
-        graph.add_from_osm_file(osm_file_path, self.profile, bbox=self.bbox)
+        graph.add_from_osm_file(osm_file_path, self.graph.profile, bbox=self.graph.bbox)
 
         self.logger.debug("Building k-d tree")
         kd_tree = routx.KDTree.build(graph)
@@ -160,35 +117,38 @@ class GenerateShapes(Task):
         self.logger.debug("Building stop position lookup table")
         stop_positions = self.load_stop_positions(db, osm_file_path)
 
+        self.logger.debug("Loading manual curation")
+        ratio_overrides, force_via = self.load_curation(resources)
+
         return ShapeGenerator(
             stop_positions,
             graph,
             kd_tree,
             logger=self.logger,
-            ratio_overrides=self.load_ratio_overrides(resources),
-            force_via=self.load_force_via(resources),
-            dump_errors=self.dump_errors,
+            ratio_overrides=ratio_overrides,
+            force_via=force_via,
+            logging_config=self.logging,
         )
 
-    def load_ratio_overrides(
+    def load_curation(
         self,
         resources: Mapping[str, ManagedResource],
-    ) -> dict[tuple[str, str], float]:
-        if not self.ratio_override_resource:
-            return {}
-        return {
-            (i["from"], i["to"]): i["ratio"] for i in resources[self.ratio_override_resource].json()
-        }
+    ) -> tuple[RatioOverrides, ForceVia]:
+        if not self.graph.curation_resource:
+            return {}, {}
 
-    def load_force_via(
-        self,
-        resources: Mapping[str, ManagedResource],
-    ) -> dict[tuple[str, str], tuple[float, float]]:
-        if not self.force_via_resource:
-            return {}
-        return {
-            (i["from"], i["to"]): tuple(i["via"]) for i in resources[self.force_via_resource].json()
-        }
+        curation = resources[self.graph.curation_resource].json()
+        ratio_overrides = self.load_ratio_overrides(curation)
+        force_via = self.load_force_via(curation)
+        return ratio_overrides, force_via
+
+    @staticmethod
+    def load_ratio_overrides(curation: Any) -> RatioOverrides:
+        return {(i["from"], i["to"]): i["ratio"] for i in curation["ratio_overrides"]}
+
+    @staticmethod
+    def load_force_via(curation: Any) -> ForceVia:
+        return {(i["from"], i["to"]): tuple(i["via"]) for i in curation["force_via"]}
 
     def load_stop_positions(
         self,
@@ -201,7 +161,7 @@ class GenerateShapes(Task):
         for osm_stop_id, lat, lon in self.load_stop_positions_from_osm(osm_file):
             original_position = positions.get(osm_stop_id)
             dist = earth_distance_m(lat, lon, *original_position) if original_position else inf
-            if dist < MAX_DISTANCE_TO_OSM_STOP_POSITION_M:
+            if dist < self.graph.max_stop_to_node_distance:
                 from_osm.add(osm_stop_id)
                 positions[osm_stop_id] = lat, lon
 
@@ -230,7 +190,48 @@ class GenerateShapes(Task):
         )
         for node in fp:
             assert isinstance(node, osmium.osm.Node)
-            networks = (node.tags.get("network") or "").split(";")
+            network = node.tags.get("network") or ""
             stop_id = node.tags.get("ref:wtp") or node.tags.get("ref") or ""
-            if "ZTM Warszawa" in networks and stop_id:
+            if "ZTM Warszawa" in network and stop_id:
                 yield stop_id, node.lat, node.lon
+
+    def generate_shapes(
+        self,
+        db: DBConnection,
+        trips_by_stops: TripsByStops,
+        generator: ShapeGenerator,
+    ) -> None:
+        with db.transaction():
+            for i, (stops, trips) in enumerate(trips_by_stops.items()):
+                if i % 100 == 0:
+                    self.logger.info(
+                        "Generated %.2f %% (%d/%d) shapes",
+                        100 * i / len(trips_by_stops),
+                        i,
+                        len(trips_by_stops),
+                    )
+
+                shape_id = f"{self.gen.shape_id_prefix}{i}"
+                shape = generator.generate_shape(stops)
+                db.raw_execute("INSERT INTO shapes (shape_id) VALUES (?)", (shape_id,))
+                db.raw_execute_many(
+                    "INSERT INTO shape_points (shape_id, sequence, lat, lon, shape_dist_traveled) "
+                    "VALUES (?, ?, ?, ?, ?)",
+                    (
+                        (shape_id, i, lat, lon, dist)
+                        for i, (lat, lon, dist) in enumerate(shape.points)
+                    ),
+                )
+                db.raw_execute_many(
+                    "UPDATE trips SET shape_id = ? WHERE trip_id = ?",
+                    ((shape_id, trip_id) for trip_id in trips),
+                )
+                db.raw_execute_many(
+                    "UPDATE stop_times SET shape_dist_traveled = ? "
+                    "WHERE trip_id = ? AND stop_sequence = ?",
+                    (
+                        (dist, trip_id, seq)
+                        for seq, dist in shape.distances.items()
+                        for trip_id in trips
+                    ),
+                )
