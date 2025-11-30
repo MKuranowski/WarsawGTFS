@@ -1,0 +1,146 @@
+{
+  "force_via": [
+    {
+      "from": "156101",
+      "to": "128701",
+      "via": [52.3242592, 21.048336],
+      "comment": "204 for Metro Bródno"
+    },
+    {
+      "from": "184801",
+      "to": "184901",
+      "via": [52.2966244, 21.1589383],
+      "comment": "L46 for Marki"
+    },
+    {
+      "from": "202003",
+      "to": "245401",
+      "via": [52.2233616, 21.1748782],
+      "comment": "305 for Strusia"
+    },
+    {
+      "from": "201901",
+      "to": "226101",
+      "via": [52.2270351, 21.1539795],
+      "comment": "305 for Strusia"
+    },
+    {
+      "from": "232102",
+      "to": "227701",
+      "via": [52.2471833, 21.1886876],
+      "comment": "115 for PKP Mokry Ług"
+    },
+    {
+      "from": "230602",
+      "to": "227701",
+      "via": [52.2471833, 21.1886876],
+      "comment": "115 for Aleksandrów"
+    },
+    {
+      "from": "287201",
+      "to": "236901",
+      "via": [52.1540788, 21.3120829],
+      "comment": "722 for Wiatraczna"
+    },
+    {
+      "from": "423601",
+      "to": "413801",
+      "via": [52.1732054, 20.8394632],
+      "comment": "717 for Dw. Zachodni"
+    },
+    {
+      "from": "109702",
+      "to": "109704",
+      "via": [52.3189321, 20.9982555],
+      "comment": "314 for Tarchomin"
+    },
+    {
+      "from": "109704",
+      "to": "109503",
+      "via": [52.3146864, 21.0016259],
+      "comment": "314 for Tarchomin"
+    },
+    {
+      "from": "127708",
+      "to": "127709",
+      "via": [52.3185531, 20.9522898],
+      "comment": "314 for Tarchomin"
+    },
+    {
+      "from": "114603",
+      "to": "114902",
+      "via": [52.29401, 21.04852],
+      "comment": "Metro Kondratowicza 03 to Knapika 02 via Malborska"
+    },
+    {
+      "from": "114603",
+      "to": "117902",
+      "via": [52.29401, 21.04852],
+      "comment": "Metro Kondratowicza 03 to CH Targówek 02 via Malborska"
+    },
+    {
+      "from": "114901",
+      "to": "114602",
+      "via": [52.29401, 21.04852],
+      "comment": "Knapika 01 to Metro Kondratowicza 02 via Malborska"
+    },
+    {
+      "from": "147202",
+      "to": "123404",
+      "via": [52.30414, 21.08082],
+      "comment": "112 for CH Marki 04 via main road"
+    },
+    {
+      "from": "123404",
+      "to": "123403",
+      "via": [52.30431, 21.08287],
+      "comment": "112 for CH Marki 03 via main road"
+    },
+    {
+      "from": "205202",
+      "to": "205201",
+      "via": [52.1594880, 21.2043491],
+      "comment": "146 to Falenica via Olecka"
+    },
+    {
+      "from": "434701",
+      "to": "401801",
+      "via": [52.0914, 20.81197],
+      "comment": "733 for Stoicka 01 via S8 Nadarzyn junction"
+    },
+    {
+      "from": "405501",
+      "to": "405301",
+      "via": [52.1207, 20.8685],
+      "comment": "703, 711 for Janki Małe 01 via viaduct over S7/S8 junction"
+    },
+    {
+      "from": "418101",
+      "to": "435801",
+      "via": [52.10678, 20.96913],
+      "comment": "L33 for PKP Jeziorki via Raszyńska street"
+    }
+  ],
+  "ratio_overrides": [
+    {"from": "100610", "to": "100609", "ratio": 32.6},
+    {"from": "102805", "to": "102811", "ratio": 9.1},
+    {"from": "120502", "to": "120501", "ratio": 17.8},
+    {"from": "201802", "to": "226002", "ratio": 3.8},
+    {"from": "203904", "to": "203903", "ratio": 7.8},
+    {"from": "206101", "to": "206102", "ratio": 10.5},
+    {"from": "207902", "to": "201801", "ratio": 3.7},
+    {"from": "287201", "to": "236901", "ratio": 4.5},
+    {"from": "325402", "to": "325401", "ratio": 25.2},
+    {"from": "418202", "to": "418101", "ratio": 3.9},
+    {"from": "428501", "to": "434901", "ratio": 4.5},
+    {"from": "428501", "to": "434903", "ratio": 4.5},
+    {"from": "434904", "to": "428502", "ratio": 3.8},
+    {"from": "505502", "to": "505507", "ratio": 10.3},
+    {"from": "600514", "to": "607505", "ratio": 4.1},
+    {"from": "600515", "to": "607505", "ratio": 4.3},
+    {"from": "600516", "to": "607505", "ratio": 3.8},
+    {"from": "600517", "to": "607505", "ratio": 3.9},
+    {"from": "607506", "to": "607501", "ratio": 16.6},
+    {"from": "707602", "to": "707603", "ratio": 12.1}
+  ]
+}

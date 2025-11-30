@@ -1,5 +1,9 @@
-from .task import GenerateShapes
+from .config import GenerateConfig, GraphConfig, LoggingConfig
+from .task import Task
 
 __all__ = [
-    "GenerateShapes",
+    "Task",
+    "GraphConfig",
+    "GenerateConfig",
+    "LoggingConfig",
 ]

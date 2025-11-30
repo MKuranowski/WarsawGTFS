@@ -5,11 +5,12 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from itertools import pairwise, starmap
 from math import inf, nan
-from os import getenv
 from pathlib import Path
 from typing import NamedTuple, Self
 
 import routx
+
+from .config import LoggingConfig
 
 # TODO: Check that the nodes matched with stops are within reasonable distance
 
@@ -84,9 +85,9 @@ class ShapeGenerator:
         graph: routx.Graph,
         kd_tree: routx.KDTree,
         logger: logging.Logger | None = None,
-        dump_errors: bool = False,
         ratio_overrides: Mapping[tuple[str, str], float] | None = None,
         force_via: Mapping[tuple[str, str], LatLon] | None = None,
+        logging_config: LoggingConfig = LoggingConfig(),
     ) -> None:
         self.logger = logger or logging.getLogger(type(self).__name__)
 
@@ -100,11 +101,12 @@ class ShapeGenerator:
             for stop_pair, (lat, lon) in (force_via or {}).items()
         }
 
-        if dump_errors:
-            self.shape_err_dir = Path(getenv("WARSAWGTFS_SHAPE_ERR_DIR", "shape_errors"))
+        if logging_config.dump_errors:
+            self.shape_err_dir = Path(logging_config.dump_errors)
             self.shape_err_dir.mkdir(exist_ok=True)
-            for f in self.shape_err_dir.glob("*.geojson"):
-                f.unlink()
+            if logging_config.clean_error_dir:
+                for f in self.shape_err_dir.glob("*.geojson"):
+                    f.unlink()
         else:
             self.shape_err_dir = None
 
