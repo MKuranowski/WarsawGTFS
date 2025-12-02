@@ -7,6 +7,7 @@ import routx
 from impuls.model import Route
 from impuls.resource import TimeLimitedResource
 
+from ..curate_stop_names import CurateStopNames
 from ..curate_stop_positions import CurateStopPositions
 from ..gtfs import GTFS_HEADERS
 from .config import GenerateConfig, GraphConfig, LoggingConfig
@@ -25,7 +26,8 @@ class GenerateShapesApp(impuls.App):
         return impuls.Pipeline(
             tasks=[
                 impuls.tasks.LoadDB("ignore_shapes_base.db"),
-                CurateStopPositions("stop_positions.json"),
+                CurateStopNames("stops.json"),
+                CurateStopPositions("stops.json"),
                 GenerateShapes(
                     GraphConfig(
                         osm_resource="tram_rail_shapes.osm",
@@ -85,7 +87,7 @@ class GenerateShapesApp(impuls.App):
                     minimal_time_between=timedelta(days=7),
                 ),
                 "shapes.json": impuls.LocalResource("data_curated/shapes.json"),
-                "stop_positions.json": impuls.LocalResource("data_curated/stop_positions.json"),
+                "stops.json": impuls.LocalResource("data_curated/stops.json"),
             },
             options=options,
         )

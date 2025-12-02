@@ -19,7 +19,7 @@ class CurateStopPositions(Task):
         self.max_distance_m = max_distance_m
 
     def execute(self, r: TaskRuntime) -> None:
-        to_curate = cast(dict[str, CuratedStop], r.resources[self.resource].json())
+        to_curate = cast(dict[str, CuratedStop], r.resources[self.resource].json()["positions"])
         curated = 0
 
         with r.db.transaction():
