@@ -55,7 +55,7 @@ def parse_groups(data: Any) -> dict[int, Group]:
 
 def parse_group(data: Any) -> Group:
     code = data["symbol_przystanku"]
-    name = data["nazwa_przystanku"]
+    name = cleanup_name(data["nazwa_przystanku"])
     town = data["nazwa_obszaru"]
     if should_add_town_name(code, name, town):
         full_name = f"{town} {name}"
@@ -98,3 +98,14 @@ def should_add_town_name(code: str, name: str, town: str) -> bool:
 def clean_code(x: str) -> str:
     m = re.search(r"[0-9]{2}", x)
     return m.group(0) if m else ""
+
+
+def cleanup_name(x: str) -> str:
+    # Ensure spaces around dashes, in case it's supposed to be a hyphen,
+    # it'll be manually curated later.
+    x = re.sub(r"(?<=\S)-(?=\S)", " - ", x)
+
+    # Ensure no double spaces
+    x = re.sub(r"\s{2,}", " ", x)
+
+    return x
