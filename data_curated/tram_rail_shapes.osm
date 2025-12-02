@@ -3565,234 +3565,273 @@
   <node id='-1023592' action='modify' visible='true' lat='52.27221724732' lon='20.97217485175' />
   <node id='-1023593' action='modify' visible='true' lat='52.13198320212' lon='21.06517374516'>
     <tag k='name' v='Kabaty' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='3282M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023594' action='modify' visible='true' lat='52.14100817936' lon='21.05651021004'>
     <tag k='name' v='Natolin' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='3281M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023595' action='modify' visible='true' lat='52.14913600804' lon='21.04636609554'>
     <tag k='name' v='Imielin' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='3280M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023596' action='modify' visible='true' lat='52.15596566052' lon='21.03486478329'>
     <tag k='name' v='Stokłosy' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='3132M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023597' action='modify' visible='true' lat='52.16182680621' lon='21.02769255638'>
     <tag k='name' v='Ursynów' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='3127M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023598' action='modify' visible='true' lat='52.1725302081' lon='21.02629780769'>
     <tag k='name' v='Służew' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='3279M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023599' action='modify' visible='true' lat='52.18186931472' lon='21.02297723293'>
     <tag k='name' v='Wilanowska' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='3009M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023600' action='modify' visible='true' lat='52.18990746822' lon='21.0165989399'>
     <tag k='name' v='Wierzbno' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='3114M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023601' action='modify' visible='true' lat='52.19890755448' lon='21.01221084595'>
     <tag k='name' v='Racławicka' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='3230M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023602' action='modify' visible='true' lat='52.20848438047' lon='21.00780665874'>
     <tag k='name' v='Pole Mokotowskie' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='3228M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023603' action='modify' visible='true' lat='52.21842066203' lon='21.0153222084'>
     <tag k='name' v='Politechnika' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='7006M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023604' action='modify' visible='true' lat='52.23105884523' lon='21.01018846035'>
     <tag k='name' v='Centrum' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='7013M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023605' action='modify' visible='true' lat='52.23583583815' lon='21.00745797157'>
     <tag k='name' v='Świętokrzyska (M1)' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='7014M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023606' action='modify' visible='true' lat='52.23533647918' lon='21.00908875465'>
     <tag k='name' v='Świętokrzyska (M2)' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='7014M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023607' action='modify' visible='true' lat='52.24475764742' lon='21.00136935711'>
     <tag k='name' v='Ratusz Arsenał' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='7099M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023608' action='modify' visible='true' lat='52.25783162381' lon='20.99438488483'>
     <tag k='name' v='Dworzec Gdański' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='7019M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023609' action='modify' visible='true' lat='52.26933918224' lon='20.98428368568'>
     <tag k='name' v='Plac Wilsona' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='6003M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023610' action='modify' visible='true' lat='52.27166331366' lon='20.9719991684'>
     <tag k='name' v='Marymont' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='6005M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023611' action='modify' visible='true' lat='52.2767871334' lon='20.96020817757'>
     <tag k='name' v='Słodowiec' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='6006M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023612' action='modify' visible='true' lat='52.28179221493' lon='20.94935595989'>
     <tag k='name' v='Stare Bielany' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='6052M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023613' action='modify' visible='true' lat='52.28631763477' lon='20.93957662582'>
     <tag k='name' v='Wawrzyszew' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='6055M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023614' action='modify' visible='true' lat='52.29079009374' lon='20.92981874943'>
     <tag k='name' v='Młociny' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='6059M:P1' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023615' action='modify' visible='true' lat='52.23929' lon='20.91502'>
     <tag k='name' v='Bemowo' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='5034M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023616' action='modify' visible='true' lat='52.24045' lon='20.93001'>
     <tag k='name' v='Ulrychów' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='5032M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023617' action='modify' visible='true' lat='52.23909632355' lon='20.94410954833'>
     <tag k='name' v='Księcia Janusza' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='5030M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023618' action='modify' visible='true' lat='52.23763991374' lon='20.9604745212'>
     <tag k='name' v='Młynów' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='5028M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023619' action='modify' visible='true' lat='52.23290034882' lon='20.9661784746'>
     <tag k='name' v='Płocka' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='5005M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023620' action='modify' visible='true' lat='52.23001401486' lon='20.98274409771'>
     <tag k='name' v='Rondo Daszyńskiego' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='5040M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023621' action='modify' visible='true' lat='52.23310243607' lon='20.99828481674'>
     <tag k='name' v='Rondo ONZ' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='7088M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023622' action='modify' visible='true' lat='52.23681811341' lon='21.01680278778'>
     <tag k='name' v='Nowy Świat-Uniwersytet' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='7043M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023623' action='modify' visible='true' lat='52.23976480875' lon='21.031447649'>
     <tag k='name' v='Centrum Nauki Kopernik' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='7079M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023624' action='modify' visible='true' lat='52.24696482859' lon='21.0429006815'>
     <tag k='name' v='Stadion Narodowy' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='1231M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023625' action='modify' visible='true' lat='52.25415054468' lon='21.03540122509'>
     <tag k='name' v='Dworzec Wileński' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='1003M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023626' action='modify' visible='true' lat='52.26345773527' lon='21.04530929983'>
     <tag k='name' v='Szwedzka' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='1526M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023627' action='modify' visible='true' lat='52.26934493034' lon='21.05137779772'>
     <tag k='name' v='Targówek Mieszkaniowy' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='1137M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023628' action='modify' visible='true' lat='52.27526580809' lon='21.0552978462'>
     <tag k='name' v='Trocka' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='1140M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023629' action='modify' visible='true' lat='52.28426' lon='21.06198'>
     <tag k='name' v='Zacisze' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='1411M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023630' action='modify' visible='true' lat='52.29208' lon='21.05019'>
     <tag k='name' v='Kondratowicza' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='1146M:P2' />
     <tag k='subway' v='yes' />
   </node>
   <node id='-1023631' action='modify' visible='true' lat='52.29356' lon='21.02907'>
     <tag k='name' v='Bródno' />
+    <tag k='network' v='ZTM Warszawa' />
     <tag k='public_transport' v='stop_position' />
     <tag k='ref' v='1085M:P2' />
     <tag k='subway' v='yes' />
