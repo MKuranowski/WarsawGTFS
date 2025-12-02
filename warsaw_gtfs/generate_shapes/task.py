@@ -16,10 +16,12 @@ from impuls.tools.types import StrPath
 
 from .config import GenerateConfig, GraphConfig, LoggingConfig
 from .generator import ShapeGenerator
-from .model import ForceVia, RatioOverrides, TripsByStops, TripStops
+from .model import ForceVia, LatLon, RatioOverrides, TripsByStops, TripStops
 
 
 class Task(ImpulsTask):
+    """Generates shapes based on OSM data (and some manual curation)"""
+
     def __init__(
         self,
         graph: GraphConfig,
@@ -50,7 +52,23 @@ class Task(ImpulsTask):
         self.generate_shapes(r.db, trips_by_stops, generator)
         self.logger.info("Shape generation complete")
 
+    def get_trip_ids_to_process(self, db: DBConnection) -> list[str]:
+        """Returns a list of trip_ids for which this task should run."""
+        route_ids = list(self.gen.routes.find_ids(db))
+        trip_query = "SELECT trip_id FROM trips WHERE route_id = ?"
+        if not self.gen.overwrite:
+            trip_query += " AND shape_id IS NULL"
+        return [
+            cast(str, i[0])
+            for route_id in route_ids
+            for i in db.raw_execute(trip_query, (route_id,))
+        ]
+
     def group_trips_by_stops(self, db: DBConnection, trip_ids: Iterable[str]) -> TripsByStops:
+        """Groups trips which should have the same shape -
+        by the same sequence of (stop_id, stop_sequence) pairs.
+        """
+
         trips_by_stops = defaultdict[TripStops, list[str]](list)
         for trip_id in trip_ids:
             stops = tuple(
@@ -64,18 +82,8 @@ class Task(ImpulsTask):
             trips_by_stops[stops].append(trip_id)
         return trips_by_stops
 
-    def get_trip_ids_to_process(self, db: DBConnection) -> list[str]:
-        route_ids = list(self.gen.routes.find_ids(db))
-        trip_query = "SELECT trip_id FROM trips WHERE route_id = ?"
-        if not self.gen.overwrite:
-            trip_query += " AND shape_id IS NULL"
-        return [
-            cast(str, i[0])
-            for route_id in route_ids
-            for i in db.raw_execute(trip_query, (route_id,))
-        ]
-
     def clean_overwritten_shapes(self, db: DBConnection, trip_ids: Iterable[str]) -> None:
+        """Removes shapes which would have been overwritten by this step."""
         shape_id_params = [(i,) for i in self.get_shape_ids_used_by_trips(db, trip_ids)]
         with db.transaction():
             db.raw_execute_many(
@@ -86,6 +94,7 @@ class Task(ImpulsTask):
 
     @staticmethod
     def get_shape_ids_used_by_trips(db: DBConnection, trip_ids: Iterable[str]) -> set[str]:
+        """Returns a set of shape_ids used by the provided trip_ids."""
         trip_ids = set(trip_ids)
         shape_ids = set[str]()
         for row in db.raw_execute("SELECT trip_id, shape_id FROM trips"):
@@ -100,6 +109,7 @@ class Task(ImpulsTask):
         db: DBConnection,
         resources: Mapping[str, ManagedResource],
     ) -> ShapeGenerator:
+        """Creates a ShapeGenerator instance for the current config and provided runtime."""
         self.logger.debug("Building routing graph")
         osm_file_path = resources[self.graph.osm_resource].stored_at
         graph = routx.Graph()
@@ -129,6 +139,7 @@ class Task(ImpulsTask):
         self,
         resources: Mapping[str, ManagedResource],
     ) -> tuple[RatioOverrides, ForceVia]:
+        """Loads curated overrides for the ShapeGenerator."""
         if not self.graph.curation_resource:
             return {}, {}
 
@@ -145,11 +156,11 @@ class Task(ImpulsTask):
     def load_force_via(curation: Any) -> ForceVia:
         return {(i["from"], i["to"]): tuple(i["via"]) for i in curation["force_via"]}
 
-    def load_stop_positions(
-        self,
-        db: DBConnection,
-        osm_file: StrPath,
-    ) -> dict[str, tuple[float, float]]:
+    def load_stop_positions(self, db: DBConnection, osm_file: StrPath) -> dict[str, LatLon]:
+        """Returns a mapping from stop_ids to its positions, based on data
+        currently stored in the database, and overrides from the OSM file.
+        """
+
         positions = self.load_stop_positions_from_db(db)
         from_osm = set[str]()
 
@@ -196,6 +207,7 @@ class Task(ImpulsTask):
         trips_by_stops: TripsByStops,
         generator: ShapeGenerator,
     ) -> None:
+        """Generates and saves shapes for the provided grouped trips using the generator."""
         with db.transaction():
             for i, (stops, trips) in enumerate(trips_by_stops.items()):
                 if i % 100 == 0:

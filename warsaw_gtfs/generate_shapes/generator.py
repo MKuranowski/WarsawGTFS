@@ -26,6 +26,10 @@ MAX_DISTANCE_RATIO_IN_SAME_GROUP = 7.0
 
 
 class ShapeGenerator:
+    """ShapeGenerator uses the provided graph, k-d tree and manual override to
+    primarily generate shapes by receiving ShapeRequests and returning ShapeResponses.
+    """
+
     def __init__(
         self,
         stop_positions: Mapping[str, LatLon],
@@ -61,6 +65,9 @@ class ShapeGenerator:
             self.shape_err_dir = None
 
     def stop_to_node(self, stop_id: str) -> int:
+        """Returns the node_id corresponding to the provided stop_id.
+        May return 0 if there is no node within `max_stop_to_node_distance`.
+        """
         if (cached := self.stop_nodes.get(stop_id)) is not None:
             return cached
 
@@ -83,24 +90,31 @@ class ShapeGenerator:
         return node_id
 
     def generate_shape(self, stops: ShapeRequest) -> ShapeResponse:
+        """Generates a shape - returns a ShapeResponse based on the given ShapeRequest."""
         matched_stops = self.match_stops_to_nodes(stops)
         leg_requests = self.generate_leg_requests(matched_stops)
         legs = self.generate_leg_shapes(leg_requests)
         return self.flatten_shape(legs)
 
     def match_stops_to_nodes(self, stops: ShapeRequest) -> Iterable[MatchedStop]:
+        """Matches stops to nodes for the provided request."""
         return starmap(self.match_stop, stops)
 
     def match_stop(self, stop_id: str, stop_sequence: int) -> MatchedStop:
+        """Matches a stop to a node."""
         return MatchedStop(stop_id, self.stop_to_node(stop_id), stop_sequence)
 
     def generate_leg_requests(self, matched_stops: Iterable[MatchedStop]) -> Iterable[LegRequest]:
+        """Converts a sequence of matched stops into leg requests."""
         for a, b in pairwise(matched_stops):
             yield from self.generate_leg_request(a, b)
 
     def generate_leg_request(self, from_: MatchedStop, to: MatchedStop) -> list[LegRequest]:
+        """Converts two matched stops to one or two leg requests, depending of there is
+        a force_via point forced in-between.
+        """
         max_distance_ratio = self._get_max_distance_ratio(from_, to)
-        force_via = self.force_via.get((from_.stop_id, to.stop_id))
+        force_via = self.force_via.get(self._get_override_key(from_, to))
         if force_via:
             force_via_fake_stop = MatchedStop(
                 stop_id=f"via-{from_.stop_id}-{to.stop_id}",
@@ -114,9 +128,11 @@ class ShapeGenerator:
             return [LegRequest(from_, to, max_distance_ratio)]
 
     def generate_leg_shapes(self, requests: Iterable[LegRequest]) -> Iterable[LegResponse]:
+        """Returns an iterable which generates shapes for provided legs."""
         return map(self.generate_leg_shape, requests)
 
     def generate_leg_shape(self, r: LegRequest) -> LegResponse:
+        """Generates a shape for the provided leg."""
         stop_pair = (r.from_.stop_id, r.to.stop_id)
         fallback_shape = self._get_fallback_shape(r)
 
@@ -126,10 +142,12 @@ class ShapeGenerator:
             self._report_failure(r, fallback_shape, error="unmatched_stop")
             return LegResponse.prepare(fallback_shape, r)
 
+        # Generate the shape
         shape = self._generate_leg_shape_unchecked(r)
         if not shape:
             return LegResponse.prepare(fallback_shape, r)
 
+        # Check against the max_distance_ratio
         if r.max_distance_ratio != inf:
             crow_flies_distance = fallback_shape[-1].distance
             shape_distance = shape[-1].distance
@@ -166,6 +184,7 @@ class ShapeGenerator:
         return self.stop_positions[s.stop_id]
 
     def flatten_shape(self, legs: Iterable[LegResponse]) -> ShapeResponse:
+        """Flattens multiple leg shapes into a single shape."""
         r = ShapeResponse()
         dist_offset = 0.0
 
@@ -189,9 +208,7 @@ class ShapeGenerator:
         return r
 
     def _get_max_distance_ratio(self, from_: MatchedStop, to: MatchedStop) -> float:
-        override_from_key = from_.stop_id.partition(":")[0]
-        override_to_key = to.stop_id.partition(":")[0]
-        override_key = (override_from_key, override_to_key)
+        override_key = self._get_override_key(from_, to)
         if overridden := self.ratio_overrides.get(override_key):
             return overridden
 
@@ -258,3 +275,8 @@ class ShapeGenerator:
         file = self.shape_err_dir / f"{r.from_.stop_id}__{r.to.stop_id}.geojson"
         with file.open("w", encoding="utf-8") as f:
             json.dump(geojson, f, indent=2, ensure_ascii=False)
+
+    def _get_override_key(self, from_: MatchedStop, to: MatchedStop) -> tuple[str, str]:
+        override_from_key = from_.stop_id.partition(":")[0]
+        override_to_key = to.stop_id.partition(":")[0]
+        return (override_from_key, override_to_key)
