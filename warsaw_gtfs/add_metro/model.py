@@ -38,8 +38,8 @@ class Service:
     friday: bool
     saturday: bool
     sunday: bool
-    added: set[Date] = field(default_factory=set)
-    removed: set[Date] = field(default_factory=set)
+    added: set[Date] = field(default_factory=set[Date])
+    removed: set[Date] = field(default_factory=set[Date])
 
     def as_calendar(self) -> Calendar:
         return Calendar(id=self.calendar_id)
@@ -143,8 +143,8 @@ class Variant:
     variant_code: str
     direction: Trip.Direction
     headsign: str
-    stops: list[VariantStop] = field(default_factory=list)
-    schedules: list[Schedule] = field(default_factory=list)
+    stops: list[VariantStop] = field(default_factory=list[VariantStop])
+    schedules: list[Schedule] = field(default_factory=list[Schedule])
 
     @property
     def variant_id(self) -> str:

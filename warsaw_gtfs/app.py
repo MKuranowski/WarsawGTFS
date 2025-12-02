@@ -1,18 +1,23 @@
+import logging
 from argparse import ArgumentParser, Namespace
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import partial
 from zoneinfo import ZoneInfo
 
-from impuls import App, LocalResource, Pipeline, PipelineOptions, Task
-from impuls.model import Agency, Attribution, Date, FeedInfo
+import routx
+from impuls import App, HTTPResource, LocalResource, Pipeline, PipelineOptions, Task, selector
+from impuls.model import Agency, Attribution, Date, FeedInfo, Route
 from impuls.multi_file import IntermediateFeed, MultiFile
-from impuls.resource import Resource
+from impuls.resource import Resource, TimeLimitedResource
 from impuls.tasks import AddEntity, ExecuteSQL, RemoveUnusedEntities, SaveGTFS
 from impuls.tools import polish_calendar_exceptions
 
+from . import generate_shapes
 from .add_metro import AddMetro
 from .api import ZTMFileProvider, ZTMResource
 from .assign_missing_directions import AssignMissingDirections
+from .curate_stop_names import CurateStopNames
+from .curate_stop_positions import CurateStopPositions
 from .drop_hidden_variants import DropHiddenVariants
 from .extend_calendars import ExtendSchedules
 from .fix_rail_direction_id import FixRailDirectionID
@@ -27,9 +32,108 @@ from .update_trip_headsigns import UpdateTripHeadsigns
 TZ = ZoneInfo("Europe/Warsaw")
 
 
+def get_generate_shapes_tasks() -> list[Task]:
+    return [
+        AddEntity(
+            task_name="AddOSMAttribution",
+            entity=Attribution(
+                id="2",
+                organization_name=(
+                    "Bus shapes based on data from: "
+                    "© OpenStreetMap contributors (under ODbL license)"
+                ),
+                is_authority=True,
+                is_data_source=True,
+                url="https://www.openstreetmap.org/copyright",
+            ),
+        ),
+        generate_shapes.Task(
+            generate_shapes.GraphConfig(
+                osm_resource="tram_rail_shapes.osm",
+                profile=routx.OsmProfile.RAILWAY,
+                curation_resource="shapes.json",
+            ),
+            generate_shapes.GenerateConfig(
+                routes=selector.Routes(type=Route.Type.RAIL),
+                overwrite=True,
+                shape_id_prefix="2:",
+            ),
+            generate_shapes.LoggingConfig(
+                task_name="GenerateRailShapes",
+            ),
+        ),
+        generate_shapes.Task(
+            generate_shapes.GraphConfig(
+                osm_resource="tram_rail_shapes.osm",
+                profile=routx.OsmProfile.TRAM,
+                curation_resource="shapes.json",
+            ),
+            generate_shapes.GenerateConfig(
+                routes=selector.Routes(type=Route.Type.TRAM),
+                overwrite=True,
+                shape_id_prefix="0:",
+            ),
+            generate_shapes.LoggingConfig(
+                task_name="GenerateTramShapes",
+            ),
+        ),
+        generate_shapes.Task(
+            generate_shapes.GraphConfig(
+                osm_resource="mazowieckie-latest.osm.pbf",
+                profile=routx.OsmProfile.BUS,
+                bbox=(20.58, 51.92, 21.47, 52.5),
+                curation_resource="shapes.json",
+            ),
+            generate_shapes.GenerateConfig(
+                routes=selector.Routes(type=Route.Type.BUS),
+                overwrite=True,
+                shape_id_prefix="3:",
+            ),
+            generate_shapes.LoggingConfig(
+                task_name="GenerateBusShapes",
+                dump_errors="shape_errors",
+            ),
+        ),
+    ]
+
+
+def get_generate_shapes_resources() -> dict[str, Resource]:
+    return {
+        "tram_rail_shapes.osm": LocalResource("data_curated/tram_rail_shapes.osm"),
+        "mazowieckie-latest.osm.pbf": TimeLimitedResource(
+            r=HTTPResource.get(
+                "https://download.geofabrik.de/europe/poland/mazowieckie-latest.osm.pbf",
+            ),
+            minimal_time_between=timedelta(days=3),
+        ),
+        "shapes.json": LocalResource("data_curated/shapes.json"),
+    }
+
+
+def get_metro_tasks() -> list[Task]:
+    return [
+        AddMetro(),
+        generate_shapes.Task(
+            generate_shapes.GraphConfig(
+                osm_resource="tram_rail_shapes.osm",
+                profile=routx.OsmProfile.SUBWAY,
+            ),
+            generate_shapes.GenerateConfig(
+                routes=selector.Routes(type=Route.Type.METRO),
+                overwrite=True,
+                shape_id_prefix="1:",
+            ),
+            generate_shapes.LoggingConfig(
+                task_name="GenerateMetroShapes",
+            ),
+        ),
+    ]
+
+
 def create_intermediate_pipeline(
     feed: IntermediateFeed[Resource],
     save_gtfs: bool = False,
+    generate_shapes: bool = False,
 ) -> list[Task]:
     tasks: list[Task] = [
         AddEntity(
@@ -142,8 +246,9 @@ def create_intermediate_pipeline(
             "FixDoubleSpacesInStopNames",
             r"UPDATE stops SET name = re_sub('\s{2,}', ' ', name) WHERE name LIKE '%  %'",
         ),
-        # TODO: Fix stop names (e.g. spaces around dashes, not just double spaces)
         MergeVirtualStops(),
+        CurateStopNames("stops.json"),
+        CurateStopPositions("stops.json"),
         FixRailDirectionID(),
         UpdateTripHeadsigns(),
         GenerateRouteLongNames(),
@@ -154,8 +259,10 @@ def create_intermediate_pipeline(
                 "(SELECT route_id FROM routes WHERE type = 2)"
             ),
         ),
-        # TODO: Fix shapes
     ]
+
+    if generate_shapes:
+        tasks.extend(get_generate_shapes_tasks())
 
     if save_gtfs:
         tasks.append(SaveGTFS(GTFS_HEADERS, "gtfs.zip", ensure_order=True))
@@ -163,15 +270,30 @@ def create_intermediate_pipeline(
     return tasks
 
 
+def create_pre_merge_pipeline(
+    feed: IntermediateFeed[Resource],
+    drop_shapes: bool = False,
+) -> list[Task]:
+    tasks = list[Task]()
+    if drop_shapes:
+        tasks.append(ExecuteSQL("DisableShapes", "UPDATE trips SET shape_id = NULL"))
+        tasks.append(ExecuteSQL("TruncateShapes", "DELETE FROM shapes"))
+    return tasks
+
+
 def create_final_pipeline(
     feeds: list[IntermediateFeed[LocalResource]],
     force_feed_version: str = "",
+    generate_shapes: bool = False,
 ) -> list[Task]:
     tasks = list[Task]()
     tasks.append(ExtendSchedules())
     if force_feed_version:
         tasks.append(SetFeedVersion(force_feed_version))
-    tasks.append(AddMetro())
+    tasks.extend(get_metro_tasks())
+    if generate_shapes:
+        tasks.extend(get_generate_shapes_tasks())
+
     # TODO: Export skm-only GTFS
     tasks.append(SaveGTFS(GTFS_HEADERS, "gtfs.zip", ensure_order=True))
     return tasks
@@ -179,6 +301,12 @@ def create_final_pipeline(
 
 class WarsawGTFS(App):
     def add_arguments(self, parser: ArgumentParser) -> None:
+        parser.add_argument(
+            "-s",
+            "--shapes",
+            action="store_true",
+            help="generate shapes using OSM data",
+        )
         parser.add_argument(
             "--single",
             nargs="?",
@@ -189,13 +317,17 @@ class WarsawGTFS(App):
             help="convert a single feed version (if the argument is missing - use today)",
         )
 
+    def before_run(self) -> None:
+        logging.getLogger("routx.osm").disabled = True
+
     def prepare(
         self,
         args: Namespace,
         options: PipelineOptions,
     ) -> Pipeline | MultiFile[ZTMResource]:
-        resources = {
+        resources: dict[str, Resource] = {
             "calendar_exceptions.csv": polish_calendar_exceptions.RESOURCE,
+            "stops.json": LocalResource("data_curated/stops.json"),
             "metro_routes.csv": LocalResource("data_curated/metro/routes.csv"),
             "metro_schedules.csv": LocalResource("data_curated/metro/schedules.csv"),
             "metro_services.csv": LocalResource("data_curated/metro/services.csv"),
@@ -205,10 +337,17 @@ class WarsawGTFS(App):
             "tram_rail_shapes.osm": LocalResource("data_curated/tram_rail_shapes.osm"),
         }
 
+        if args.shapes:
+            resources.update(**get_generate_shapes_resources())
+
         if args.single:
             feed = ZTMFileProvider(args.single).single()
             return Pipeline(
-                tasks=create_intermediate_pipeline(feed, save_gtfs=True),
+                tasks=create_intermediate_pipeline(
+                    feed,
+                    save_gtfs=True,
+                    generate_shapes=args.shapes,
+                ),
                 resources={
                     **resources,
                     feed.resource_name: feed.resource,
@@ -221,9 +360,14 @@ class WarsawGTFS(App):
                 options=options,
                 intermediate_provider=ZTMFileProvider(),
                 intermediate_pipeline_tasks_factory=create_intermediate_pipeline,
+                pre_merge_pipeline_tasks_factory=partial(
+                    create_pre_merge_pipeline,
+                    drop_shapes=args.shapes,  # no need to merge shapes if we're overwriting them
+                ),
                 final_pipeline_tasks_factory=partial(
                     create_final_pipeline,
                     force_feed_version=feed_version,
+                    generate_shapes=args.shapes,
                 ),
                 additional_resources=resources,
             )
