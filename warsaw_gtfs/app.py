@@ -16,11 +16,13 @@ from . import generate_shapes
 from .add_metro import AddMetro
 from .api import ZTMFileProvider, ZTMResource
 from .assign_missing_directions import AssignMissingDirections
+from .assign_zone_id import AssignZoneId
 from .curate_stop_names import CurateStopNames
 from .curate_stop_positions import CurateStopPositions
 from .drop_hidden_variants import DropHiddenVariants
 from .extend_calendars import ExtendSchedules
 from .fix_rail_direction_id import FixRailDirectionID
+from .generate_fares import GenerateFares
 from .generate_route_long_names import GenerateRouteLongNames
 from .gtfs import GTFS_HEADERS
 from .load_json import LoadJSON
@@ -270,12 +272,14 @@ def create_intermediate_pipeline(
                 "(SELECT route_id FROM routes WHERE type = 2)"
             ),
         ),
+        AssignZoneId(),
     ]
 
     if generate_shapes:
         tasks.extend(get_generate_shapes_tasks())
 
     if save_gtfs:
+        tasks.append(GenerateFares())
         tasks.append(SaveGTFS(GTFS_HEADERS, "gtfs.zip", ensure_order=True))
 
     return tasks
@@ -297,8 +301,10 @@ def create_final_pipeline(
     force_feed_version: str = "",
     generate_shapes: bool = False,
 ) -> list[Task]:
-    tasks = list[Task]()
-    tasks.append(ExtendSchedules())
+    tasks: list[Task] = [
+        GenerateFares(),
+        ExtendSchedules(),
+    ]
     if force_feed_version:
         tasks.append(SetFeedVersion(force_feed_version))
     tasks.extend(get_metro_tasks())

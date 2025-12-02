@@ -15,6 +15,7 @@ from .stops import parse_stops
 from .trips import parse_trips
 from .variants import parse_variant_stops, parse_variants
 from .vehicles import VehicleKind, parse_vehicle_kinds
+from .zones import parse_zones
 
 DB_SCHEMA_EXTENSION = """
 CREATE TABLE variants (
@@ -36,6 +37,8 @@ CREATE TABLE variant_stops (
     is_not_available INTEGER NOT NULL DEFAULT 0 CHECK (is_not_available IN (0, 1)),
     is_virtual INTEGER NOT NULL DEFAULT 0 CHECK (is_virtual IN (0, 1)),
     accessibility INTEGER,
+    zone_id TEXT NOT NULL DEFAULT '',
+    is_zone_border INTEGER NOT NULL DEFAULT 0 CHECK (is_zone_border IN (0, 1)),
     PRIMARY KEY (variant_id, stop_sequence)
 ) STRICT;
 """
@@ -48,6 +51,7 @@ class LoadJSON(Task):
         self.vehicle_kinds = dict[int, VehicleKind]()
         self.route_id_lookup = dict[int, str]()
         self.stop_id_lookup = dict[int, str]()
+        self.zone_id_lookup = dict[int, str]()
         self.calendar_id_lookup = dict[int, str]()
         self.trip_id_lookup = dict[int, str]()
 
@@ -76,6 +80,7 @@ class LoadJSON(Task):
             self.load_routes(r.db, data)
             self.load_calendars(r.db, data)
             self.load_vehicle_kinds(data)
+            self.load_zone_id_lookup(data)
 
     def load_stops(self, db: DBConnection, data: Any) -> None:
         self.logger.debug("Loading stops")
@@ -100,6 +105,10 @@ class LoadJSON(Task):
         self.logger.debug("Loading vehicle kinds")
         self.vehicle_kinds = parse_vehicle_kinds(data)
 
+    def load_zone_id_lookup(self, data: Any) -> None:
+        self.logger.debug("Loading zones")
+        self.zone_id_lookup = parse_zones(data)
+
     def load_schedules(self, r: TaskRuntime) -> None:
         self.logger.info("Loading schedules")
         # TODO: Don't load the entire JSON to memory
@@ -123,8 +132,8 @@ class LoadJSON(Task):
         self.logger.debug("Loading variant stops")
         assert self.stop_id_lookup
         db.raw_execute_many(
-            "INSERT INTO variant_stops VALUES (?,?,?,?,?,?,?)",
-            parse_variant_stops(data, self.stop_id_lookup),
+            "INSERT INTO variant_stops VALUES (?,?,?,?,?,?,?,?,?)",
+            parse_variant_stops(data, self.stop_id_lookup, self.zone_id_lookup),
         )
 
     def load_trips(self, db: DBConnection, data: Any) -> None:

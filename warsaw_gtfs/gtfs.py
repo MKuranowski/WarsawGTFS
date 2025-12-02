@@ -46,6 +46,7 @@ GTFS_HEADERS = {
         "location_type",
         "parent_station",
         "wheelchair_boarding",
+        "zone_id",
         "stop_name_stem",
         "town_name",
         "street_name",
@@ -87,5 +88,19 @@ GTFS_HEADERS = {
         "shape_pt_lat",
         "shape_pt_lon",
         "shape_dist_traveled",
+    ),
+    "fare_attributes.txt": (
+        "fare_id",
+        "price",
+        "currency_type",
+        "payment_method",
+        "transfers",
+        "agency_id",
+        "transfer_duration",
+    ),
+    "fare_rules.txt": (
+        "fare_id",
+        "route_id",
+        "contains_id",
     ),
 }
