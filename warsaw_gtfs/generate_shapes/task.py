@@ -118,9 +118,10 @@ class Task(ImpulsTask):
             stop_positions,
             graph,
             kd_tree,
-            logger=self.logger,
+            max_stop_to_node_distance=self.graph.max_stop_to_node_distance,
             ratio_overrides=ratio_overrides,
             force_via=force_via,
+            logger=self.logger,
             logging_config=self.logging,
         )
 
