@@ -60,6 +60,7 @@ GTFS_HEADERS = {
         "direction_id",
         "wheelchair_accessible",
         "hidden_block_id",
+        "variant_code",
         "brigade",
         "fleet_type",
     ),

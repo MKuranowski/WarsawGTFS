@@ -228,6 +228,17 @@ def create_intermediate_pipeline(
         RemoveUnusedEntities(),
         AssignMissingDirections(),
         ExecuteSQL(
+            "SetTripVariantCode",
+            (
+                "UPDATE trips SET "
+                "extra_fields_json = json_set("
+                "  extra_fields_json,"
+                "  '$.variant_code',"
+                "  (SELECT code FROM variants WHERE variant_id = shape_id)"
+                ")"
+            ),
+        ),
+        ExecuteSQL(
             "SetTripDirection",
             (
                 "UPDATE trips SET direction = (SELECT direction FROM variants "
