@@ -6,7 +6,6 @@ from impuls.model import CalendarException, Date, Frequency, Route, Stop, StopTi
 from impuls.tools import polish_calendar_exceptions
 
 from . import model
-from .shape_generator import ShapeGenerator
 
 
 class AddMetro(Task):
@@ -20,7 +19,6 @@ class AddMetro(Task):
             self.add_calendars(r)
 
             variants = self.parse_variants(r)
-            self.add_shapes(r, variants.values())
             self.add_trips(r, variants.values())
             self.add_stop_times(r, variants.values())
             self.add_frequencies(r, variants.values())
@@ -81,24 +79,8 @@ class AddMetro(Task):
 
         return variants
 
-    def add_shapes(self, r: TaskRuntime, variants: Iterable[model.Variant]) -> None:
-        with r.resources["tram_rail_shapes.osm"].open_binary() as f:
-            generator = ShapeGenerator(f)
-
-        for variant in variants:
-            r.db.raw_execute("INSERT INTO shapes (shape_id) VALUES (?)", (variant.variant_id,))
-            r.db.raw_execute_many(
-                "INSERT INTO shape_points (shape_id,sequence,lat,lon) VALUES (?,?,?,?)",
-                (
-                    (variant.variant_id, i, lat, lon)
-                    for i, (lat, lon) in enumerate(
-                        generator.generate_shape(stop.stop_id for stop in variant.stops)
-                    )
-                ),
-            )
-
     def add_trips(self, r: TaskRuntime, variants: Iterable[model.Variant]) -> None:
-        r.db.create_many(Trip, (i for v in variants for i in v.as_trips(v.variant_id)))
+        r.db.create_many(Trip, (i for v in variants for i in v.as_trips()))
 
     def add_stop_times(self, r: TaskRuntime, variants: Iterable[model.Variant]) -> None:
         r.db.create_many(StopTime, (i for v in variants for i in v.as_stop_times()))
