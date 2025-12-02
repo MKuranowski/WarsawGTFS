@@ -1,7 +1,6 @@
 import json
 import logging
 from collections.abc import Iterable, Mapping
-from functools import lru_cache
 from itertools import pairwise, starmap
 from math import inf
 from pathlib import Path
@@ -22,8 +21,6 @@ from .model import (
     ShapeResponse,
 )
 
-# TODO: Check that the nodes matched with stops are within reasonable distance
-
 MAX_DISTANCE_RATIO = 3.5
 MAX_DISTANCE_RATIO_IN_SAME_GROUP = 7.0
 
@@ -34,17 +31,20 @@ class ShapeGenerator:
         stop_positions: Mapping[str, LatLon],
         graph: routx.Graph,
         kd_tree: routx.KDTree,
-        logger: logging.Logger | None = None,
+        max_stop_to_node_distance: float = 100.0,
         ratio_overrides: RatioOverrides | None = None,
         force_via: ForceVia | None = None,
+        logger: logging.Logger | None = None,
         logging_config: LoggingConfig = LoggingConfig(),
     ) -> None:
         self.logger = logger or logging.getLogger(type(self).__name__)
 
         self.stop_positions = stop_positions
+        self.stop_nodes = dict[str, int]()
         self.graph = graph
         self.kd_tree = kd_tree
         self.failed_pairs = set[tuple[str, str]]()
+        self.max_stop_to_node_distance = max_stop_to_node_distance
         self.ratio_overrides = ratio_overrides or {}
         self.force_via = {
             stop_pair: ForceViaPoint(lat, lon)
@@ -60,12 +60,27 @@ class ShapeGenerator:
         else:
             self.shape_err_dir = None
 
-    @lru_cache(maxsize=None)
     def stop_to_node(self, stop_id: str) -> int:
+        if (cached := self.stop_nodes.get(stop_id)) is not None:
+            return cached
+
         lat, lon = self.stop_positions[stop_id]
-        if self.kd_tree:
-            return self.kd_tree.find_nearest_node(lat, lon).id
-        return self.graph.find_nearest_node(lat, lon).id
+        node = self.kd_tree.find_nearest_node(lat, lon)
+        dist = routx.earth_distance(lat, lon, node.lat, node.lon)
+        if dist > self.max_stop_to_node_distance:
+            node_id = 0
+            self.logger.error(
+                "Stop %s is too far from nearest node (%d) - %.1f m (max is %.0f m)",
+                stop_id,
+                node.id,
+                dist,
+                self.max_stop_to_node_distance,
+            )
+        else:
+            node_id = node.id
+
+        self.stop_nodes[stop_id] = node_id
+        return node_id
 
     def generate_shape(self, stops: ShapeRequest) -> ShapeResponse:
         matched_stops = self.match_stops_to_nodes(stops)
@@ -103,7 +118,14 @@ class ShapeGenerator:
 
     def generate_leg_shape(self, r: LegRequest) -> LegResponse:
         stop_pair = (r.from_.stop_id, r.to.stop_id)
-        fallback_shape = list(self._nodes_to_points((r.from_.node_id, r.to.node_id)))
+        fallback_shape = self._get_fallback_shape(r)
+
+        # Don't attempt to generate shape if from or to was not matched to the graph
+        if r.from_.node_id == 0 or r.to.node_id == 0:
+            self.failed_pairs.add(stop_pair)
+            self._report_failure(r, fallback_shape, error="unmatched_stop")
+            return LegResponse.prepare(fallback_shape, r)
+
         shape = self._generate_leg_shape_unchecked(r)
         if not shape:
             return LegResponse.prepare(fallback_shape, r)
@@ -130,6 +152,18 @@ class ShapeGenerator:
                 return LegResponse.prepare(fallback_shape, r)
 
         return LegResponse.prepare(shape, r)
+
+    def _get_fallback_shape(self, r: LegRequest) -> list[LatLonDist]:
+        from_pos = self._get_fallback_lat_lon(r.from_)
+        to_pos = self._get_fallback_lat_lon(r.to)
+        dist = routx.earth_distance(*from_pos, *to_pos)
+        return [LatLonDist(*from_pos, 0.0), LatLonDist(*to_pos, dist)]
+
+    def _get_fallback_lat_lon(self, s: MatchedStop) -> LatLon:
+        if s.node_id:
+            n = self.graph[s.node_id]
+            return n.lat, n.lon
+        return self.stop_positions[s.stop_id]
 
     def flatten_shape(self, legs: Iterable[LegResponse]) -> ShapeResponse:
         r = ShapeResponse()
@@ -168,6 +202,9 @@ class ShapeGenerator:
         return MAX_DISTANCE_RATIO
 
     def _generate_leg_shape_unchecked(self, r: LegRequest) -> list[LatLonDist]:
+        assert r.from_.node_id != 0
+        assert r.to.node_id != 0
+
         stop_pair = (r.from_.stop_id, r.to.stop_id)
         if stop_pair in self.failed_pairs:
             return []
