@@ -17,6 +17,7 @@ from .add_metro import AddMetro
 from .api import ZTMFileProvider, ZTMResource
 from .assign_missing_directions import AssignMissingDirections
 from .assign_zone_id import AssignZoneId
+from .collapse_duplicate_stop_times import CollapseDuplicateStopTimes
 from .curate_stop_names import CurateStopNames
 from .curate_stop_positions import CurateStopPositions
 from .extend_calendars import ExtendSchedules
@@ -331,6 +332,7 @@ def create_intermediate_pipeline(
         ),
         CurateStopNames("stops.json"),
         CurateStopPositions("stops.json"),
+        CollapseDuplicateStopTimes(),
         # ========================
         # 9. Prettify other attributes
         # ========================
