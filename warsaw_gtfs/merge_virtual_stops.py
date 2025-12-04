@@ -8,9 +8,14 @@ from .util import is_railway_stop
 
 
 class MergeVirtualStops(Task):
-    def __init__(self, explicit_virtual_stops: Iterable[str] = []) -> None:
+    def __init__(self, explicit_pairs: Iterable[tuple[str, str | None]] = []) -> None:
         super().__init__()
-        self.explicit_virtual_stops = list(explicit_virtual_stops)
+        self.force_merge: list[str] = []
+        self.preferred_targets: dict[str, str] = {}
+        for src_id, dst_id in explicit_pairs:
+            self.force_merge.append(src_id)
+            if dst_id:
+                self.preferred_targets[src_id] = dst_id
 
     def execute(self, r: TaskRuntime) -> None:
         all = self.get_all_stop_ids(r.db)
@@ -29,7 +34,7 @@ class MergeVirtualStops(Task):
 
     def find_virtual_stops(self, all_ids: set[str]) -> set[str]:
         base = {i for i in all_ids if re.match(r"^[0-9]{4}8[1-9]$", i) and not is_railway_stop(i)}
-        for id in self.explicit_virtual_stops:
+        for id in self.preferred_targets:
             if id in all_ids:
                 base.add(id)
             else:
@@ -48,11 +53,17 @@ class MergeVirtualStops(Task):
             else:
                 self.logger.warning("No replacement for virtual stop %s", id)
 
-    @staticmethod
-    def find_replacement_stop(virtual: str, all: set[str]) -> str | None:
-        # Special case for Metro Młociny 88 - map to 28
-        if virtual == "605988" and "605928" in all:
-            return "605928"
+    def find_replacement_stop(self, virtual: str, all: set[str]) -> str | None:
+        # Special cases
+        if preferred := self.preferred_targets.get(virtual):
+            if preferred in all:
+                return preferred
+            else:
+                self.logger.warning(
+                    "Preferred target for %s - %s - does not exist, picking alternative candidate",
+                    virtual,
+                    preferred,
+                )
 
         # Try to replace 8x by 0x, 1x, ..., 7x
         for i in range(8):
