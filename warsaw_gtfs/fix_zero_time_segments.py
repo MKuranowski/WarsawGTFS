@@ -23,7 +23,7 @@ class FixZeroTimeSegments(Task):
         self.logger.debug("Finding trips to fix")
         trips = self.get_trips_to_fix(r.db)
 
-        self.logger.debug("Fixing zero time segments")
+        self.logger.info("Fixing zero time segments in %s trips", len(trips))
         self.fix_zero_segments(trips)
 
         self.logger.debug("Saving updated times")
@@ -56,9 +56,8 @@ class FixZeroTimeSegments(Task):
                 prev_dep = dep
             yield trip_id, times
 
-    def fix_zero_segments(self, trips: Sequence[tuple[str, list[StopTimeHash]]]) -> None:
-        for i, (trip_id, times) in enumerate(trips, start=1):
-            self.logger.debug("Fixing times in trip %s (%d/%d)", trip_id, i, len(trips))
+    def fix_zero_segments(self, trips: Iterable[tuple[str, list[StopTimeHash]]]) -> None:
+        for _, times in trips:
             fix_zero_travel_time_with_dwell_time(times[1:])
             fix_zero_travel_from_first_virtual_stop(times)
             for segment in find_zero_segments(times):
