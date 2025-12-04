@@ -57,5 +57,5 @@ class MergeVirtualStops(Task):
         # Try to replace 8x by 0x, 1x, ..., 7x
         for i in range(8):
             candidate = f"{virtual[:4]}{i}{virtual[5:]}"
-            if candidate in all:
+            if candidate != virtual and candidate in all:
                 return candidate
