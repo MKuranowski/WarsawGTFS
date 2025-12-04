@@ -327,7 +327,8 @@ def create_intermediate_pipeline(
         MergeVirtualStops(
             explicit_virtual_stops=[
                 "305875",  # Sielce 75 → Sielce 05
-                "305876",  # Sielce 76 → Sielce 06
+                "305876",  # Sielce 76 → Sielce 05
+                "663351",  # Kiełpin KMŁ 51 → Kiełpin KMŁ 01
             ],
         ),
         CurateStopNames("stops.json"),
