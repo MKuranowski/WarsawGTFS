@@ -22,6 +22,7 @@ from .curate_stop_names import CurateStopNames
 from .curate_stop_positions import CurateStopPositions
 from .extend_calendars import ExtendSchedules
 from .fix_rail_direction_id import FixRailDirectionID
+from .fix_zero_time_segments import FixZeroTimeSegments
 from .generate_fares import GenerateFares
 from .generate_route_long_names import GenerateRouteLongNames
 from .gtfs import GTFS_HEADERS
@@ -337,7 +338,7 @@ def create_intermediate_pipeline(
         # ========================
         # 9. Prettify other attributes
         # ========================
-        # TODO: Fix zero-time segments -- also removing duplicate sequences (see Sielce 05)
+        FixZeroTimeSegments(),
         FixRailDirectionID(),
         UpdateTripHeadsigns(),
         GenerateRouteLongNames(),
