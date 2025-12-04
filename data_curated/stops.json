@@ -1,7 +1,8 @@
 {
   "positions": {
     "210003": {"lat": 52.236141, "lon": 21.084183, "distance": 35},
-    "402905": {"lat": 52.216349, "lon": 20.992639, "distance": 35}
+    "402905": {"lat": 52.216349, "lon": 20.992639, "distance": 35},
+    "505071": {"lat": 52.239027, "lon": 20.900669}
   },
   "names": {
     "1011": {"name": "Budzińskiej-Tylickiej"},
@@ -11,6 +12,7 @@
     "1909": {"name": "Michałów-Reginów"},
     "2005": {"name": "Praga-Płd. - Ratusz"},
     "2053": {"name": "Mera-Pnefal"},
+    "3809": {"name": "Henryków-Urocze"},
     "3144": {"name": "Szolc-Rogozińskiego"},
     "3233": {"name": "Joliot-Curie"},
     "4004": {"name": "Och-Teatr"},
@@ -21,6 +23,17 @@
     "4342": {"name": "PKP Ursus-Niedźwiadek"},
     "6077": {"name": "Marymont-Potok"},
     "6083": {"name": "Most Grota-Roweckiego"},
-    "6660": {"name": "Izabelin-Dziekanówek", "stem": "Dziekanówek"}
+    "6660": {"name": "Izabelin-Dziekanówek", "stem": "Dziekanówek"},
+    "R-01": {"name": "R-1 Zajezdnia Wola"},
+    "R-02": {"name": "R-2 Zajezdnia Praga"},
+    "R-03": {"name": "R-3 Zajezdnia Mokotów"},
+    "R-04": {"name": "R-4 Zajezdnia Żoliborz"},
+    "R-05": {"name": "R-5 Zajezdnia Annopol", "zone": "1"},
+    "R-07": {"name": "R-1 Zajezdnia Woronicza"},
+    "R-10": {"name": "R-3 Zajezdnia Ostrobramska"},
+    "R-11": {"name": "R-2 Zajezdnia Kleszczowa"},
+    "R-13": {"name": "R-4 Zajezdnia Stalowa"},
+    "R-14": {"name": "R-6 Zajezdnia Płochocińska"},
+    "T-04": {"name": "Wydział Włościańska"}
   }
 }

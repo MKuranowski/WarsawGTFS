@@ -59,6 +59,7 @@ GTFS_HEADERS = {
         "trip_short_name",
         "trip_headsign",
         "direction_id",
+        "exceptional",
         "wheelchair_accessible",
         "hidden_block_id",
         "variant_code",

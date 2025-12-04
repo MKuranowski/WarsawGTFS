@@ -18,7 +18,12 @@ class UpdateTripHeadsigns(Task):
                     "    SELECT st.stop_id"
                     "    FROM stop_times AS st"
                     "    WHERE st.trip_id = t.trip_id"
-                    "    ORDER BY st.stop_sequence DESC"
+                    "    ORDER BY"
+                    "      CASE st.drop_off_type"
+                    "      WHEN 1 THEN st.stop_sequence"
+                    "      ELSE 1000 + st.stop_sequence"  # Prefer using real stops for headsigns
+                    "      END"
+                    "    DESC"
                     "    LIMIT 1"
                     "))"
                 )

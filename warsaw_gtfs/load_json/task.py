@@ -24,7 +24,8 @@ CREATE TABLE variants (
     code TEXT NOT NULL,
     direction INTEGER,
     is_main INTEGER NOT NULL DEFAULT 0 CHECK (is_main IN (0, 1)),
-    is_exceptional INTEGER NOT NULL DEFAULT 0 CHECK (is_exceptional IN (0, 1))
+    is_exceptional INTEGER NOT NULL DEFAULT 0 CHECK (is_exceptional IN (0, 1)),
+    is_not_available INTEGER NOT NULL DEFAULT 0 CHECK (is_not_available IN (0, 1))
 ) STRICT;
 
 CREATE TABLE variant_stops (
@@ -124,7 +125,7 @@ class LoadJSON(Task):
         self.logger.debug("Loading variants")
         assert self.route_id_lookup
         db.raw_execute_many(
-            "INSERT INTO variants VALUES (?,?,?,?,?,?)",
+            "INSERT INTO variants VALUES (?,?,?,?,?,?,0)",
             parse_variants(data, self.route_id_lookup),
         )
 

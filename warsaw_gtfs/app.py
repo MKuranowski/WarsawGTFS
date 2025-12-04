@@ -19,7 +19,6 @@ from .assign_missing_directions import AssignMissingDirections
 from .assign_zone_id import AssignZoneId
 from .curate_stop_names import CurateStopNames
 from .curate_stop_positions import CurateStopPositions
-from .drop_hidden_variants import DropHiddenVariants
 from .extend_calendars import ExtendSchedules
 from .fix_rail_direction_id import FixRailDirectionID
 from .generate_fares import GenerateFares
@@ -138,6 +137,9 @@ def create_intermediate_pipeline(
     generate_shapes: bool = False,
 ) -> list[Task]:
     tasks: list[Task] = [
+        # ========================
+        # 1. Create static objects
+        # ========================
         AddEntity(
             task_name="AddAgency",
             entity=Agency(
@@ -179,6 +181,9 @@ def create_intermediate_pipeline(
                 version=feed.resource.last_modified.strftime("%Y-%m-%d_%H-%M-%S"),
             ),
         ),
+        # ========================
+        # 2. Load data & drop anything non-WTP
+        # ========================
         LoadJSON(feed.resource_name),
         ExecuteSQL(
             "DropNonSkmRailRoutes",
@@ -188,6 +193,48 @@ def create_intermediate_pipeline(
             "DropKmRoutes",
             "DELETE FROM routes WHERE short_name LIKE 'R%'",
         ),
+        # ========================
+        # 3. Infer extra variant & variant-stop attributes
+        # ========================
+        ExecuteSQL(
+            "FlagRepositionVariants",  # 2-stop TU-* variants
+            (
+                "UPDATE variants SET is_exceptional = 1, is_not_available = 1 "
+                "WHERE variant_id IN ("
+                "  SELECT vs.variant_id FROM variant_stops vs"
+                "  LEFT JOIN variants v ON (vs.variant_id = v.variant_id)"
+                "  WHERE v.code LIKE 'TU-%'"
+                "  GROUP BY vs.variant_id"
+                "  HAVING COUNT(*) <= 2"
+                ")"
+            ),
+        ),
+        ExecuteSQL(
+            "FlagDepotVariants",  # 2-stop variants where one stop is a depot
+            (
+                "UPDATE variants SET is_exceptional = 1, is_not_available = 1 "
+                "WHERE variant_id IN ("
+                "  SELECT variant_id FROM variants v"
+                "  WHERE"
+                "  (SELECT COUNT(*) FROM variant_stops vs WHERE v.variant_id = vs.variant_id) <= 2"
+                "  AND EXISTS ("
+                "    SELECT 1 FROM variant_stops vs LEFT JOIN stops s ON (vs.stop_id = s.stop_id)"
+                "    WHERE vs.variant_id = v.variant_id AND s.extra_fields_json ->> 'depot' = '1'"
+                "  )"
+                ")"
+            ),
+        ),
+        ExecuteSQL(
+            "PropagateNotAvailableVariantsToVariantStops",
+            (
+                "UPDATE variant_stops SET is_not_available = 1 "
+                "WHERE variant_id IN (SELECT variant_id FROM variants WHERE is_not_available = 1)"
+            ),
+        ),
+        AssignMissingDirections(),
+        # ========================
+        # 4. Infer trip attributes based on variant data
+        # ========================
         ExecuteSQL(
             "SetTripShapeIds",
             (
@@ -199,37 +246,6 @@ def create_intermediate_pipeline(
             ),
         ),
         ExecuteSQL(
-            "SetStopAccessibility",
-            (
-                "UPDATE stops SET wheelchair_boarding = iif(stop_id IN "
-                "(SELECT DISTINCT variant_stops.stop_id FROM variant_stops "
-                "WHERE accessibility >= 6), 0, 1)"
-            ),
-        ),
-        ExecuteSQL(
-            "FlagRequestStopTimes",
-            (
-                "UPDATE stop_times SET pickup_type = 3, drop_off_type = 3 "
-                "WHERE (extra_fields_json ->> 'variant_id', stop_sequence) "
-                "IN (SELECT variant_id, stop_sequence FROM variant_stops "
-                "    WHERE is_request = 1)"
-            ),
-        ),
-        ExecuteSQL(
-            "DeleteUnavailableStopTimes",
-            (
-                "DELETE FROM stop_times "
-                "WHERE (extra_fields_json ->> 'variant_id', stop_sequence) "
-                "IN (SELECT variant_id, stop_sequence FROM variant_stops "
-                "    WHERE is_not_available = 1)"
-                "OR stop_id IN (SELECT stop_id FROM stops"
-                "               WHERE extra_fields_json ->> 'depot' = '1')"
-            ),
-        ),
-        DropHiddenVariants(),
-        RemoveUnusedEntities(),
-        AssignMissingDirections(),
-        ExecuteSQL(
             "SetTripVariantCode",
             (
                 "UPDATE trips SET "
@@ -239,6 +255,10 @@ def create_intermediate_pipeline(
                 "  (SELECT code FROM variants WHERE variant_id = shape_id)"
                 ")"
             ),
+        ),
+        ExecuteSQL(
+            "DropHiddenVariants",  # All TN-* variants
+            "DELETE FROM trips WHERE extra_fields_json ->> 'variant_code' LIKE 'TN-%'",
         ),
         ExecuteSQL(
             "SetTripDirection",
@@ -254,14 +274,67 @@ def create_intermediate_pipeline(
                 "WHERE variants.variant_id = trips.shape_id)"
             ),
         ),
-        MergeDuplicateStops(),
+        # ========================
+        # 5. Infer stop-time attributes based on variant-stop data
+        # ========================
         ExecuteSQL(
-            "FixDoubleSpacesInStopNames",
-            r"UPDATE stops SET name = re_sub('\s{2,}', ' ', name) WHERE name LIKE '%  %'",
+            "FlagRequestStopTimes",
+            (
+                "UPDATE stop_times SET pickup_type = 3, drop_off_type = 3 "
+                "WHERE (extra_fields_json ->> 'variant_id', stop_sequence) "
+                "IN (SELECT variant_id, stop_sequence FROM variant_stops "
+                "    WHERE is_request = 1)"
+            ),
         ),
-        MergeVirtualStops(),
+        ExecuteSQL(
+            "FlagUnavailableStopTimes",
+            (
+                "UPDATE stop_times SET pickup_type = 1, drop_off_type = 1 "
+                "WHERE (extra_fields_json ->> 'variant_id', stop_sequence) "
+                "IN (SELECT variant_id, stop_sequence FROM variant_stops "
+                "    WHERE is_not_available = 1)"
+                "OR stop_id IN (SELECT stop_id FROM stops"
+                "               WHERE extra_fields_json ->> 'depot' = '1')"
+            ),
+        ),
+        # ========================
+        # 6. Infer stop attributes based on variant-stop data
+        # ========================
+        ExecuteSQL(
+            "SetStopAccessibility",
+            (
+                "UPDATE stops SET wheelchair_boarding = iif(stop_id IN "
+                "(SELECT DISTINCT variant_stops.stop_id FROM variant_stops "
+                "WHERE accessibility >= 6), 0, 1)"
+            ),
+        ),
+        AssignZoneId(),
+        # ========================
+        # 7. Run garbage collection
+        # ========================
+        RemoveUnusedEntities(),
+        ExecuteSQL(
+            "RemoveUnusedVariants",
+            "DELETE FROM variants WHERE NOT EXISTS ("
+            "  SELECT 1 FROM trips WHERE trips.shape_id = variants.variant_id"
+            ")",
+        ),
+        # ========================
+        # 8. Merge & curate stops
+        # ========================
+        MergeDuplicateStops(),
+        MergeVirtualStops(
+            explicit_virtual_stops=[
+                "305875",  # Sielce 75 → Sielce 05
+                "305876",  # Sielce 76 → Sielce 06
+            ],
+        ),
         CurateStopNames("stops.json"),
         CurateStopPositions("stops.json"),
+        # ========================
+        # 9. Prettify other attributes
+        # ========================
+        # TODO: Fix zero-time segments -- also removing duplicate sequences (see Sielce 05)
         FixRailDirectionID(),
         UpdateTripHeadsigns(),
         GenerateRouteLongNames(),
@@ -272,7 +345,6 @@ def create_intermediate_pipeline(
                 "(SELECT route_id FROM routes WHERE type = 2)"
             ),
         ),
-        AssignZoneId(),
     ]
 
     if generate_shapes:

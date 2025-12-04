@@ -8,8 +8,9 @@ from .util import is_railway_stop
 
 
 class MergeVirtualStops(Task):
-    def __init__(self) -> None:
+    def __init__(self, explicit_virtual_stops: Iterable[str] = []) -> None:
         super().__init__()
+        self.explicit_virtual_stops = list(explicit_virtual_stops)
 
     def execute(self, r: TaskRuntime) -> None:
         all = self.get_all_stop_ids(r.db)
@@ -26,9 +27,14 @@ class MergeVirtualStops(Task):
     def get_all_stop_ids(db: DBConnection) -> set[str]:
         return {cast(str, i[0]) for i in db.raw_execute("SELECT stop_id FROM stops")}
 
-    @staticmethod
-    def find_virtual_stops(all_ids: set[str]) -> set[str]:
-        return {i for i in all_ids if re.match(r"^[0-9]{4}8[1-9]$", i) and not is_railway_stop(i)}
+    def find_virtual_stops(self, all_ids: set[str]) -> set[str]:
+        base = {i for i in all_ids if re.match(r"^[0-9]{4}8[1-9]$", i) and not is_railway_stop(i)}
+        for id in self.explicit_virtual_stops:
+            if id in all_ids:
+                base.add(id)
+            else:
+                self.logger.warning("Won't explicitly merge %s - stop does not exist", id)
+        return base
 
     def generate_replacement_pairs(
         self,
