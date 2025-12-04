@@ -276,6 +276,11 @@ def create_intermediate_pipeline(
                 "WHERE variants.variant_id = trips.shape_id)"
             ),
         ),
+        # NOTE: Beyond this point variant & variant_stops are effectively abandoned
+        #       They are used read-only for basic curation, but following that
+        #       all modifications only apply trips and stop_times.
+        #       This means that variant_stops will most likely not match with stop_times,
+        #       as all stop & stop-time changes & merges only apply to stop_times.
         # ========================
         # 5. Infer stop-time attributes based on variant-stop data
         # ========================
