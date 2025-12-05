@@ -71,4 +71,8 @@ class LegResponse:
 
     @classmethod
     def prepare(cls, points: list[LatLonDist], request: LegRequest) -> Self:
-        return cls(request.from_, request.to, points)
+        return cls(
+            request.from_,
+            request.to,
+            [LatLonDist(round(lat, 6), round(lon, 6), round(dist, 6)) for lat, lon, dist in points],
+        )
