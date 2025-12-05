@@ -61,9 +61,9 @@ GTFS_HEADERS = {
         "direction_id",
         "exceptional",
         "wheelchair_accessible",
-        "hidden_block_id",
+        "block_id",
+        "block_short_name",
         "variant_code",
-        "brigade",
         "fleet_type",
     ),
     "stop_times.txt": (

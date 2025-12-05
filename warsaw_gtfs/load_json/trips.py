@@ -45,8 +45,10 @@ def parse_trip(
     vehicle_kinds: Mapping[int, VehicleKind] = {},
 ) -> tuple[int, Trip]:
     route_id, calendar_id = schedule
-    brigade = data["brygada_kursu"] or ""
     departure_time = data["o24"][0:2] + data["o24"][3:5]  # extract HHMM from HH:MM:SS
+    brigade = data["brygada_kursu"]
+    if not brigade:
+        raise ValueError(f"Trip {data["id_kursu"]} has no brigade")
 
     route_name = route_id.partition(":")[0]
     calendar_name = calendar_id.partition(":")[0]
@@ -66,10 +68,10 @@ def parse_trip(
         calendar_id,
         short_name=data.get("numer_kursu") or "",
         wheelchair_accessible=accessible,
+        block_id=str(data["id_zadania"]),
         extra_fields_json=compact_json(
             {
-                "hidden_block_id": str(data["id_zadania"]),
-                "brigade": data["brygada_kursu"] or "",
+                "block_short_name": brigade,
                 "fleet_type": fleet_type,
             }
         ),
