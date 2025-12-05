@@ -349,9 +349,9 @@ func (g *Gtfs) LoadTrips(file *zip.File) (err error) {
 			return errors.New("trips.txt is missing the service_id column")
 		}
 
-		brigade, ok := row["brigade"]
+		brigade, ok := row["block_short_name"]
 		if !ok {
-			return errors.New("trips.txt is missing the brigade column")
+			return errors.New("trips.txt is missing the block_short_name column")
 		}
 
 		// Save data

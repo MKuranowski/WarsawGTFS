@@ -80,7 +80,7 @@ This mode is enabled by the `-p` command line flag. Here are all available optio
 - `-gtfs-file SOME_FILE_OR_URL`: from which GTFS file should trips&brigades be loaded? defaults to <https://mkuran.pl/gtfs/warsaw.zip>
 - `-target SOME_FOLDER`: where to put the created files? defaults to `data_rt`
 - `-loop DURATION`: if positive (e.g. `30s`), updates the files every DURATION. defaults to `0s`, loop mode disabled.
-- `-checkdata DURATION`: when in loop-mode, decides how often should the `-brigades-file` be checked for changes. defaults to `30m`.
+- `-checkdata DURATION`: when in loop-mode, decides how often should the `-gtfs-file` be checked for changes. defaults to `30m`.
 
 ## License
 
