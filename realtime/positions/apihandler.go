@@ -88,7 +88,47 @@ func (api *VehicleAPI) Get(apiVehType string) ([]*APIVehicleEntry, error) {
 	return respJSON.Result, nil
 }
 
-// GetAll will automatically call the api to retrieve a list of all tram and bus positions
+// GetSKM tries to get train positions from the external zbiorkom API.
+func (api *VehicleAPI) GetSKM() ([]*APIVehicleEntry, error) {
+	reqURL := "https://api.zbiorkom.live/4.9/external/skm"
+	resp, err := api.Client.Get(reqURL)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	// Check response code
+	if resp.StatusCode <= 199 || resp.StatusCode >= 300 {
+		return nil, util.RequestError{
+			URL:        reqURL,
+			Status:     resp.Status,
+			StatusCode: resp.StatusCode,
+		}
+	}
+
+	// Read the response
+	respRaw, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Marshall the response into JSON
+	// Note: The structure is compatible with the one used for ZTM (result list of objects)
+	var respJSON struct {
+		Result []*APIVehicleEntry `json:"result"`
+	}
+
+	err = json.Unmarshal(respRaw, &respJSON)
+	if err != nil {
+		log.Printf("Invalid API SKM Response:\n%s\n", respRaw)
+		return nil, err
+	}
+
+	return respJSON.Result, nil
+}
+
+// GetAll will automatically call the api to retrieve a list of all tram, bus and SKM positions
 func (api *VehicleAPI) GetAll() (s []*APIVehicleEntry, err error) {
 	// create used objects
 	var tempBuff []*APIVehicleEntry
@@ -106,5 +146,13 @@ func (api *VehicleAPI) GetAll() (s []*APIVehicleEntry, err error) {
 		return
 	}
 	s = append(s, tempBuff...)
+
+	// load SKM positions
+	tempBuff, err = api.GetSKM()
+	if err != nil {
+		return
+	}
+	s = append(s, tempBuff...)
+
 	return
 }
