@@ -113,7 +113,7 @@ func (api *VehicleAPI) GetSKM() ([]*APIVehicleEntry, error) {
 		return nil, err
 	}
 
-	// Marshall the response into JSON
+	// Unmarshal the response from JSON
 	// Note: The structure is compatible with the one used for ZTM (result list of objects)
 	var respJSON struct {
 		Result []*APIVehicleEntry `json:"result"`
