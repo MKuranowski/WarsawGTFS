@@ -169,7 +169,7 @@ def create_intermediate_pipeline(
             entity=Attribution(
                 id="1",
                 organization_name="GTFS provided by: Mikołaj Kuranowski",
-                is_authority=True,
+                is_producer=True,
                 is_data_source=True,
                 url="https://mkuran.pl/gtfs/",
             ),
