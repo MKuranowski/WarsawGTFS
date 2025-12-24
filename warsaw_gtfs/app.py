@@ -9,7 +9,14 @@ from impuls import App, HTTPResource, LocalResource, Pipeline, PipelineOptions, 
 from impuls.model import Agency, Attribution, Date, FeedInfo, Route
 from impuls.multi_file import IntermediateFeed, MultiFile
 from impuls.resource import Resource, TimeLimitedResource
-from impuls.tasks import AddEntity, ExecuteSQL, RemoveUnusedEntities, SaveGTFS
+from impuls.tasks import (
+    AddEntity,
+    AssignDirections,
+    ExecuteSQL,
+    ExtendCalendarsFromPolishExceptions,
+    RemoveUnusedEntities,
+    SaveGTFS,
+)
 from impuls.tools import polish_calendar_exceptions
 
 from . import generate_shapes
@@ -20,8 +27,6 @@ from .assign_zone_id import AssignZoneId
 from .collapse_duplicate_stop_times import CollapseDuplicateStopTimes
 from .curate_stop_names import CurateStopNames
 from .curate_stop_positions import CurateStopPositions
-from .extend_calendars import ExtendSchedules
-from .fix_rail_direction_id import FixRailDirectionID
 from .fix_zero_time_segments import FixZeroTimeSegments
 from .generate_fares import GenerateFares
 from .generate_route_long_names import GenerateRouteLongNames
@@ -345,7 +350,22 @@ def create_intermediate_pipeline(
         # 9. Prettify other attributes
         # ========================
         FixZeroTimeSegments(),
-        FixRailDirectionID(),
+        AssignDirections(
+            outbound_stop_pairs=[
+                ("4900", "7900"),  # W-wa Zachodnia      → W-wa Centralna
+                ("4900", "2900"),  # W-wa Zachodnia      → W-wa Wschodnia
+                ("5902", "7903"),  # W-wa Zachodnia p. 9 → W-wa Gdańska
+                ("4902", "4900"),  # W-wa Włochy         → W-wa Zachodnia
+                ("3901", "4917"),  # W-wa Służewiec      → W-wa Rakowiec
+                ("1902", "1904"),  # W-wa Praga          → W-wa Żerań
+                ("2900", "2910"),  # W-wa Wschodnia      → W-wa Rembertów
+                ("2921", "2903"),  # W-wa Grochów        → W-wa Gocławek
+                ("1907", "1910"),  # Legionowo           → Wieliszew
+            ],
+            routes=selector.Routes(type=Route.Type.RAIL),
+            overwrite=True,
+            task_name="FixRailDirection",
+        ),
         UpdateTripHeadsigns(),
         GenerateRouteLongNames(),
         ExecuteSQL(
@@ -385,7 +405,11 @@ def create_final_pipeline(
 ) -> list[Task]:
     tasks: list[Task] = [
         GenerateFares(),
-        ExtendSchedules(),
+        ExtendCalendarsFromPolishExceptions(
+            resource_name="calendar_exceptions.csv",
+            region=polish_calendar_exceptions.PolishRegion.MAZOWIECKIE,
+            duration_days=30,
+        ),
     ]
     if force_feed_version:
         tasks.append(SetFeedVersion(force_feed_version))

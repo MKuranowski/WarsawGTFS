@@ -1,4 +1,4 @@
-impuls ~= 2.2
+impuls ~= 2.4
 requests ~= 2.32
 routx ~= 1.0.5
 osmium ~= 4.2.0
