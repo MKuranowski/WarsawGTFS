@@ -27,6 +27,7 @@ from .assign_zone_id import AssignZoneId
 from .collapse_duplicate_stop_times import CollapseDuplicateStopTimes
 from .curate_stop_names import CurateStopNames
 from .curate_stop_positions import CurateStopPositions
+from .fix_technical_trips import FixTechnicalTrips
 from .fix_zero_time_segments import FixZeroTimeSegments
 from .generate_fares import GenerateFares
 from .generate_route_long_names import GenerateRouteLongNames
@@ -346,6 +347,7 @@ def create_intermediate_pipeline(
         CurateStopNames("stops.json"),
         CurateStopPositions("stops.json"),
         CollapseDuplicateStopTimes(),
+        FixTechnicalTrips(),
         # ========================
         # 9. Prettify other attributes
         # ========================
