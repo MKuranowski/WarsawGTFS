@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from typing import cast
 
-from impuls import Task, TaskRuntime
+from impuls import DBConnection, Task, TaskRuntime
 from impuls.model import CalendarException, Date, Frequency, Route, Stop, StopTime, Trip
 from impuls.tools import polish_calendar_exceptions
 
@@ -22,6 +22,7 @@ class AddMetro(Task):
             self.add_trips(r, variants.values())
             self.add_stop_times(r, variants.values())
             self.add_frequencies(r, variants.values())
+            self.drop_empty_calendars(r.db)
 
     def add_routes(self, r: TaskRuntime) -> None:
         r.db.create_many(Route, map(model.parse_route, r.resources["metro_routes.csv"].csv()))
@@ -87,3 +88,9 @@ class AddMetro(Task):
 
     def add_frequencies(self, r: TaskRuntime, variants: Iterable[model.Variant]) -> None:
         r.db.create_many(Frequency, (i for v in variants for i in v.as_frequencies()))
+
+    def drop_empty_calendars(self, db: DBConnection) -> None:
+        db.raw_execute(
+            "DELETE FROM calendars WHERE NOT EXISTS (SELECT 1 FROM calendar_exceptions "
+            "WHERE calendars.calendar_id = calendar_exceptions.calendar_id)"
+        )
