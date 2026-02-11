@@ -18,6 +18,7 @@ from impuls.tasks import (
     SaveGTFS,
 )
 from impuls.tools import polish_calendar_exceptions
+from impuls.tools.types import StrPath
 
 from . import generate_shapes
 from .add_metro import AddMetro
@@ -140,7 +141,7 @@ def get_metro_tasks() -> list[Task]:
 
 def create_intermediate_pipeline(
     feed: IntermediateFeed[Resource],
-    save_gtfs: bool = False,
+    save_gtfs: StrPath | None = None,
     generate_shapes: bool = False,
 ) -> list[Task]:
     tasks: list[Task] = [
@@ -382,7 +383,7 @@ def create_intermediate_pipeline(
 
     if save_gtfs:
         tasks.append(GenerateFares())
-        tasks.append(SaveGTFS(GTFS_HEADERS, "gtfs.zip", ensure_order=True))
+        tasks.append(SaveGTFS(GTFS_HEADERS, save_gtfs, ensure_order=True))
 
     return tasks
 
@@ -401,6 +402,7 @@ def create_pre_merge_pipeline(
 def create_final_pipeline(
     feeds: list[IntermediateFeed[LocalResource]],
     force_feed_version: str = "",
+    output: StrPath | None = "gtfs.zip",
     generate_shapes: bool = False,
 ) -> list[Task]:
     tasks: list[Task] = [
@@ -417,8 +419,8 @@ def create_final_pipeline(
     if generate_shapes:
         tasks.extend(get_generate_shapes_tasks())
 
-    # TODO: Export skm-only GTFS
-    tasks.append(SaveGTFS(GTFS_HEADERS, "gtfs.zip", ensure_order=True))
+    if output:
+        tasks.append(SaveGTFS(GTFS_HEADERS, output, ensure_order=True))
     return tasks
 
 
@@ -438,6 +440,12 @@ class WarsawGTFS(App):
             const=Date.today(),
             type=Date.from_ymd_str,
             help="convert a single feed version (if the argument is missing - use today)",
+        )
+        parser.add_argument(
+            "-o",
+            "--output",
+            default="gtfs.zip",
+            help="path to output GTFS file",
         )
 
     def before_run(self) -> None:
@@ -468,7 +476,7 @@ class WarsawGTFS(App):
             return Pipeline(
                 tasks=create_intermediate_pipeline(
                     feed,
-                    save_gtfs=True,
+                    save_gtfs=args.output,
                     generate_shapes=args.shapes,
                 ),
                 resources={
@@ -490,6 +498,7 @@ class WarsawGTFS(App):
                 final_pipeline_tasks_factory=partial(
                     create_final_pipeline,
                     force_feed_version=feed_version,
+                    output=args.output,
                     generate_shapes=args.shapes,
                 ),
                 additional_resources=resources,
