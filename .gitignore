@@ -12,3 +12,4 @@ shape_errors
 ignore*
 warsawgtfs_realtime
 gtfs.zip
+gtfs.*.zip

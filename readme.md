@@ -39,6 +39,30 @@ Due to the sheer volume of data, the script can take a couple of minutes to run.
 
 [Impuls](https://impuls.readthedocs.io) has a smart caching system and won't re-build the GTFS unless necessary.
 
+### Static GTFS Variants
+
+The script can output multiple variants/flavors of the GTFS Schedules file:
+- `full`, containing non-revenue trips & stops;
+- `user_facing`, with non-revenue data stripped.
+
+Which variant of the file is created can be selected by the `--variant` argument, which defaults
+to `full`.
+
+The `--variant` option can also be set to `all`, which causes the script to output all flavors
+of the GTFS Schedules file. This setting also affects the way `--output` is interpreted -
+instead of a simple path, it's now treated as a template string, where `$variant` is substituted
+by the variant being produced. For example, with `--variant all --output gtfs.$variant.zip`,
+two files are produced: `gtfs.full.zip` and `gtfs.user_facing.zip`.
+
+With `--variant all`, but `$variant` not present in the `--output` argument, special rules apply:
+- if `--output` points to an existing directory or ends with a `/`,
+    the *effective* output setting becomes `$output/gtfs.$variant.zip`.
+- otherwise, the last extension is replaced by `.$variant.zip`, e.g.:
+    - `--variant all --output warsaw.zip` → output is `warsaw.$variant.zip`,
+    - `--variant all --output /foo/bar/baz/warsaw.gtfs` → `/foo/bar/baz/warsaw.$variant.zip`.
+
+With `--variant all` and `--output` missing, the output is set to `gtfs.$variant.zip`.
+
 ## Creating realtime GTFS
 
 The part of the project responsible for GTFS-Realtime has been written a long time ago

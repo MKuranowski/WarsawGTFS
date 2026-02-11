@@ -1,7 +1,11 @@
 import logging
 from argparse import ArgumentParser, Namespace
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from functools import partial
+from pathlib import Path
+from string import Template
+from typing import Self
 from zoneinfo import ZoneInfo
 
 import routx
@@ -18,7 +22,6 @@ from impuls.tasks import (
     SaveGTFS,
 )
 from impuls.tools import polish_calendar_exceptions
-from impuls.tools.types import StrPath
 
 from . import generate_shapes
 from .add_metro import AddMetro
@@ -39,6 +42,68 @@ from .set_feed_version import SetFeedVersion
 from .update_trip_headsigns import UpdateTripHeadsigns
 
 TZ = ZoneInfo("Europe/Warsaw")
+
+
+@dataclass
+class OutputPaths:
+    full: Path | None = None
+    user_facing: Path | None = None
+
+    def __bool__(self) -> bool:
+        return bool(self.full or self.user_facing)
+
+    def get_tasks(self) -> list[Task]:
+        if not self:
+            return []
+
+        tasks = list[Task]()
+        tasks.append(GenerateFares())
+
+        if self.full:
+            tasks.append(SaveGTFS(GTFS_HEADERS, self.full, ensure_order=True))
+
+        if self.user_facing:
+            tasks.append(
+                ExecuteSQL(
+                    task_name="DropNonUserFacingStops",
+                    statement="DELETE FROM stop_times WHERE pickup_type = 1 AND drop_off_type = 1",
+                )
+            )
+            tasks.append(RemoveUnusedEntities())
+            tasks.append(SaveGTFS(GTFS_HEADERS, self.user_facing, ensure_order=True))
+
+        return tasks
+
+    @classmethod
+    def from_args(cls, variant: str, output: str) -> Self:
+        match variant:
+            case "full":
+                return cls(full=Path(output))
+
+            case "user_facing":
+                return cls(user_facing=Path(output))
+
+            case "all":
+                t = cls.get_variant_output_template(output)
+                return cls(
+                    full=Path(t.safe_substitute(variant="full")),
+                    user_facing=Path(t.safe_substitute(variant="user_facing")),
+                )
+
+            case _:
+                raise ValueError(f"invalid gtfs variant: {variant!r}")
+
+    @staticmethod
+    def get_variant_output_template(output: str) -> Template:
+        if "variant" in (t := Template(output)).get_identifiers():
+            return t
+
+        base_file_name = (
+            Path(output, "gtfs.zip")
+            if Path(output).is_dir() or output.endswith("/")
+            else Path(output)
+        )
+        return Template(str(base_file_name.with_suffix(".$variant.zip")))
 
 
 def get_generate_shapes_tasks() -> list[Task]:
@@ -141,7 +206,7 @@ def get_metro_tasks() -> list[Task]:
 
 def create_intermediate_pipeline(
     feed: IntermediateFeed[Resource],
-    save_gtfs: StrPath | None = None,
+    output: OutputPaths | None = None,
     generate_shapes: bool = False,
 ) -> list[Task]:
     tasks: list[Task] = [
@@ -381,9 +446,8 @@ def create_intermediate_pipeline(
     if generate_shapes:
         tasks.extend(get_generate_shapes_tasks())
 
-    if save_gtfs:
-        tasks.append(GenerateFares())
-        tasks.append(SaveGTFS(GTFS_HEADERS, save_gtfs, ensure_order=True))
+    if output:
+        tasks.extend(output.get_tasks())
 
     return tasks
 
@@ -402,11 +466,10 @@ def create_pre_merge_pipeline(
 def create_final_pipeline(
     feeds: list[IntermediateFeed[LocalResource]],
     force_feed_version: str = "",
-    output: StrPath | None = "gtfs.zip",
+    output: OutputPaths | None = None,
     generate_shapes: bool = False,
 ) -> list[Task]:
     tasks: list[Task] = [
-        GenerateFares(),
         ExtendCalendarsFromPolishExceptions(
             resource_name="calendar_exceptions.csv",
             region=polish_calendar_exceptions.PolishRegion.MAZOWIECKIE,
@@ -418,9 +481,8 @@ def create_final_pipeline(
     tasks.extend(get_metro_tasks())
     if generate_shapes:
         tasks.extend(get_generate_shapes_tasks())
-
     if output:
-        tasks.append(SaveGTFS(GTFS_HEADERS, output, ensure_order=True))
+        tasks.extend(output.get_tasks())
     return tasks
 
 
@@ -445,7 +507,14 @@ class WarsawGTFS(App):
             "-o",
             "--output",
             default="gtfs.zip",
-            help="path to output GTFS file",
+            help="path to output GTFS file (note special meaning with `--variant all` in readme)",
+        )
+        parser.add_argument(
+            "-t",
+            "--variant",
+            default="full",
+            choices=("full", "user_facing", "all"),
+            help="which variant of the GTFS to produce",
         )
 
     def before_run(self) -> None:
@@ -468,6 +537,8 @@ class WarsawGTFS(App):
             "tram_rail_shapes.osm": LocalResource("data_curated/tram_rail_shapes.osm"),
         }
 
+        output = OutputPaths.from_args(args.variant, args.output)
+
         if args.shapes:
             resources.update(**get_generate_shapes_resources())
 
@@ -476,7 +547,7 @@ class WarsawGTFS(App):
             return Pipeline(
                 tasks=create_intermediate_pipeline(
                     feed,
-                    save_gtfs=args.output,
+                    output=output,
                     generate_shapes=args.shapes,
                 ),
                 resources={
@@ -498,7 +569,7 @@ class WarsawGTFS(App):
                 final_pipeline_tasks_factory=partial(
                     create_final_pipeline,
                     force_feed_version=feed_version,
-                    output=args.output,
+                    output=output,
                     generate_shapes=args.shapes,
                 ),
                 additional_resources=resources,
