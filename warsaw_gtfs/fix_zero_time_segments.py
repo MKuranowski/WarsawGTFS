@@ -114,16 +114,16 @@ def fix_zero_segment(times: Sequence[StopTimeHash]) -> None:
 
 
 def borrow_travel_time_from_last(times: Sequence[StopTimeHash]) -> None:
-    time_available = times[-1].travel_time
+    time_available = min(times[-1].travel_time, 60)
     assert time_available > len(times), "not enough time to redistribute :^("
 
     new_travel_time = time_available // len(times)
-    leftover = time_available % len(times)
+    borrowed_time = new_travel_time * (len(times) - 1)
 
     for t in times[:-1]:
         t.travel_time = new_travel_time
 
-    times[-1].travel_time = new_travel_time + leftover
+    times[-1].travel_time -= borrowed_time
 
 
 def add_travel_time_at_end(times: Sequence[StopTimeHash]) -> None:
