@@ -9,7 +9,7 @@ Written in [Python](https://www.python.org/) and with the [Impuls framework](htt
 Static data comes from a proprietary endpoint shared by ZTM (the Public Transit Authority).
 Access to it is restricted; credentials need to be provided through `WARSAW_ZTM_USER`, `WARSAW_ZTM_PASS` and `WARSAW_ZTM_KEY` env variables.
 
-Realtime feeds incorporate data from <https://api.um.warszawa.pl>.
+Realtime feeds incorporate data from <https://dane.um.warszawa.pl>.
 
 ## Features
 
@@ -75,7 +75,7 @@ There are several dependencies required by this project, all listed in the `go.m
 AFAIK they should be downloaded automatically when running/compiling the project.
 If they are not, `go mod download` explicitly downloads the dependencies.
 
-Position data are mostly based on data from <https://api.um.warszawa.pl>,
+Position data are mostly based on data from [https://dane.um.warszawa.pl/](https://dane.um.warszawa.pl/pl/catalogue/f319f602-7292-4e8c-b3d1-f5898aa9a638),
 while alerts are downloaded from <https://www.wtp.waw.pl/utrudnienia/> and <https://www.wtp.waw.pl/zmiany/>
 
 ### Alerts
@@ -98,7 +98,7 @@ Creates the GTFS-Realtime feed with a vehicle positions and their active trips.
 
 This mode is enabled by the `-p` command line flag. Here are all available options:
 
-- `-k` (**required**): apikey to api.um.warszawa.pl
+- `-k` (**required**): apikey to dane.um.warszawa.pl
 - `-json`: Apart from the GTFS-RT file, write the parsed positions into a custom JSON format
 - `-readable`: Use a human-readable GTFS-RT format instead of the binary one
 - `-gtfs-file SOME_FILE_OR_URL`: from which GTFS file should trips&brigades be loaded? defaults to <https://mkuran.pl/gtfs/warsaw.zip>

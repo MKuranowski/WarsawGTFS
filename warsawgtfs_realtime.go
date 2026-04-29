@@ -43,7 +43,7 @@ var (
 	flagApikey = flag.String(
 		"k",
 		"",
-		"apikey for api.um.warszawa.pl (for positions), if empty/omitted - use WARSAW_APIKEY env variable")
+		"apikey for dane.um.warszawa.pl (for positions), if empty/omitted - use WARSAW_APIKEY env variable")
 
 	flagGtfsFile = flag.String(
 		"gtfs-file",
@@ -131,7 +131,7 @@ func parsePositionsFlags() (o positions.Options, err error) {
 	// Ensure an apikey was provided
 	o.Apikey = getApikey()
 	if o.Apikey == "" {
-		err = errors.New("key for api.um.warszawa.pl needs to be provided")
+		err = errors.New("key for dane.um.warszawa.pl needs to be provided")
 		return
 	}
 

@@ -6,10 +6,15 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/MKuranowski/WarsawGTFS/realtime/util"
+)
+
+const (
+	apiBus  = 1
+	apiTram = 2
+	apiSKM  = -1
 )
 
 // APIVehicleEntry represents a single object from the API
@@ -24,31 +29,50 @@ type apiError struct {
 }
 
 func (e apiError) Error() string {
-	return fmt.Sprintf("api.um.warszawa.pl responded with an error: %q", e.apiErrMsg)
+	return fmt.Sprintf("dane.um.warszawa.pl responded with an error: %q", e.apiErrMsg)
 }
 
-// VehicleAPI is an object for communicating with the vehicle position api at api.um.warszawa.pl
+// VehicleAPI is an object for communicating with the vehicle position api at dane.um.warszawa.pl
 type VehicleAPI struct {
 	Key    string
 	Client *http.Client
 }
 
-// buildURL returns the url of API endpoint with vehicle data for given vehicle type
-func (api *VehicleAPI) buildURL(apiVehType string) string {
-	return fmt.Sprintf(
-		"https://api.um.warszawa.pl/api/action/busestrams_get/"+
-			"?resource_id=f2e5503e927d-4ad3-9500-4ab9e55deb59&apikey=%s&type=%s",
-		url.QueryEscape(api.Key),
-		url.QueryEscape(apiVehType),
-	)
+// buildWarsawRequest prepares a http.Request for fetching vehicles from dane.um.warszawa.pl
+// of a particular kind.
+func (api *VehicleAPI) buildWarsawRequest(apiVehType int) *http.Request {
+	body := strings.NewReader(fmt.Sprintf(`{"type":%d}`, apiVehType))
+	req, err := http.NewRequest("POST", "https://dane.um.warszawa.pl/api/action/get_ztm_lokalizacja_pojazdow", body)
+	if err != nil {
+		panic(fmt.Errorf("http.NewRequest: dane.um.warszawa.pl: %w", err))
+	}
+	req.Header.Add("Authorization", api.Key)
+	req.Header.Add("Content-Type", "application/json")
+	return req
+}
+
+// buildZbiorkomRequest prepares a http.Request for fetching SKM vehicles from zbiorkom.live
+func (api *VehicleAPI) buildZbiorkomRequest() *http.Request {
+	req, err := http.NewRequest("GET", "https://api.zbiorkom.live/4.9/external/skm", nil)
+	if err != nil {
+		panic(fmt.Errorf("http.NewRequest: api.zbiorkom.live: %w", err))
+	}
+	return req
+}
+
+func (api *VehicleAPI) buildRequest(apiVehType int) *http.Request {
+	if apiVehType < 0 {
+		return api.buildZbiorkomRequest()
+	}
+	return api.buildWarsawRequest(apiVehType)
 }
 
 // Get tries to get vehicle positions from the API.
 // apiVehType can be "1" to get bus positions or "2" to get tram positions.
-func (api *VehicleAPI) Get(apiVehType string) ([]*APIVehicleEntry, error) {
+func (api *VehicleAPI) Get(apiVehType int) ([]*APIVehicleEntry, error) {
 	// Prepare request
-	reqURL := api.buildURL(apiVehType)
-	resp, err := api.Client.Get(reqURL)
+	req := api.buildRequest(apiVehType)
+	resp, err := api.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +82,7 @@ func (api *VehicleAPI) Get(apiVehType string) ([]*APIVehicleEntry, error) {
 	// Check response code
 	if resp.StatusCode <= 199 || resp.StatusCode >= 300 {
 		err = util.RequestError{
-			URL:        strings.ReplaceAll(reqURL, api.Key, "xxxxxx"),
+			URL:        req.URL.String(),
 			Status:     resp.Status,
 			StatusCode: resp.StatusCode,
 		}
@@ -66,93 +90,70 @@ func (api *VehicleAPI) Get(apiVehType string) ([]*APIVehicleEntry, error) {
 	}
 
 	// Read the response
-	respRaw, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	// Marshall the response into JSON
-	var respJSON struct {
-		Error  string
-		Result []*APIVehicleEntry
-	}
-
-	err = json.Unmarshal(respRaw, &respJSON)
+	data, err := tryParseResponse(body)
 	if err != nil {
-		log.Printf("Invalid API UM Respose for %s:\n%s\n", apiVehType, respRaw)
-		return nil, err
-	} else if respJSON.Error != "" {
-		return nil, apiError{respJSON.Error}
-	}
-
-	return respJSON.Result, nil
-}
-
-// GetSKM tries to get train positions from the external zbiorkom API.
-func (api *VehicleAPI) GetSKM() ([]*APIVehicleEntry, error) {
-	reqURL := "https://api.zbiorkom.live/4.9/external/skm"
-	resp, err := api.Client.Get(reqURL)
-	if err != nil {
+		log.Printf("Invalid %s response for %d:\n%s\n", req.URL.Host, apiVehType, body)
 		return nil, err
 	}
-
-	defer resp.Body.Close()
-
-	// Check response code
-	if resp.StatusCode <= 199 || resp.StatusCode >= 300 {
-		return nil, util.RequestError{
-			URL:        reqURL,
-			Status:     resp.Status,
-			StatusCode: resp.StatusCode,
-		}
-	}
-
-	// Read the response
-	respRaw, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	// Unmarshal the response from JSON
-	// Note: The structure is compatible with the one used for ZTM (result list of objects)
-	var respJSON struct {
-		Result []*APIVehicleEntry `json:"result"`
-	}
-
-	err = json.Unmarshal(respRaw, &respJSON)
-	if err != nil {
-		log.Printf("Invalid API SKM Response:\n%s\n", respRaw)
-		return nil, err
-	}
-
-	return respJSON.Result, nil
+	return data, nil
 }
 
 // GetAll will automatically call the api to retrieve a list of all tram, bus and SKM positions
 func (api *VehicleAPI) GetAll() (s []*APIVehicleEntry, err error) {
-	// create used objects
-	var tempBuff []*APIVehicleEntry
+	var tmp []*APIVehicleEntry
 
-	// load tram positions
-	tempBuff, err = api.Get("2")
-	if err != nil {
-		return
+	for _, apiType := range []int{apiTram, apiBus, apiSKM} {
+		tmp, err = api.Get(apiType)
+		if err != nil {
+			return
+		}
+		s = append(s, tmp...)
 	}
-	s = append(s, tempBuff...)
-
-	// load bus positions
-	tempBuff, err = api.Get("1")
-	if err != nil {
-		return
-	}
-	s = append(s, tempBuff...)
-
-	// load SKM positions
-	tempBuff, err = api.GetSKM()
-	if err != nil {
-		return
-	}
-	s = append(s, tempBuff...)
 
 	return
+}
+
+func tryParseResponse(data []byte) ([]*APIVehicleEntry, error) {
+	// Generally, we expect a {"error": "error description"} or a {"result": [...]} object,
+	// but the API sometimes simply returns `[...]` or `"error description"`.
+	var resp struct {
+		Error  string
+		Result []*APIVehicleEntry
+	}
+
+	err := json.Unmarshal(data, &resp)
+	if e, ok := err.(*json.UnmarshalTypeError); ok && e.Field == "" {
+		// If unmarshal into an object fails at the top-level (e.Field == ""),
+		// try to parse directly a slice or string
+		altOk := false
+		switch e.Value {
+		case "array":
+			altErr := json.Unmarshal(data, &resp.Result)
+			altOk = altErr == nil
+
+		case "string":
+			altErr := json.Unmarshal(data, &resp.Error)
+			altOk = altErr == nil
+
+		default:
+		}
+
+		if altOk {
+			err = nil
+		}
+	}
+
+	// Check if an error occurred
+	if err != nil {
+		return nil, err
+	} else if resp.Error != "" {
+		return nil, apiError{resp.Error}
+	}
+
+	return resp.Result, nil
 }
