@@ -50,7 +50,7 @@ func alertFromRssItem(r *rssItem, routeMap map[string]sort.StringSlice) (a *Aler
 	// Extract other data
 	a.Effect = r.Type
 	a.Link = htmlCleaner.Sanitize(r.Link)
-	a.Title = htmlCleaner.Sanitize(r.Description)
+	a.Title = strings.TrimRight(htmlCleaner.Sanitize(r.Description), ":. ")
 
 	// Extract affected routes from the title
 	if strings.Contains(r.Title, ":") {
