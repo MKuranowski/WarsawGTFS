@@ -16,6 +16,7 @@ class RouteDescription(Enum):
     TRAIN_SKM = 6
     TRAIN_KM = 7
     TRAIN_WKD = 8
+    TOURIST_UNKNOWN = 9
 
     @classmethod
     def from_name(cls, name: str) -> "RouteDescription":
@@ -36,23 +37,33 @@ class RouteDescription(Enum):
             return cls.SUBURBAN_BUS
         elif "EKSPR" in name or "PRZYSP" in name:
             return cls.EXPRESS_BUS
+        elif "TURYST" in name:
+            return cls.TOURIST_UNKNOWN
         else:
             return cls.NORMAL_BUS
 
-    def type(self) -> Route.Type:
-        match self:
-            case self.TRAM:
+    def type(self, route_name: str) -> Route.Type:
+        match self, route_name:
+            case self.TRAM, _:
                 return Route.Type.TRAM
+
             case (
                 self.NORMAL_BUS
                 | self.EXPRESS_BUS
                 | self.SUBURBAN_BUS
                 | self.RURAL_BUS
                 | self.NIGHT_BUS
-            ):
+            ), _:
                 return Route.Type.BUS
-            case self.TRAIN_SKM | self.TRAIN_KM | self.TRAIN_WKD:
+
+            case self.TRAIN_SKM | self.TRAIN_KM | self.TRAIN_WKD, _:
                 return Route.Type.RAIL
+
+            case self.TOURIST_UNKNOWN, _:
+                if self.is_tourist_route_tram(route_name):
+                    return Route.Type.TRAM
+                return Route.Type.BUS
+
         raise RuntimeError(f"unexpected {self}")
 
     def color(self, route_name: str) -> tuple[str, str]:
@@ -69,6 +80,7 @@ class RouteDescription(Enum):
                 return "000088", "FFFFFF"
             case self.NIGHT_BUS, _:
                 return "000000", "FFFFFF"
+
             case self.TRAIN_SKM, "S1" | "S10" | "S11":
                 return "E84A4B", "FFFFFF"
             case self.TRAIN_SKM, "S2" | "S20":
@@ -81,7 +93,17 @@ class RouteDescription(Enum):
                 return "70AD46", "FFFFFF"
             case self.TRAIN_SKM | self.TRAIN_KM | self.TRAIN_WKD, _:
                 return "009955", "FFFFFF"
+
+            case self.TOURIST_UNKNOWN, _:
+                if self.is_tourist_route_tram(route_name):
+                    return "B60000", "FFFFFF"
+                return "880077", "FFFFFF"
+
         raise RuntimeError(f"unexpected {self}")
+
+    @staticmethod
+    def is_tourist_route_tram(route_name: str) -> bool:
+        return route_name in ("M", "T") or (route_name.isdigit() and len(route_name) <= 2)
 
 
 def parse_routes(data: Any) -> Iterable[tuple[int, Route]]:
@@ -93,7 +115,7 @@ def parse_routes(data: Any) -> Iterable[tuple[int, Route]]:
 
 def parse_route(data: Any, desc: RouteDescription, used_ids: set[str]) -> tuple[int, Route]:
     name = data["nazwa"].strip()
-    type = desc.type()
+    type = desc.type(name)
     color, text_color = desc.color(name)
     id = find_non_conflicting_id(used_ids, name)
     used_ids.add(id)
