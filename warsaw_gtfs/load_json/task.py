@@ -8,6 +8,7 @@ from impuls.model import CalendarException, StopTime
 from impuls.resource import ManagedResource
 
 from .calendars import parse_calendar_exceptions, parse_calendars
+from .depots import parse_depots
 from .routes import parse_routes
 from .shapes import parse_shape_points, parse_shapes
 from .stop_times import parse_stop_times
@@ -50,6 +51,7 @@ class LoadJSON(Task):
         super().__init__()
         self.resource_name = resource_name
         self.vehicle_kinds = dict[int, VehicleKind]()
+        self.depots = dict[int, str]()
         self.route_id_lookup = dict[int, str]()
         self.stop_id_lookup = dict[int, str]()
         self.zone_id_lookup = dict[int, str]()
@@ -58,6 +60,7 @@ class LoadJSON(Task):
 
     def clear(self) -> None:
         self.vehicle_kinds.clear()
+        self.depots.clear()
         self.route_id_lookup.clear()
         self.stop_id_lookup.clear()
         self.calendar_id_lookup.clear()
@@ -81,6 +84,7 @@ class LoadJSON(Task):
             self.load_routes(r.db, data)
             self.load_calendars(r.db, data)
             self.load_vehicle_kinds(data)
+            self.load_depots(data)
             self.load_zone_id_lookup(data)
 
     def load_stops(self, db: DBConnection, data: Any) -> None:
@@ -105,6 +109,10 @@ class LoadJSON(Task):
     def load_vehicle_kinds(self, data: Any) -> None:
         self.logger.debug("Loading vehicle kinds")
         self.vehicle_kinds = parse_vehicle_kinds(data)
+
+    def load_depots(self, data: Any) -> None:
+        self.logger.debug("Loading depots")
+        self.depots = parse_depots(data)
 
     def load_zone_id_lookup(self, data: Any) -> None:
         self.logger.debug("Loading zones")
@@ -141,7 +149,13 @@ class LoadJSON(Task):
         self.logger.debug("Loading trips")
         assert self.route_id_lookup
         assert self.calendar_id_lookup
-        trips = parse_trips(data, self.route_id_lookup, self.calendar_id_lookup, self.vehicle_kinds)
+        trips = parse_trips(
+            data,
+            self.route_id_lookup,
+            self.calendar_id_lookup,
+            self.vehicle_kinds,
+            self.depots,
+        )
         for original_id, trip in trips:
             self.trip_id_lookup[original_id] = trip.id
             db.create(trip)
