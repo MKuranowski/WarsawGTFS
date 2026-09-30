@@ -353,6 +353,18 @@
       "to": "421721",
       "via": [52.1954418, 20.8836579],
       "comment": "129 for PKP Ursus 21 via Regulska, not the car park"
+    },
+    {
+      "from": "100507",
+      "to": "100518",
+      "via": [52.2594803, 21.0273283],
+      "comment": "166 for Pl. Hallera 18 round the Skoczylasa loop, not against the one-way"
+    },
+    {
+      "from": "100518",
+      "to": "100508",
+      "via": [52.2594803, 21.0273283],
+      "comment": "166 for Pl. Hallera 08 round the Skoczylasa loop, not against the one-way"
     }
   ],
   "ratio_overrides": [
