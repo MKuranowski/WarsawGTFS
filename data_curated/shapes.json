@@ -341,6 +341,18 @@
       "to": "175601",
       "via": [52.3368843, 21.2384961],
       "comment": "L38 for Wołomin Partyzantów - Szkoła 01 via Wiejska and Brzozowa, not via Lipińska and Sikorskiego"
+    },
+    {
+      "from": "421704",
+      "to": "421721",
+      "via": [52.1954418, 20.8836579],
+      "comment": "401 for PKP Ursus 21 via Regulska, not the car park"
+    },
+    {
+      "from": "410001",
+      "to": "421721",
+      "via": [52.1954418, 20.8836579],
+      "comment": "129 for PKP Ursus 21 via Regulska, not the car park"
     }
   ],
   "ratio_overrides": [
