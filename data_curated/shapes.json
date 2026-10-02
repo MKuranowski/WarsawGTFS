@@ -377,6 +377,18 @@
       "to": "399601",
       "via": [52.0619236, 21.0018491],
       "comment": "L32 for Piaseczno Długosza 01 down Wyspiańskiego and round Plac Wolności, not through Śląska and Długosza"
+    },
+    {
+      "from": "174801",
+      "to": "138902",
+      "via": [52.346775, 21.228277],
+      "comment": "L36, L40, L44 for Wołomin Sasina 02 on along Gdyńska and down Sasina, not reversing at Sasina - Liceum 01 into Średnia"
+    },
+    {
+      "from": "177202",
+      "to": "167502",
+      "via": [52.366465, 21.283188],
+      "comment": "L36 for Lipinki Wiosenna 02 via Kolejowa, Willowa, Parkowa and up Wiosenna, not reversing at PKP Zagościniec 02 and in Wiosenna"
     }
   ],
   "ratio_overrides": [
