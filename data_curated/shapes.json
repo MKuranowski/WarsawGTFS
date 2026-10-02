@@ -371,6 +371,12 @@
       "to": "384201",
       "via": [52.0224721, 21.0424542],
       "comment": "L28, L13 for PKP Zalesie Górne 01 round the Leśnych Boginek roundabout and up Młodych Wilcząt, not back up Wiekowej Sosny"
+    },
+    {
+      "from": "399501",
+      "to": "399601",
+      "via": [52.0619236, 21.0018491],
+      "comment": "L32 for Piaseczno Długosza 01 down Wyspiańskiego and round Plac Wolności, not through Śląska and Długosza"
     }
   ],
   "ratio_overrides": [
