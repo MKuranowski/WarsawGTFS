@@ -22,6 +22,7 @@
   <node id='-1020048' action='modify' visible='true' lat='52.14745065399' lon='21.22532844007' />
   <node id='-1020049' action='modify' visible='true' lat='52.14828017378' lon='21.22449695528' />
   <node id='-1020050' action='modify' visible='true' lat='52.14892205349' lon='21.22386931837' />
+  <node id='-1024394' action='modify' visible='true' lat='52.15152426135' lon='21.22132827101' />
   <node id='-1020051' action='modify' visible='true' lat='52.1502749081' lon='21.22255503595' />
   <node id='-1020052' action='modify' visible='true' lat='52.15239462682' lon='21.22047364175' />
   <node id='-1020053' action='modify' visible='true' lat='52.15397118446' lon='21.21890186727' />
@@ -34,6 +35,7 @@
   <node id='-1020060' action='modify' visible='true' lat='52.16433426213' lon='21.20856463373' />
   <node id='-1020061' action='modify' visible='true' lat='52.16561754937' lon='21.20729326665' />
   <node id='-1020062' action='modify' visible='true' lat='52.16741408934' lon='21.2054908222' />
+  <node id='-1024393' action='modify' visible='true' lat='52.17062886950' lon='21.20226178073' />
   <node id='-1020063' action='modify' visible='true' lat='52.16911185165' lon='21.20380103052' />
   <node id='-1020064' action='modify' visible='true' lat='52.17185577237' lon='21.20101689756' />
   <node id='-1020065' action='modify' visible='true' lat='52.17267167778' lon='21.20021223485' />
@@ -402,6 +404,7 @@
   <node id='-1020428' action='modify' visible='true' lat='52.26810813435' lon='21.03747188509' />
   <node id='-1020429' action='modify' visible='true' lat='52.26770105924' lon='21.03886663377' />
   <node id='-1020430' action='modify' visible='true' lat='52.26700180053' lon='21.04163467348' />
+  <node id='-1024395' action='modify' visible='true' lat='52.26426578628' lon='21.05175861262' />
   <node id='-1020431' action='modify' visible='true' lat='52.2661121174' lon='21.04489087522' />
   <node id='-1020432' action='modify' visible='true' lat='52.2637253147' lon='21.05376898706' />
   <node id='-1020433' action='modify' visible='true' lat='52.26250395743' lon='21.05841457307' />
@@ -4725,6 +4728,7 @@
     <nd ref='-1020429' />
     <nd ref='-1020430' />
     <nd ref='-1020431' />
+    <nd ref='-1024395' />
     <nd ref='-1020432' />
     <nd ref='-1020433' />
     <nd ref='-1020434' />
@@ -8703,6 +8707,7 @@
     <nd ref='-1020049' />
     <nd ref='-1020050' />
     <nd ref='-1020051' />
+    <nd ref='-1024394' />
     <nd ref='-1020052' />
     <nd ref='-1020053' />
     <nd ref='-1020054' />
@@ -8715,6 +8720,7 @@
     <nd ref='-1020061' />
     <nd ref='-1020062' />
     <nd ref='-1020063' />
+    <nd ref='-1024393' />
     <nd ref='-1020064' />
     <nd ref='-1020065' />
     <nd ref='-1020066' />
