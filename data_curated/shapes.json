@@ -401,6 +401,12 @@
       "to": "302501",
       "via": [52.1105278, 20.9904661],
       "comment": "L43 for PKP Jeziorki 01 out of the loop by Gogolińska, along Karczunkowska's service carriageway and back on the main one; real route breaks the 7.0 cap"
+    },
+    {
+      "from": "200851",
+      "to": "200852",
+      "via": [52.2444116, 21.084444],
+      "comment": "521 for Wiatraczna 52 round Rondo Wiatraczna and back east along Grochowska"
     }
   ],
   "ratio_overrides": [
