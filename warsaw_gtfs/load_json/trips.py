@@ -16,6 +16,7 @@ class Schedule(NamedTuple):
 class Job(NamedTuple):
     name: str
     vehicle_kind: int
+    depot: int | None
 
 
 def parse_trips(
@@ -23,6 +24,7 @@ def parse_trips(
     route_id_lookup: Mapping[int, str],
     calendar_id_lookup: Mapping[int, str],
     vehicle_kinds: Mapping[int, VehicleKind] = {},
+    depots: Mapping[int, str] = {},
 ) -> Iterable[tuple[int, Trip]]:
     schedules = parse_schedules(data, route_id_lookup, calendar_id_lookup)
     jobs = parse_jobs(data)
@@ -34,6 +36,7 @@ def parse_trips(
             jobs[trip["id_zadania"]],
             used_ids,
             vehicle_kinds,
+            depots,
         )
 
 
@@ -43,6 +46,7 @@ def parse_trip(
     job: Job,
     used_ids: set[str],
     vehicle_kinds: Mapping[int, VehicleKind] = {},
+    depots: Mapping[int, str] = {},
 ) -> tuple[int, Trip]:
     route_id, calendar_id = schedule
     departure_time = data["o24"][0:2] + data["o24"][3:5]  # extract HHMM from HH:MM:SS
@@ -72,6 +76,7 @@ def parse_trip(
         extra_fields_json=compact_json(
             {
                 "block_short_name": brigade,
+                "depot_id": depots.get(job.depot, "") if job.depot is not None else "",
                 "fleet_type": fleet_type,
             }
         ),
@@ -98,6 +103,7 @@ def parse_jobs(data: Any) -> dict[int, Job]:
         i["id_zadania"]: Job(
             name=i["nazwa_zadania"],
             vehicle_kind=i["id_taboru"],
+            depot=i["id_zajezdni"],
         )
         for i in data["zadania"]
     }
