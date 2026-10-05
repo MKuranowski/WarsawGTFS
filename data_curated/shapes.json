@@ -341,12 +341,61 @@
       "to": "175601",
       "via": [52.3368843, 21.2384961],
       "comment": "L38 for Wołomin Partyzantów - Szkoła 01 via Wiejska and Brzozowa, not via Lipińska and Sikorskiego"
+    },
+    {
+      "from": "421704",
+      "to": "421721",
+      "via": [52.1954418, 20.8836579],
+      "comment": "401 for PKP Ursus 21 via Regulska, not the car park"
+    },
+    {
+      "from": "410001",
+      "to": "421721",
+      "via": [52.1954418, 20.8836579],
+      "comment": "129 for PKP Ursus 21 via Regulska, not the car park"
+    },
+    {
+      "from": "100507",
+      "to": "100518",
+      "via": [52.2594803, 21.0273283],
+      "comment": "166 for Pl. Hallera 18 round the Skoczylasa loop, not against the one-way"
+    },
+    {
+      "from": "100518",
+      "to": "100508",
+      "via": [52.2594803, 21.0273283],
+      "comment": "166 for Pl. Hallera 08 round the Skoczylasa loop, not against the one-way"
+    },
+    {
+      "from": "388301",
+      "to": "384201",
+      "via": [52.0224721, 21.0424542],
+      "comment": "L28, L13 for PKP Zalesie Górne 01 round the Leśnych Boginek roundabout and up Młodych Wilcząt, not back up Wiekowej Sosny"
+    },
+    {
+      "from": "399501",
+      "to": "399601",
+      "via": [52.0619236, 21.0018491],
+      "comment": "L32 for Piaseczno Długosza 01 down Wyspiańskiego and round Plac Wolności, not through Śląska and Długosza"
+    },
+    {
+      "from": "174801",
+      "to": "138902",
+      "via": [52.346775, 21.228277],
+      "comment": "L36, L40, L44 for Wołomin Sasina 02 on along Gdyńska and down Sasina, not reversing at Sasina - Liceum 01 into Średnia"
+    },
+    {
+      "from": "177202",
+      "to": "167502",
+      "via": [52.366465, 21.283188],
+      "comment": "L36 for Lipinki Wiosenna 02 via Kolejowa, Willowa, Parkowa and up Wiosenna, not reversing at PKP Zagościniec 02 and in Wiosenna"
     }
   ],
   "ratio_overrides": [
     {"from": "100610", "to": "100609", "ratio": 32.6},
     {"from": "102805", "to": "102811", "ratio": 9.1},
     {"from": "120502", "to": "120501", "ratio": 17.8},
+    {"from": "200851", "to": "200852", "ratio": 7.5},
     {"from": "201802", "to": "226002", "ratio": 3.8},
     {"from": "203904", "to": "203903", "ratio": 7.8},
     {"from": "204702", "to": "244351", "ratio": 4.8},
@@ -354,6 +403,8 @@
     {"from": "207902", "to": "201801", "ratio": 3.7},
     {"from": "244352", "to": "204701", "ratio": 8.7},
     {"from": "287201", "to": "236901", "ratio": 4.5},
+    {"from": "302502", "to": "302504", "ratio": 8.3},
+    {"from": "302504", "to": "302501", "ratio": 10.2},
     {"from": "325402", "to": "325401", "ratio": 25.2},
     {"from": "418202", "to": "418101", "ratio": 3.9},
     {"from": "428501", "to": "434901", "ratio": 4.5},
@@ -364,6 +415,7 @@
     {"from": "600515", "to": "607505", "ratio": 4.3},
     {"from": "600516", "to": "607505", "ratio": 3.8},
     {"from": "600517", "to": "607505", "ratio": 3.9},
+    {"from": "600574", "to": "600515", "ratio": 9.8},
     {"from": "607506", "to": "607501", "ratio": 16.6},
     {"from": "707602", "to": "707603", "ratio": 12.1}
   ]
