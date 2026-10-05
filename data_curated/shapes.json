@@ -391,18 +391,6 @@
       "comment": "L36 for Lipinki Wiosenna 02 via Kolejowa, Willowa, Parkowa and up Wiosenna, not reversing at PKP Zagościniec 02 and in Wiosenna"
     },
     {
-      "from": "302502",
-      "to": "302504",
-      "via": [52.1105278, 20.9904661],
-      "comment": "L43 for PKP Jeziorki 04 on along Karczunkowska, back down its service carriageway and into the loop by Gogolińska; real route breaks the 7.0 cap"
-    },
-    {
-      "from": "302504",
-      "to": "302501",
-      "via": [52.1105278, 20.9904661],
-      "comment": "L43 for PKP Jeziorki 01 out of the loop by Gogolińska, along Karczunkowska's service carriageway and back on the main one; real route breaks the 7.0 cap"
-    },
-    {
       "from": "200851",
       "to": "200852",
       "via": [52.2444116, 21.084444],
@@ -420,6 +408,8 @@
     {"from": "207902", "to": "201801", "ratio": 3.7},
     {"from": "244352", "to": "204701", "ratio": 8.7},
     {"from": "287201", "to": "236901", "ratio": 4.5},
+    {"from": "302502", "to": "302504", "ratio": 8.3},
+    {"from": "302504", "to": "302501", "ratio": 10.2},
     {"from": "325402", "to": "325401", "ratio": 25.2},
     {"from": "418202", "to": "418101", "ratio": 3.9},
     {"from": "428501", "to": "434901", "ratio": 4.5},
