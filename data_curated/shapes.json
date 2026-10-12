@@ -389,6 +389,12 @@
       "to": "167502",
       "via": [52.366465, 21.283188],
       "comment": "L36 for Lipinki Wiosenna 02 via Kolejowa, Willowa, Parkowa and up Wiosenna, not reversing at PKP Zagościniec 02 and in Wiosenna"
+    },
+    {
+      "from": "399201",
+      "to": "399202",
+      "via": [52.0887721, 21.0597893],
+      "comment": "L53 for Julianów Dzikiej Jabłoni 02 round Rondo Praw Dzieci i Młodzieży, not reversing on Architektów"
     }
   ],
   "ratio_overrides": [
