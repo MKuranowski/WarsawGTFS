@@ -25,7 +25,7 @@ from .model import (
 # TODO: Simplify LegResponse using RDP algorithm
 
 MAX_DISTANCE_RATIO = 3.5
-MAX_DISTANCE_RATIO_IN_SAME_GROUP = 7.0
+MAX_DISTANCE_RATIO_IN_SAME_GROUP = 30.0
 
 
 class ShapeGenerator:
