@@ -27,7 +27,6 @@ func Create(api VehicleAPI, brigadeMap map[string][]*brigadeEntry, prevVehicles 
 	// 0. Prepare a container
 	container := &VehicleContainer{}
 	container.SyncTime = time.Now().In(util.WarsawTimezone)
-	container.CompareSyncTime = newCompareTimeFromTime(container.SyncTime)
 
 	// 1. Get data from the api
 	apiEntries, err := api.GetAll()
@@ -87,9 +86,9 @@ type brigadesResource struct {
 }
 
 func (rr *brigadesResource) ShouldUpdate() (bool, error) {
-	// Force a refresh at 3:00, when a new service date begins operating
-	gotDate := util.ServiceDate(rr.Resource.LastCheck().In(util.WarsawTimezone))
-	expectedDate := util.ServiceDate(time.Now().In(util.WarsawTimezone))
+	// Force a refresh at midnight, when the set of loaded service dates changes
+	gotDate := rr.Resource.LastCheck().In(util.WarsawTimezone).Format("20060102")
+	expectedDate := time.Now().In(util.WarsawTimezone).Format("20060102")
 	if expectedDate != gotDate {
 		return true, nil
 	}
