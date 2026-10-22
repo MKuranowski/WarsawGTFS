@@ -112,6 +112,13 @@ func SecondsToString(totalSeconds uint32) string {
 	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
 }
 
+func ServiceDate(t time.Time) string {
+	if t.Hour() < 3 {
+		t = t.AddDate(0, 0, -1)
+	}
+	return t.Format("20060102")
+}
+
 // ServiceDates returns the service dates (as YYYYMMDD strings) whose trips might be running
 // at t: the day before (for trips past midnight, with times like 27:15:00) and the day of t.
 func ServiceDates(t time.Time) []string {
