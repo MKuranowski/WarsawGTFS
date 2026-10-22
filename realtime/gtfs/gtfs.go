@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"sync"
@@ -39,7 +40,7 @@ type TripData struct {
 type Gtfs struct {
 	Routes   map[string]sort.StringSlice // route_type → [route_id route_id ...]
 	Stops    map[string][2]float64       // stop_id → [stop_lat stop_lon]
-	Services map[string]bool             // service_id → true (if service is active on g.SyncTime)
+	Services map[string][]string         // service_id → [date ...] (active dates among util.ServiceDates(g.SyncTime))
 	Trips    map[string]TripData         // trip_id → TripData
 
 	fileObj  ReaderAtCloser
@@ -53,7 +54,7 @@ func NewGtfsFromFile(fname string) (gtfs *Gtfs, err error) {
 	gtfs = &Gtfs{
 		Routes:   make(map[string]sort.StringSlice),
 		Stops:    make(map[string][2]float64),
-		Services: make(map[string]bool),
+		Services: make(map[string][]string),
 		Trips:    make(map[string]TripData),
 	}
 
@@ -109,7 +110,7 @@ func NewGtfsFromReader(r io.Reader) (gtfs *Gtfs, err error) {
 	gtfs = &Gtfs{
 		Routes:   make(map[string]sort.StringSlice),
 		Stops:    make(map[string][2]float64),
-		Services: make(map[string]bool),
+		Services: make(map[string][]string),
 		Trips:    make(map[string]TripData),
 		SyncTime: time.Now(),
 	}
@@ -262,7 +263,7 @@ func (g *Gtfs) LoadStops(file *zip.File) (err error) {
 
 // LoadServices loads calendar_dates.txt from provided zip.File
 func (g *Gtfs) LoadServices(file *zip.File) (err error) {
-	expectedDate := util.ServiceDate(g.SyncTime.In(util.WarsawTimezone))
+	expectedDates := util.ServiceDates(g.SyncTime)
 	fileReader, err := file.Open()
 	if err != nil {
 		return
@@ -298,8 +299,8 @@ func (g *Gtfs) LoadServices(file *zip.File) (err error) {
 		}
 
 		// Save data, only if data matches
-		if serviceDate == expectedDate {
-			g.Services[serviceID] = true
+		if slices.Contains(expectedDates, serviceDate) {
+			g.Services[serviceID] = append(g.Services[serviceID], serviceDate)
 		}
 	}
 	return

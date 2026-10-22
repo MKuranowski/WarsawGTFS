@@ -52,11 +52,11 @@ func initialBearing(lat1, lon1, lat2, lon2 float64) float64 {
 }
 
 // indexMatchingTrip returns the index of first *brigadeEntry
-// with the same trip as provided searchTrip.
+// with the same trip and service date as provided searchTrip and searchDate.
 // Returns -1 if no matches were found.
-func indexMatchingTrip(s []*brigadeEntry, searchTrip string) int {
+func indexMatchingTrip(s []*brigadeEntry, searchTrip string, searchDate string) int {
 	for idx, elem := range s {
-		if elem.TripID == searchTrip {
+		if elem.TripID == searchTrip && elem.ServiceDate == searchDate {
 			return idx
 		}
 	}
