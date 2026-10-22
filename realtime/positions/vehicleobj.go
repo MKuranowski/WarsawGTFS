@@ -93,25 +93,30 @@ func (v *Vehicle) MatchTripNoPV(st time.Time, be []*brigadeEntry) error {
 	// that is the current trip, assuming the vehicle runs on schedule
 	idx := slices.IndexFunc(be, func(b *brigadeEntry) bool { return b.LastStopTime.After(st) })
 
-	// if the synctime is past the last trip of a duty (the whole brigade, or its runs
-	// on one service date), check if it makes sense to say that the vehicle is doing that trip
-	if idx != 0 {
-		var lastBE *brigadeEntry
-		if idx < 0 {
-			lastBE = be[len(be)-1]
-		} else if be[idx-1].ServiceDate != be[idx].ServiceDate {
-			lastBE = be[idx-1]
-		}
-
-		// Assume vehicle is doing the last trip if and only if
-		// it's no more then 15 minutes past the last trip end
-		if lastBE != nil && lastBE.LastStopTime.Sub(st).Seconds() >= -900 {
+	switch {
+	case idx < 0:
+		// The synctime is past the very last trip of the brigade -
+		// assume the vehicle is doing that trip if and only if
+		// it's no more then 15 minutes past its end
+		if lastBE := be[len(be)-1]; lastBE.LastStopTime.Sub(st) >= -15*time.Minute {
 			v.setTrip(lastBE)
-			return nil
 		}
-	}
 
-	if idx >= 0 {
+	case idx >= 1 && be[idx-1].ServiceDate != be[idx].ServiceDate:
+		// The synctime is between the duties on two service dates.
+		// Assume the vehicle is still doing the last trip of the previous duty
+		// if it's no more then 15 minutes past its end.
+		// Otherwise, assume the vehicle is doing the first trip of the next duty
+		// if it ends within 2 hours - that is, the trip has (almost) started,
+		// as no trip takes longer than ~1.5 hours.
+		// If neither holds, the vehicle is not active on the network.
+		if lastBE := be[idx-1]; lastBE.LastStopTime.Sub(st) >= -15*time.Minute {
+			v.setTrip(lastBE)
+		} else if be[idx].LastStopTime.Sub(st) <= 2*time.Hour {
+			v.setTrip(be[idx])
+		}
+
+	default:
 		v.setTrip(be[idx])
 	}
 	return nil
