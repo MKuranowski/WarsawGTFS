@@ -23,7 +23,7 @@ type Vehicle struct {
 
 	// Fields not filled by NewVehicle method
 	Trip        string  `json:"trip_id"`
-	ServiceDate string  `json:"-"`
+	ServiceDate string  `json:"service_date"`
 	Bearing     float64 `json:"bearing,omitempty"`
 
 	// Private fields, not meant to be exported
