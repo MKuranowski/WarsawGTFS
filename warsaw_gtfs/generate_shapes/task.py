@@ -1,6 +1,5 @@
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
-from math import inf
 from typing import Any, cast
 
 import osmium
@@ -164,12 +163,18 @@ class Task(ImpulsTask):
         positions = self.load_stop_positions_from_db(db)
         from_osm = set[str]()
 
+        # Merging multiple feeds may add ":1"-style suffixes to stop_ids (e.g. on zone changes),
+        # while OSM refs only use the base id - so OSM positions apply to all suffixed variants.
+        ids_by_base = defaultdict[str, list[str]](list)
+        for stop_id in positions:
+            ids_by_base[stop_id.partition(":")[0]].append(stop_id)
+
         for osm_stop_id, lat, lon in self.load_stop_positions_from_osm(osm_file):
-            original_position = positions.get(osm_stop_id)
-            dist = earth_distance_m(lat, lon, *original_position) if original_position else inf
-            if dist < self.graph.max_stop_to_node_distance:
-                from_osm.add(osm_stop_id)
-                positions[osm_stop_id] = lat, lon
+            for stop_id in ids_by_base.get(osm_stop_id, []):
+                dist = earth_distance_m(lat, lon, *positions[stop_id])
+                if dist < self.graph.max_stop_to_node_distance:
+                    from_osm.add(stop_id)
+                    positions[stop_id] = lat, lon
 
         self.logger.info(
             "Overridden %d / %d (%.2f %%) stop positions from OSM",
