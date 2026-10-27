@@ -64,6 +64,7 @@ GTFS_HEADERS = {
         "block_id",
         "block_short_name",
         "variant_code",
+        "depot_id",
         "fleet_type",
     ),
     "stop_times.txt": (
