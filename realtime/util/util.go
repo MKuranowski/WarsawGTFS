@@ -97,7 +97,7 @@ func ParseTimeToSeconds(x string) (uint32, error) {
 
 	s := uint64(0)
 	if len(parts) == 3 {
-		s, err = strconv.ParseUint(parts[1], 10, 8)
+		s, err = strconv.ParseUint(parts[2], 10, 8)
 		if err != nil {
 			return 0, InvalidTimeString{x}
 		}
@@ -117,4 +117,29 @@ func ServiceDate(t time.Time) string {
 		t = t.AddDate(0, 0, -1)
 	}
 	return t.Format("20060102")
+}
+
+// ServiceDates returns the service dates (as YYYYMMDD strings) whose trips might be running
+// at t: the day before (for trips past midnight, with times like 27:15:00) and the day of t.
+func ServiceDates(t time.Time) []string {
+	t = t.In(WarsawTimezone)
+	return []string{t.AddDate(0, 0, -1).Format("20060102"), t.Format("20060102")}
+}
+
+// GtfsTime converts a GTFS time (HH:MM:SS, possibly over 24:00:00) on a given
+// service date (YYYYMMDD) into an absolute time.Time. GTFS times are measured from
+// "noon minus 12h", which keeps them correct on DST change days.
+func GtfsTime(serviceDate string, hms string) (time.Time, error) {
+	d, err := time.ParseInLocation("20060102", serviceDate, WarsawTimezone)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	seconds, err := ParseTimeToSeconds(hms)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	noon := time.Date(d.Year(), d.Month(), d.Day(), 12, 0, 0, 0, WarsawTimezone)
+	return noon.Add(-12*time.Hour + time.Duration(seconds)*time.Second), nil
 }

@@ -3,6 +3,7 @@ package positions
 import (
 	"encoding/json"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/MKuranowski/WarsawGTFS/realtime/util"
@@ -21,8 +22,9 @@ type Vehicle struct {
 	SideNumber string  `json:"side_number"`
 
 	// Fields not filled by NewVehicle method
-	Trip    string  `json:"trip_id"`
-	Bearing float64 `json:"bearing,omitempty"`
+	Trip        string  `json:"trip_id"`
+	ServiceDate string  `json:"service_date"`
+	Bearing     float64 `json:"bearing,omitempty"`
 
 	// Private fields, not meant to be exported
 	Line    string    `json:"-"`
@@ -58,7 +60,7 @@ func (v *Vehicle) AsProto() *gtfsrt.FeedEntity {
 	return &gtfsrt.FeedEntity{
 		Id: &v.ID,
 		Vehicle: &gtfsrt.VehiclePosition{
-			Trip:    &gtfsrt.TripDescriptor{TripId: &v.Trip},
+			Trip:    &gtfsrt.TripDescriptor{TripId: &v.Trip, StartDate: &v.ServiceDate},
 			Vehicle: &gtfsrt.VehicleDescriptor{Id: &v.ID, Label: &v.SideNumber},
 			Position: &gtfsrt.Position{
 				Latitude:  &lat32,
@@ -86,59 +88,58 @@ func (v *Vehicle) CalculateBearing(pv *Vehicle) {
 
 // MatchTripNoPV tries to guess which trip this vehicle is on, without knowing
 // the previous trip
-func (v *Vehicle) MatchTripNoPV(cst compareTime, be []*brigadeEntry) error {
+func (v *Vehicle) MatchTripNoPV(st time.Time, be []*brigadeEntry) error {
 	// find first trip, which ends after the synctime -
 	// that is the current trip, assuming the vehicle runs on schedule
-	for _, b := range be {
-		endsInFuture, err := b.LastStopTime.After(cst)
-		if err != nil {
-			return err
-		} else if endsInFuture {
-			v.Trip = b.TripID
-			break
+	idx := slices.IndexFunc(be, func(b *brigadeEntry) bool { return b.LastStopTime.After(st) })
+
+	switch {
+	case idx < 0:
+		// The synctime is past the very last trip of the brigade -
+		// assume the vehicle is doing that trip if and only if
+		// it's no more then 15 minutes past its end
+		if lastBE := be[len(be)-1]; lastBE.LastStopTime.Sub(st) >= -15*time.Minute {
+			v.setTrip(lastBE)
 		}
+
+	case idx >= 1 && be[idx-1].ServiceDate != be[idx].ServiceDate:
+		// The synctime is between the duties on two service dates.
+		// Assume the vehicle is still doing the last trip of the previous duty
+		// if it's no more then 15 minutes past its end.
+		// Otherwise, assume the vehicle is doing the first trip of the next duty
+		// if it ends within 2 hours - that is, the trip has (almost) started,
+		// as no trip takes longer than ~1.5 hours.
+		// If neither holds, the vehicle is not active on the network.
+		if lastBE := be[idx-1]; lastBE.LastStopTime.Sub(st) >= -15*time.Minute {
+			v.setTrip(lastBE)
+		} else if be[idx].LastStopTime.Sub(st) <= 2*time.Hour {
+			v.setTrip(be[idx])
+		}
+
+	default:
+		v.setTrip(be[idx])
 	}
-
-	// if the synctime is past the last trip end time
-	// check if it makes sense to say that the vehicle is doing the last trip
-	if v.Trip == "" {
-		// Extract info about last trip
-		lastBE := be[len(be)-1]
-		secondsToEnd, err := lastBE.LastStopTime.Since(cst)
-		if err != nil {
-			return err
-		}
-
-		// Assume vehicle is doing the last trip if and only if
-		// it's no more then 15 minutes past the last trip end
-		if secondsToEnd >= -900 {
-			v.Trip = lastBE.TripID
-		}
-	}
-
 	return nil
 }
 
 // MatchTripWithPV tries to guess which trip this vehicle is on
-func (v *Vehicle) MatchTripWithPV(pv *Vehicle, cst compareTime, be []*brigadeEntry) error {
+func (v *Vehicle) MatchTripWithPV(pv *Vehicle, st time.Time, be []*brigadeEntry) error {
 	// first - get the index in be of pv.Trip
-	prevTripIdx := indexMatchingTrip(be, pv.Trip)
+	prevTripIdx := indexMatchingTrip(be, pv.Trip, pv.ServiceDate)
 
 	// EDGE CASE: previous trip not found in brigadeEntries
 	// calculate as if previous trip was not known
 	if prevTripIdx < 0 {
-		return v.MatchTripNoPV(cst, be)
+		return v.MatchTripNoPV(st, be)
 	}
 
 	// extract info about previous vehicle trip
 	pvTripEntry := be[prevTripIdx]
-	secondsToEnd, err := pvTripEntry.LastStopTime.Since(cst)
-	if err != nil {
-		return err
-	}
+	secondsToEnd := pvTripEntry.LastStopTime.Sub(st).Seconds()
 
-	// EDGE CASE: previous vehicle was doing the last trip
-	if prevTripIdx == len(be)-1 {
+	// EDGE CASE: previous vehicle was doing the last trip of its duty -
+	// either the last trip of the brigade, or the last one on its service date
+	if prevTripIdx == len(be)-1 || be[prevTripIdx+1].ServiceDate != pvTripEntry.ServiceDate {
 		// 15 minutes past last trip end time - assume the vehicle is no longer
 		// active on the network
 		if secondsToEnd < -900 {
@@ -147,7 +148,7 @@ func (v *Vehicle) MatchTripWithPV(pv *Vehicle, cst compareTime, be []*brigadeEnt
 		}
 
 		// Otherwise assume the vehicle is still doing the last trip
-		v.Trip = pv.Trip
+		v.setTrip(pvTripEntry)
 		return nil
 	}
 
@@ -163,15 +164,15 @@ func (v *Vehicle) MatchTripWithPV(pv *Vehicle, cst compareTime, be []*brigadeEnt
 	// Move to the next trip if it's close to the trip end (in time and space) or
 	// if the fail-safe is active
 	if (nearTerminus && nearEndTime) || isVeryLate {
-		v.Trip = be[prevTripIdx+1].TripID
+		v.setTrip(be[prevTripIdx+1])
 	} else {
-		v.Trip = pv.Trip
+		v.setTrip(pvTripEntry)
 	}
 	return nil
 }
 
 // MatchTrip tries to guess which trip this vehicle is on
-func (v *Vehicle) MatchTrip(pv *Vehicle, cst compareTime, be []*brigadeEntry) error {
+func (v *Vehicle) MatchTrip(pv *Vehicle, st time.Time, be []*brigadeEntry) error {
 	// Handle some edge cases
 	if len(be) == 0 {
 		// No corresponding brigade entries - an 'inactive vehicle' -
@@ -180,17 +181,22 @@ func (v *Vehicle) MatchTrip(pv *Vehicle, cst compareTime, be []*brigadeEntry) er
 		return nil
 	} else if pv == nil {
 		// The previous entry for this vehicle id is unknown
-		return v.MatchTripNoPV(cst, be)
+		return v.MatchTripNoPV(st, be)
 	}
 
-	return v.MatchTripWithPV(pv, cst, be)
+	return v.MatchTripWithPV(pv, st, be)
+}
+
+// setTrip assigns a particular run of a trip to this vehicle
+func (v *Vehicle) setTrip(b *brigadeEntry) {
+	v.Trip = b.TripID
+	v.ServiceDate = b.ServiceDate
 }
 
 // VehicleContainer is a container for multiple Vehicle objects
 type VehicleContainer struct {
-	SyncTime        time.Time
-	CompareSyncTime compareTime
-	Vehicles        map[string]*Vehicle
+	SyncTime time.Time
+	Vehicles map[string]*Vehicle
 }
 
 // MarshalJSON returns this VehicleContainer marshalled into JSON
@@ -295,7 +301,7 @@ func (vc *VehicleContainer) MatchAll(brigadeMap map[string][]*brigadeEntry, prev
 		pv := prevVehicles[vID]
 
 		// Match this vehicle to a particular trip
-		err := v.MatchTrip(pv, vc.CompareSyncTime, be)
+		err := v.MatchTrip(pv, vc.SyncTime, be)
 		if err != nil {
 			return err
 		}
