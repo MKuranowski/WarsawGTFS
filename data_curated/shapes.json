@@ -395,6 +395,24 @@
       "to": "399202",
       "via": [52.0887721, 21.0597893],
       "comment": "L53 for Julianów Dzikiej Jabłoni 02 round Rondo Praw Dzieci i Młodzieży, not reversing on Architektów"
+    },
+    {
+      "from": "708801",
+      "to": "700221",
+      "via": [52.2300063, 21.001088],
+      "comment": "N12, N14, N16, N62, N64 for Dw. Centralny 21 through the tunnel under Jana Pawła II, not round Rondo Czterdziestolatka"
+    },
+    {
+      "from": "708801",
+      "to": "700223",
+      "via": [52.2300063, 21.001088],
+      "comment": "160, N13, N44, N46, N63, N91 for Dw. Centralny 23 through the tunnel under Jana Pawła II, not round Rondo Czterdziestolatka"
+    },
+    {
+      "from": "708801",
+      "to": "700225",
+      "via": [52.2300063, 21.001088],
+      "comment": "N21, N71, N95 for Dw. Centralny 25 through the tunnel under Jana Pawła II, not round Rondo Czterdziestolatka"
     }
   ],
   "ratio_overrides": [
