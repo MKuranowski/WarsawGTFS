@@ -121,10 +121,10 @@
       "comment": "L33 for PKP Jeziorki via Raszyńska street"
     },
     {
-      "from": "100308",
+      "from": "100302",
       "to": "100309",
       "via": [52.257858, 21.034591],
-      "comment": "162 for Dworzec Wileński 08 to 09 around the block via 11 Listopada"
+      "comment": "162 for Dworzec Wileński 02 to 09 around the block via 11 Listopada and Inżynierska"
     },
     {
       "from": "707904",
