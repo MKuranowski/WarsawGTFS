@@ -14,7 +14,6 @@ import (
 const (
 	apiBus  = 1
 	apiTram = 2
-	apiSKM  = -1
 )
 
 // APIVehicleEntry represents a single object from the API
@@ -51,19 +50,7 @@ func (api *VehicleAPI) buildWarsawRequest(apiVehType int) *http.Request {
 	return req
 }
 
-// buildZbiorkomRequest prepares a http.Request for fetching SKM vehicles from zbiorkom.live
-func (api *VehicleAPI) buildZbiorkomRequest() *http.Request {
-	req, err := http.NewRequest("GET", "https://api.zbiorkom.live/4.9/external/skm", nil)
-	if err != nil {
-		panic(fmt.Errorf("http.NewRequest: api.zbiorkom.live: %w", err))
-	}
-	return req
-}
-
 func (api *VehicleAPI) buildRequest(apiVehType int) *http.Request {
-	if apiVehType < 0 {
-		return api.buildZbiorkomRequest()
-	}
 	return api.buildWarsawRequest(apiVehType)
 }
 
@@ -107,7 +94,7 @@ func (api *VehicleAPI) Get(apiVehType int) ([]*APIVehicleEntry, error) {
 func (api *VehicleAPI) GetAll() (s []*APIVehicleEntry, err error) {
 	var tmp []*APIVehicleEntry
 
-	for _, apiType := range []int{apiTram, apiBus, apiSKM} {
+	for _, apiType := range []int{apiTram, apiBus} {
 		tmp, err = api.Get(apiType)
 		if err != nil {
 			return
