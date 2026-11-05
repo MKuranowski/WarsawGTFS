@@ -402,6 +402,7 @@ def create_intermediate_pipeline(
                 ("305875", "305805"),  # Sielce 75 → Sielce 05
                 ("305876", "305805"),  # Sielce 76 → Sielce 05
                 ("663351", "663301"),  # Kiełpin KMŁ 51 → Kiełpin KMŁ 01
+                ("100389", "100303"),  # Dw. Wileński 89 → Dw. Wileński 03 (tram stand, not bus 09)
             ],
         ),
         CurateStopNames("stops.json"),
