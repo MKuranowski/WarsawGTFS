@@ -557,6 +557,12 @@
       "to": "208202",
       "via": [52.2607798, 21.1519414],
       "comment": "115 for Kordiana 02 via Zesłańców Polskich and Rondo Polskich Maratończyków, not residential Zawiszaków"
+    },
+    {
+      "from": "410602",
+      "to": "410601",
+      "via": [52.2008122, 20.9477095],
+      "comment": "N88 for Instalatorów 01 round the north side of the bus loop, not reversing at 02"
     }
   ],
   "ratio_overrides": [
