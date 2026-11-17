@@ -563,6 +563,12 @@
       "to": "410601",
       "via": [52.2008122, 20.9477095],
       "comment": "N88 for Instalatorów 01 round the north side of the bus loop, not reversing at 02"
+    },
+    {
+      "from": "622203",
+      "to": "622402",
+      "via": [52.3264887, 20.900096],
+      "comment": "110 for Łomianki Pancerz 02 round Rondo Rotmistrza Witolda Pileckiego, not hairpinning at the end of the CH Łomianki bus bay"
     }
   ],
   "ratio_overrides": [
