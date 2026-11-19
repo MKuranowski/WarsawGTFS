@@ -569,6 +569,18 @@
       "to": "622402",
       "via": [52.3264887, 20.900096],
       "comment": "110 for Łomianki Pancerz 02 round Rondo Rotmistrza Witolda Pileckiego, not hairpinning at the end of the CH Łomianki bus bay"
+    },
+    {
+      "from": "606906",
+      "to": "610301",
+      "via": [52.2958201, 20.8954185],
+      "comment": "250/409 for Cm. Północny - Brama Płd. 01 along the car park road from Wóycickiego, not reversing at the stop from Wólczyńska"
+    },
+    {
+      "from": "610302",
+      "to": "606904",
+      "via": [52.2958201, 20.8954185],
+      "comment": "250/409 for Cm. Północny - Brama Gł. 04 along the car park road to Wóycickiego, not reversing at Brama Płd. 02"
     }
   ],
   "ratio_overrides": [
