@@ -431,6 +431,12 @@
       "to": "438401",
       "via": [52.1016101, 20.9828498],
       "comment": "L33 for Zgorzała Storczykowa 01 round the roundabout at the end of Storczykowa, not reversing at the stop"
+    },
+    {
+      "from": "316203",
+      "to": "316403",
+      "via": [52.0776309, 21.0354209],
+      "comment": "L53 for Piaseczno Chyliczkowska - Technikum 03 via Armii Krajowej, not reversing at the stop"
     }
   ],
   "ratio_overrides": [
