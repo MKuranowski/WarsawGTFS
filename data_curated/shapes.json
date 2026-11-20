@@ -437,6 +437,12 @@
       "to": "316403",
       "via": [52.0776309, 21.0354209],
       "comment": "L53 for Piaseczno Chyliczkowska - Technikum 03 via Armii Krajowej, not reversing at the stop"
+    },
+    {
+      "from": "181302",
+      "to": "181401",
+      "via": [52.4710823, 20.9495042],
+      "comment": "L10, L11 for Wieliszew Wodociąg Płn. 01 round the loop at the end of Przedpełskiego and down the bus bay, not reversing at the stop"
     }
   ],
   "ratio_overrides": [
