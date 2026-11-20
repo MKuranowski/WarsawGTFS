@@ -395,6 +395,12 @@
       "to": "399202",
       "via": [52.0887721, 21.0597893],
       "comment": "L53 for Julianów Dzikiej Jabłoni 02 round Rondo Praw Dzieci i Młodzieży, not reversing on Architektów"
+    },
+    {
+      "from": "181402",
+      "to": "181501",
+      "via": [52.4782891, 20.9467221],
+      "comment": "L-9, L10 for Wieliszew - Plaża 01 round the turning loop past the stop, not reversing at the stop on 600-lecia"
     }
   ],
   "ratio_overrides": [
