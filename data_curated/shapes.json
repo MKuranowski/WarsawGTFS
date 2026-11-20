@@ -407,6 +407,12 @@
       "to": "485001",
       "via": [52.088804, 20.8542103],
       "comment": "L-4 for Walendów Konwaliowa 01 round the turning loop at the end of Brzozowa, not reversing at Os. Walendia 01"
+    },
+    {
+      "from": "199001",
+      "to": "177702",
+      "via": [52.3556413, 21.326755],
+      "comment": "L35 for Nowe Grabie II 02 round the cemetery car park, not reversing at Nowe Grabie - Cmentarz 01"
     }
   ],
   "ratio_overrides": [
