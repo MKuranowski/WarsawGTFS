@@ -419,6 +419,18 @@
       "to": "337302",
       "via": [52.02445, 21.1194478],
       "comment": "L28 for Solec 02 on along Szkolna and up Graniczna, not reversing at Baniocha - Szkoła 02"
+    },
+    {
+      "from": "432902",
+      "to": "438401",
+      "via": [52.1016101, 20.9828498],
+      "comment": "L33 for Zgorzała Storczykowa 01 round the roundabout at the end of Storczykowa, not reversing at the stop"
+    },
+    {
+      "from": "418101",
+      "to": "438401",
+      "via": [52.1016101, 20.9828498],
+      "comment": "L33 for Zgorzała Storczykowa 01 round the roundabout at the end of Storczykowa, not reversing at the stop"
     }
   ],
   "ratio_overrides": [
