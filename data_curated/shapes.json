@@ -443,6 +443,18 @@
       "to": "181401",
       "via": [52.4710823, 20.9495042],
       "comment": "L10, L11 for Wieliszew Wodociąg Płn. 01 round the loop at the end of Przedpełskiego and down the bus bay, not reversing at the stop"
+    },
+    {
+      "from": "149002",
+      "to": "195801",
+      "via": [52.3384619, 21.2143668],
+      "comment": "L26 for Kobyłka Miejski Ośrodek Kultury 01 via 11 Listopada and Piaskowa, not reversing at either stop"
+    },
+    {
+      "from": "195802",
+      "to": "149001",
+      "via": [52.3384619, 21.2143668],
+      "comment": "L26 for PKP Kobyłka 01 via Piaskowa and 11 Listopada, not reversing at either stop"
     }
   ],
   "ratio_overrides": [
