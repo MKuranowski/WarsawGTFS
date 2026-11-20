@@ -401,6 +401,12 @@
       "to": "181501",
       "via": [52.4782891, 20.9467221],
       "comment": "L-9, L10 for Wieliszew - Plaża 01 round the turning loop past the stop, not reversing at the stop on 600-lecia"
+    },
+    {
+      "from": "485101",
+      "to": "485001",
+      "via": [52.088804, 20.8542103],
+      "comment": "L-4 for Walendów Konwaliowa 01 round the turning loop at the end of Brzozowa, not reversing at Os. Walendia 01"
     }
   ],
   "ratio_overrides": [
