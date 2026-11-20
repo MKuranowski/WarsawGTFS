@@ -413,6 +413,12 @@
       "to": "177702",
       "via": [52.3556413, 21.326755],
       "comment": "L35 for Nowe Grabie II 02 round the cemetery car park, not reversing at Nowe Grabie - Cmentarz 01"
+    },
+    {
+      "from": "361602",
+      "to": "337302",
+      "via": [52.02445, 21.1194478],
+      "comment": "L28 for Solec 02 on along Szkolna and up Graniczna, not reversing at Baniocha - Szkoła 02"
     }
   ],
   "ratio_overrides": [
