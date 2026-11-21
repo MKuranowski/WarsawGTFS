@@ -115,10 +115,18 @@ force_via:
     to: 138902
     via: [52.346775, 21.228277]
     comment: "L36, L40, L44 for Wołomin Sasina 02 on along Gdyńska and down Sasina, not reversing at Sasina - Liceum 01 into Średnia"
+  - from: 175601
+    to: 175701
+    via: [52.3340971, 21.2427242]
+    comment: "L38 for Wołomin Gryczana 01 down Legionów and along Gryczana, not reversing at Partyzantów - Szkoła 01 and round by Partyzantów and Sikorskiego"
   - from: 175652
     to: 175502
     via: [52.3368843, 21.2384961]
     comment: "L38 for Wołomin Lipińska 02 via Brzozowa and Wiejska, not via Sikorskiego and back along Lipińska"
+  - from: 175702
+    to: 175652
+    via: [52.3340971, 21.2427242]
+    comment: "L38 for Wołomin Partyzantów - Szkoła 52 along Gryczana and up Legionów, not reversing at Gryczana 02 and round by Sikorskiego and Partyzantów"
   - from: 177202
     to: 167502
     via: [52.366465, 21.283188]
