@@ -19,7 +19,7 @@ Realtime feeds incorporate data from <https://dane.um.warszawa.pl>.
 4. Fares
 5. Unambiguous stop names, prepended by town names when necessary
 6. Deduplicated stops
-7. Overrides for faulty stop data (<data_curated/stops.json>)
+7. Overrides for faulty stop data (<data_curated/stops.yaml>)
 8. Better shapes based on [OSM](https://www.openstreetmap.org/) for buses and a custom graph for other modes
 9. Frequency-based metro schedules (<data_curated/metro>)
 10. Brigade numbers, planned vehicle types

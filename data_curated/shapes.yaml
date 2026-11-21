@@ -1,0 +1,428 @@
+force_via:
+  - from: 100302
+    to: 100309
+    via: [52.257858, 21.034591]
+    comment: "162 for Dworzec Wileński 02 to 09 around the block via 11 Listopada and Inżynierska"
+  - from: 100507
+    to: 100518
+    via: [52.2594803, 21.0273283]
+    comment: "166 for Pl. Hallera 18 round the Skoczylasa loop, not against the one-way"
+  - from: 100518
+    to: 100508
+    via: [52.2594803, 21.0273283]
+    comment: "166 for Pl. Hallera 08 round the Skoczylasa loop, not against the one-way"
+  - from: 101804
+    to: 110202
+    via: [52.3154027, 20.9815282]
+    comment: "126 for Polfa 02 clockwise round the Polfa turning loop, not entering it backwards"
+  - from: 109506
+    to: 109604
+    via: [52.3154193, 21.0010219]
+    comment: "314, 126 reach Os. Marywilska 04 straight off Płochocińska, not backwards off Kupiecka"
+  - from: 109507
+    to: 109604
+    via: [52.3154193, 21.0010219]
+    comment: "126, N64 reach Os. Marywilska 04 straight off Płochocińska, not backwards off Kupiecka"
+  - from: 109702
+    to: 109704
+    via: [52.3189321, 20.9982555]
+    comment: "314 for Tarchomin"
+  - from: 109704
+    to: 109503
+    via: [52.3146864, 21.0016259]
+    comment: "314 for Tarchomin"
+  - from: 110201
+    to: 101801
+    via: [52.3151386, 20.9818937]
+    comment: "126 for Ekspresowa 01 clockwise round the Polfa turning loop, not reversing at Polfa 01"
+  - from: 114603
+    to: 114902
+    via: [52.29401, 21.04852]
+    comment: "Metro Kondratowicza 03 to Knapika 02 via Malborska"
+  - from: 114603
+    to: 117902
+    via: [52.29401, 21.04852]
+    comment: "Metro Kondratowicza 03 to CH Targówek 02 via Malborska"
+  - from: 114901
+    to: 114602
+    via: [52.29401, 21.04852]
+    comment: "Knapika 01 to Metro Kondratowicza 02 via Malborska"
+  - from: 123404
+    to: 123403
+    via: [52.30431, 21.08287]
+    comment: "112 for CH Marki 03 via main road"
+  - from: 127707
+    to: 127701
+    via: [52.31776, 20.951267]
+    comment: "152 for Tarchomin 01 round the block via Świderska and Ćmielowska"
+  - from: 127708
+    to: 127709
+    via: [52.3185531, 20.9522898]
+    comment: "314 for Tarchomin"
+  - from: 127709
+    to: 127701
+    via: [52.31776, 20.951267]
+    comment: "126 for Tarchomin 01 round the block via Świderska and Ćmielowska"
+  - from: 128601
+    to: 135802
+    via: [52.3162205, 21.0552597]
+    comment: "234 for Os. Derby III 02 along Astrowa, not back up Ostródzka and round Berensona"
+  - from: 128702
+    to: 132601
+    via: [52.3253083, 21.0495354]
+    comment: "204 for Grodzisk via Ostródzka and Olsztyńska, not reversing at Berensona 02"
+  - from: 131701
+    to: 131702
+    via: [52.34811, 20.941745]
+    comment: "211/511 for Dąbrówka Wiślana 02 round the turning loop via Mikołaja Trąby, not reversing at 01"
+  - from: 131701
+    to: 136602
+    via: [52.34811, 20.941745]
+    comment: "211 for Kępa Tarchomińska round the Dąbrówka Wiślana turning loop, not reversing at 01"
+  - from: 136603
+    to: 131702
+    via: [52.34811, 20.941745]
+    comment: "211/900 for Dąbrówka Wiślana 02 round the turning loop via Mikołaja Trąby, not reversing at 02"
+  - from: 139601
+    to: 175601
+    via: [52.3368843, 21.2384961]
+    comment: "L38 for Wołomin Partyzantów - Szkoła 01 via Wiejska and Brzozowa, not via Lipińska and Sikorskiego"
+  - from: 142202
+    to: 131702
+    via: [52.34811, 20.941745]
+    comment: "900 for Dąbrówka Wiślana 02 round the turning loop via Mikołaja Trąby, not entering it backwards"
+  - from: 147202
+    to: 123404
+    via: [52.30414, 21.08082]
+    comment: "112 for CH Marki 04 via main road"
+  - from: 147404
+    to: 147601
+    via: [52.2877272, 21.1265092]
+    comment: "245 for Ząbki Gajowa 01 round the Gajowa/Sosnowa/Sikorskiego roundabout, not reversing at 01"
+  - from: 156101
+    to: 128701
+    via: [52.3242592, 21.048336]
+    comment: "204 for Metro Bródno"
+  - from: 166702
+    to: 176301
+    via: [52.3160806, 21.2916235]
+    comment: "L37 turns round at the Polna junction in Cięciwa, not on the spot at Cięciwa Polna 02"
+  - from: 174801
+    to: 138902
+    via: [52.346775, 21.228277]
+    comment: "L36, L40, L44 for Wołomin Sasina 02 on along Gdyńska and down Sasina, not reversing at Sasina - Liceum 01 into Średnia"
+  - from: 175652
+    to: 175502
+    via: [52.3368843, 21.2384961]
+    comment: "L38 for Wołomin Lipińska 02 via Brzozowa and Wiejska, not via Sikorskiego and back along Lipińska"
+  - from: 177202
+    to: 167502
+    via: [52.366465, 21.283188]
+    comment: "L36 for Lipinki Wiosenna 02 via Kolejowa, Willowa, Parkowa and up Wiosenna, not reversing at PKP Zagościniec 02 and in Wiosenna"
+  - from: 181002
+    to: 181102
+    via: [52.453792, 20.9550041]
+    comment: "L10, L11, L-9 for Wieliszew Willowa 02 up Słoneczna, not back along Modlińska and Krótka"
+  - from: 182003
+    to: 184701
+    via: [52.4477457, 20.9729858]
+    comment: "Z40, L10, L11, L-9 for Wieliszew Solidarności 01 along Aleja Solidarności, not back along Modlińska and Kościelna"
+  - from: 184801
+    to: 184901
+    via: [52.2966244, 21.1589383]
+    comment: "L46 for Marki"
+
+  - from: 201901
+    to: 226101
+    via: [52.2270351, 21.1539795]
+    comment: "305 for Strusia"
+  - from: 202003
+    to: 245401
+    via: [52.2233616, 21.1748782]
+    comment: "305 for Strusia"
+  - from: 205202
+    to: 205201
+    via: [52.159488, 21.2043491]
+    comment: "146 to Falenica via Olecka"
+  - from: 207057
+    to: 208202
+    via: [52.2607798, 21.1519414]
+    comment: "115 for Kordiana 02 via Zesłańców Polskich and Rondo Polskich Maratończyków, not residential Zawiszaków"
+  - from: 208201
+    to: 208202
+    via: [52.260766, 21.151131]
+    comment: "153 turns around at rondo Polskich Maratończyków (Rembertów tunnel diversion)"
+  - from: 214302
+    to: 209701
+    via: [52.2312537, 21.0663678]
+    comment: "411, E-1 for Saska 01 via Brazylijska and Międzynarodowa"
+  - from: 222002
+    to: 222005
+    via: [52.2769327, 21.1703392]
+    comment: "225 for PKP Mokry Ług 05 round the Al. Sztandarów loop, not reversing on Czwartaków"
+  - from: 227502
+    to: 227503
+    via: [52.222319, 21.2433293]
+    comment: "147 for Stara Miłosna (Ułańska) 03 round Rondo Józefa Maroszka, not reversing at 02"
+  - from: 228353
+    to: 234451
+    via: [52.2535848, 21.2306062]
+    comment: "198 for PKP Wesoła 51 up Chodkiewicza and along Głowackiego, not via Sikorskiego and Akacjowa"
+  - from: 230602
+    to: 227701
+    via: [52.2471833, 21.1886876]
+    comment: "115 for Aleksandrów"
+  - from: 232102
+    to: 227701
+    via: [52.2471833, 21.1886876]
+    comment: "115 for PKP Mokry Ług"
+  - from: 234451
+    to: 228301
+    via: [52.2535848, 21.2306062]
+    comment: "198 for Chodkiewicza 01 along Głowackiego and down Chodkiewicza, not via Akacjowa and Szarych Szeregów"
+  - from: 238901
+    to: 238801
+    via: [52.1691556, 21.3594996]
+    comment: "720 for Pęclin Podleśna 01 round the Pęclin turning loop, not reversing at 01"
+  - from: 244351
+    to: 250752
+    via: [52.1627549, 21.2126619]
+    comment: "115, 142, 161 for PKP Falenica (Bystrzycka) 52 along Frenkla, not via Kędzierzyńska and Firletki"
+  - from: 287201
+    to: 236901
+    via: [52.1540788, 21.3120829]
+    comment: "722 for Wiatraczna"
+
+  - from: 301201
+    to: 301202
+    via: [52.1554342, 21.0178082]
+    comment: "300 for Metro Wilanowska, turning around at Romera"
+  - from: 302601
+    to: 302701
+    via: [52.2036892, 21.0336465]
+    comment: "116, 166, 503 and E-2 for Dolna 01 down the Belwederska busway, not the carriageway and back up from Chełmska"
+  - from: 302801
+    to: 303101
+    via: [52.195081, 21.0417507]
+    comment: "E-2 for Mangalia 01 down the Sobieskiego busway, not around Beethovena"
+  - from: 302801
+    to: 309501
+    via: [52.195081, 21.0417507]
+    comment: "503 for Warneńska 01 down the Sobieskiego busway, not around Beethovena"
+  - from: 302801
+    to: 349105
+    via: [52.195081, 21.0417507]
+    comment: "116, 166 and 172 for Idzikowskiego 05 down the Sobieskiego busway, not around Beethovena"
+  - from: 302802
+    to: 302702
+    via: [52.2006716, 21.0364298]
+    comment: "116, 166, 503 and E-2 for Dolna 02 up the Sobieskiego busway, not a U-turn at Beethovena"
+  - from: 302802
+    to: 302704
+    via: [52.1984193, 21.0383774]
+    comment: "172 for Dolna 04 up the Sobieskiego busway, not a U-turn at Beethovena"
+  - from: 326771
+    to: 324502
+    via: [52.1712457, 21.0045415]
+    comment: "N34 out of Pętla Bokserska reaches Gotarda 02 via ul. Gotarda, not past the stop and back up Rzymowskiego"
+  - from: 327903
+    to: 333802
+    via: [52.163423, 21.027161]
+    comment: "401 for Bacha 02 via the U-turn near P&R Ursynów"
+  - from: 388301
+    to: 384201
+    via: [52.0224721, 21.0424542]
+    comment: "L28, L13 for PKP Zalesie Górne 01 round the Leśnych Boginek roundabout and up Młodych Wilcząt, not back up Wiekowej Sosny"
+  - from: 399201
+    to: 399202
+    via: [52.0887721, 21.0597893]
+    comment: "L53 for Julianów Dzikiej Jabłoni 02 round Rondo Praw Dzieci i Młodzieży, not reversing on Architektów"
+  - from: 399501
+    to: 399601
+    via: [52.0619236, 21.0018491]
+    comment: "L32 for Piaseczno Długosza 01 down Wyspiańskiego and round Plac Wolności, not through Śląska and Długosza"
+
+  - from: 402302
+    to: 402301
+    via: [52.156302, 20.962702]
+    comment: "N88 turns round via Wieżowa east of Ogrody Działkowe Na Skraju, not on the spot"
+  - from: 405501
+    to: 405301
+    via: [52.1207, 20.8685]
+    comment: "703, 711 for Janki Małe 01 via viaduct over S7/S8 junction"
+  - from: 410001
+    to: 421721
+    via: [52.1954418, 20.8836579]
+    comment: "129 for PKP Ursus 21 via Regulska, not the car park"
+  - from: 410602
+    to: 410601
+    via: [52.2008122, 20.9477095]
+    comment: "N88 for Instalatorów 01 round the north side of the bus loop, not reversing at 02"
+  - from: 411202
+    to: 403201
+    via: [52.2010196, 20.980364]
+    comment: "172 for Sadyba via Mołdawska and Pruszkowska"
+  - from: 417501
+    to: 417601
+    via: [52.1190844, 20.9437655]
+    comment: "715/815 for Podolszyn 01 via Olszynowa and the turning loop, not reversing on the Długa stub"
+  - from: 418101
+    to: 435801
+    via: [52.10678, 20.96913]
+    comment: "L33 for PKP Jeziorki via Raszyńska street"
+  - from: 418303
+    to: 413104
+    via: [52.1824861, 20.8989669]
+    comment: "220 for Starodęby 04 onwards along Bodycha and Al. Jerozolimskie, not back up Ryżowa"
+  - from: 420503
+    to: 434204
+    via: [52.1928229, 20.8718127]
+    comment: "187 for PKP Ursus-Niedźwiadek 04 via Orląt Lwowskich"
+  - from: 421704
+    to: 421721
+    via: [52.1954418, 20.8836579]
+    comment: "401 for PKP Ursus 21 via Regulska, not the car park"
+  - from: 423601
+    to: 413801
+    via: [52.1732054, 20.8394632]
+    comment: "717 for Dw. Zachodni"
+  - from: 424302
+    to: 430902
+    via: [52.182508, 20.8881204]
+    comment: "207 for Melcera 02 via Stanisława Bodycha"
+  - from: 428801
+    to: 428701
+    via: [52.0822827, 20.7673806]
+    comment: "733 for Stara Wieś 01 round the turning loop, not reversing at the stop"
+  - from: 429502
+    to: 428701
+    via: [52.0822827, 20.7673806]
+    comment: "733 for Stara Wieś 01 round the turning loop, not reversing at the stop"
+  - from: 434201
+    to: 420501
+    via: [52.1928229, 20.8718127]
+    comment: "187 for Bełzy 01 via Orląt Lwowskich"
+  - from: 434701
+    to: 401801
+    via: [52.0914, 20.81197]
+    comment: "733 for Stoicka 01 via S8 Nadarzyn junction"
+  - from: 435652
+    to: 512701
+    via: [52.2145685, 20.9309098]
+    comment: "228 for Wagonownia 01 round the Potrzebna roundabout, not reversing at 01"
+
+  - from: 503401
+    to: 503471
+    via: [52.237232, 20.917092]
+    comment: "149, 714, 719, 729 to Metro Bemowo 71 via Konarskiego, not a U-turn on Górczewska and a service road at Czumy"
+  - from: 507204
+    to: 507305
+    via: [52.245452, 20.940731]
+    comment: "129 and 249 for Koło 05 via Newelska and Księcia Janusza, not back up Erazma Ciołka"
+  - from: 507204
+    to: 507306
+    via: [52.245452, 20.940731]
+    comment: "184 for Koło 06 via Newelska and Księcia Janusza, not back up Erazma Ciołka"
+  - from: 513202
+    to: 513402
+    via: [52.2130125, 20.7748657]
+    comment: "713 for Ożarów Mazowiecki Parkowa 02 via Lipowa, not reversing at 02 from Umiastowska"
+  - from: 513301
+    to: 513402
+    via: [52.2130125, 20.7748657]
+    comment: "743 for Ożarów Mazowiecki Parkowa 02 via Lipowa, not reversing at Umiastowska 01 and 02"
+
+  - from: 606906
+    to: 610301
+    via: [52.2958201, 20.8954185]
+    comment: "250/409 for Cm. Północny - Brama Płd. 01 along the car park road from Wóycickiego, not reversing at the stop from Wólczyńska"
+  - from: 610302
+    to: 606904
+    via: [52.2958201, 20.8954185]
+    comment: "250/409 for Cm. Północny - Brama Gł. 04 along the car park road to Wóycickiego, not reversing at Brama Płd. 02"
+  - from: 611502
+    to: 623202
+    via: [52.2506239, 20.8412413]
+    comment: "712 for CH Babice Nowe 02 via Piłsudskiego and Kresowa, not reversing on Rynek"
+  - from: 611903
+    to: 612701
+    via: [52.2869647, 20.7981707]
+    comment: "210/N58 for Hornówek 01 via Lipkowska and the bus bay, not reversing in the bay from Kurowskiego"
+  - from: 619602
+    to: 619601
+    via: [52.2748764, 20.8754658]
+    comment: "N91 for Klaudyn Zorzy 01 round Rondo Radiostacji Babice, not reversing at 02"
+  - from: 622203
+    to: 622402
+    via: [52.3264887, 20.900096]
+    comment: "110 for Łomianki Pancerz 02 round Rondo Rotmistrza Witolda Pileckiego, not hairpinning at the end of the CH Łomianki bus bay"
+  - from: 623202
+    to: 611501
+    via: [52.248001, 20.840462]
+    comment: "712 for Stare Babice Rynek 01 via Kresowa and Piłsudskiego, not reversing on Rynek or at the Piłsudskiego junction"
+  - from: 665603
+    to: 666551
+    via: [52.3899907, 20.7338636]
+    comment: "755 turns around at the Czosnów roundabout after Czosnów 03, not on the spot"
+  - from: 665603
+    to: 666602
+    via: [52.3899907, 20.7338636]
+    comment: "755 turns around at the Czosnów roundabout after Czosnów 03, not on the spot"
+  - from: 666002
+    to: 666001
+    via: [52.3524105, 20.8160237]
+    comment: "150/750 for Izabelin-Dziekanówek 01 round the Kolejowa roundabout, not hairpinning into the bay"
+
+  - from: 707904
+    to: 706703
+    via: [52.23819, 21.025393]
+    comment: "162 and others via Topiel, not Dobra"
+  - from: 708801
+    to: 700221
+    via: [52.2300063, 21.001088]
+    comment: "N12, N14, N16, N62, N64 for Dw. Centralny 21 through the tunnel under Jana Pawła II, not round Rondo Czterdziestolatka"
+  - from: 708801
+    to: 700223
+    via: [52.2300063, 21.001088]
+    comment: "160, N13, N44, N46, N63, N91 for Dw. Centralny 23 through the tunnel under Jana Pawła II, not round Rondo Czterdziestolatka"
+  - from: 708801
+    to: 700225
+    via: [52.2300063, 21.001088]
+    comment: "N21, N71, N95 for Dw. Centralny 25 through the tunnel under Jana Pawła II, not round Rondo Czterdziestolatka"
+
+ratio_overrides:
+  - {from: 100610, to: 100609, ratio: 32.6}
+  - {from: 102805, to: 102811, ratio: 9.1}
+  - {from: 120502, to: 120501, ratio: 17.8}
+  - {from: 194706, to: 194773, ratio: 8.0}
+  - {from: 200851, to: 200852, ratio: 7.5}
+  - {from: 201802, to: 226002, ratio: 3.8}
+  - {from: 203904, to: 203903, ratio: 7.8}
+  - {from: 204702, to: 244351, ratio: 4.8}
+  - {from: 206101, to: 206102, ratio: 10.5}
+  - {from: 207902, to: 201801, ratio: 3.7}
+  - {from: 244352, to: 204701, ratio: 8.7}
+  - {from: 287201, to: 236901, ratio: 4.5}
+  - {from: 302502, to: 302504, ratio: 8.3}
+  - {from: 302504, to: 302501, ratio: 10.2}
+  - {from: 325402, to: 325401, ratio: 25.2}
+  - {from: 418202, to: 418101, ratio: 3.9}
+  - {from: 428501, to: 434901, ratio: 4.5}
+  - {from: 428501, to: 434903, ratio: 4.5}
+  - {from: 434904, to: 428502, ratio: 3.8}
+  - {from: 503005, to: 502072, ratio: 4.0}
+  - {from: 505502, to: 505507, ratio: 10.3}
+  - {from: 520301, to: 500906, ratio: 4.4}
+  - {from: 600514, to: 607505, ratio: 4.1}
+  - {from: 600515, to: 607505, ratio: 4.3}
+  - {from: 600516, to: 607505, ratio: 3.8}
+  - {from: 600517, to: 607505, ratio: 3.9}
+  - {from: 600574, to: 600515, ratio: 9.8}
+  - {from: 606971, to: 606903, ratio: 23.0}
+  - {from: 607506, to: 607501, ratio: 16.6}
+  - {from: 622401, to: 622402, ratio: 8.4}
+  - {from: 700216, to: 700225, ratio: 11.0}
+  - {from: 700216, to: 700229, ratio: 11.0}
+  - {from: 701306, to: 701303, ratio: 8.0}
+  - {from: 707602, to: 707603, ratio: 12.1}
+  - {from: T-0400, to: 600511, ratio: 11.0}

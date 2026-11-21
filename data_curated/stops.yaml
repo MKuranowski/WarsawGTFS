@@ -1,0 +1,65 @@
+positions:
+  110002: {lat: 52.341997, lon: 20.987754}
+  116651: {lat: 52.300395, lon: 21.031479, distance: 35}
+  120902: {lat: 52.277575, lon: 21.115400, distance: 150}
+  156001: {lat: 52.326505, lon: 21.039353}
+  165501: {lat: 52.309239, lon: 21.227243}
+  174502: {lat: 52.369050, lon: 21.225402, distance: 150}
+  200852: {lat: 52.244913, lon: 21.088767}
+  209802: {lat: 52.229930, lon: 21.068681}
+  211102: {lat: 52.249420, lon: 21.092990, distance: 150}
+  215302: {lat: 52.235364, lon: 21.053520, distance: 200}
+  235701: {lat: 52.111082, lon: 21.255799, distance: 250}
+  235702: {lat: 52.110575, lon: 21.256476, distance: 200}
+  241802: {lat: 52.231023, lon: 21.096364, distance: 350}
+  244352: {lat: 52.164224, lon: 21.210827, distance: 700}
+  250752: {lat: 52.161255, lon: 21.214791}
+  286901: {lat: 52.086017, lon: 21.260194, distance: 350}
+  306403: {lat: 52.187567, lon: 21.063203}
+  312008: {lat: 52.162165, lon: 21.033854}
+  312704: {lat: 52.161971, lon: 21.029379}
+  400902: {lat: 52.195176, lon: 20.962349, distance: 150}
+  402905: {lat: 52.216349, lon: 20.992639, distance: 35}
+  421201: {lat: 52.211792, lon: 20.913640, distance: 150}
+  438401: {lat: 52.101498, lon: 20.981366, distance: 400}
+  503603: {lat: 52.234180, lon: 20.991003}
+  503604: {lat: 52.235226, lon: 20.990489}
+  505071: {lat: 52.239027, lon: 20.900669}
+  506302: {lat: 52.252738, lon: 20.914509}
+  703102: {lat: 52.235683, lon: 21.013505, distance: 250}
+  707202: {lat: 52.217502, lon: 21.037563}
+  707301: {lat: 52.215260, lon: 21.045835, distance: 200}
+  708702: {lat: 52.235746, lon: 20.995663, distance: 250}
+
+names:
+    1011: {name: "Budzińskiej-Tylickiej"}
+    1226: {name: "Mańki-Wojdy"}
+    1482: {name: "PKP Zacisze-Wilno"}
+    1801: {name: "PKP Michałów-Reginów"}
+    1909: {name: "Michałów-Reginów"}
+    2005: {name: "Praga-Płd. - Ratusz"}
+    2053: {name: "Mera-Pnefal"}
+    3809: {name: "Henryków-Urocze"}
+    3144: {name: "Szolc-Rogozińskiego"}
+    3233: {name: "Joliot-Curie"}
+    4004: {name: "Och-Teatr"}
+    4043: {name: "Grzymały-Sokołowskiego"}
+    4107: {name: "Skorochód-Majewskiego"}
+    4195: {name: "Pruszków Os. Staszica - Pętla", stem: "Os. Staszica - Pętla"}
+    4221: {name: "Ursus-Niedźwiadek"}
+    4342: {name: "PKP Ursus-Niedźwiadek"}
+    6077: {name: "Marymont-Potok"}
+    6083: {name: "Most Grota-Roweckiego"}
+    6658: {name: "Łomianki 11 Listopada", stem: "11 Listopada"}
+    6660: {name: "Izabelin-Dziekanówek", stem: "Dziekanówek"}
+    R-01: {name: "R-1 Zajezdnia Wola"}
+    R-02: {name: "R-2 Zajezdnia Praga"}
+    R-03: {name: "R-3 Zajezdnia Mokotów"}
+    R-04: {name: "R-4 Zajezdnia Żoliborz"}
+    R-05: {name: "R-5 Zajezdnia Annopol", zone: "1"}
+    R-07: {name: "R-1 Zajezdnia Woronicza"}
+    R-10: {name: "R-3 Zajezdnia Ostrobramska"}
+    R-11: {name: "R-2 Zajezdnia Kleszczowa"}
+    R-13: {name: "R-4 Zajezdnia Stalowa"}
+    R-14: {name: "R-6 Zajezdnia Płochocińska"}
+    T-04: {name: "Wydział Włościańska"}

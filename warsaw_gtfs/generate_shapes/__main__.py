@@ -26,13 +26,13 @@ class GenerateShapesApp(impuls.App):
         return impuls.Pipeline(
             tasks=[
                 impuls.tasks.LoadDB("ignore_shapes_base.db"),
-                CurateStopNames("stops.json"),
-                CurateStopPositions("stops.json"),
+                CurateStopNames("stops.yaml"),
+                CurateStopPositions("stops.yaml"),
                 GenerateShapes(
                     GraphConfig(
                         osm_resource="tram_rail_shapes.osm",
                         profile=routx.OsmProfile.RAILWAY,
-                        curation_resource="shapes.json",
+                        curation_resource="shapes.yaml",
                     ),
                     GenerateConfig(
                         routes=impuls.selector.Routes(type=Route.Type.RAIL),
@@ -47,7 +47,7 @@ class GenerateShapesApp(impuls.App):
                     GraphConfig(
                         osm_resource="tram_rail_shapes.osm",
                         profile=routx.OsmProfile.TRAM,
-                        curation_resource="shapes.json",
+                        curation_resource="shapes.yaml",
                     ),
                     GenerateConfig(
                         routes=impuls.selector.Routes(type=Route.Type.TRAM),
@@ -63,7 +63,7 @@ class GenerateShapesApp(impuls.App):
                         osm_resource="mazowieckie-latest.osm.pbf",
                         profile=routx.OsmProfile.BUS,
                         bbox=(20.58, 51.92, 21.47, 52.5),
-                        curation_resource="shapes.json",
+                        curation_resource="shapes.yaml",
                     ),
                     GenerateConfig(
                         routes=impuls.selector.Routes(type=Route.Type.BUS),
@@ -86,8 +86,8 @@ class GenerateShapesApp(impuls.App):
                     ),
                     minimal_time_between=timedelta(days=7),
                 ),
-                "shapes.json": impuls.LocalResource("data_curated/shapes.json"),
-                "stops.json": impuls.LocalResource("data_curated/stops.json"),
+                "shapes.yaml": impuls.LocalResource("data_curated/shapes.yaml"),
+                "stops.yaml": impuls.LocalResource("data_curated/stops.yaml"),
             },
             options=options,
         )
