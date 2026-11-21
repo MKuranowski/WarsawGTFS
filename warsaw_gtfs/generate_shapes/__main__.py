@@ -82,7 +82,7 @@ class GenerateShapesApp(impuls.App):
                 "tram_rail_shapes.osm": impuls.LocalResource("data_curated/tram_rail_shapes.osm"),
                 "mazowieckie-latest.osm.pbf": TimeLimitedResource(
                     r=impuls.HTTPResource.get(
-                        "https://download.geofabrik.de/europe/poland/mazowieckie-latest.osm.pbf",
+                        "https://download.geofabrik.de/europe/poland/mazowieckie/mazowieckie-latest.osm.pbf",
                     ),
                     minimal_time_between=timedelta(days=7),
                 ),
