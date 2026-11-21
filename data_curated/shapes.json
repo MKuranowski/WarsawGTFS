@@ -427,12 +427,6 @@
       "comment": "N21, N71, N95 for Dw. Centralny 25 through the tunnel under Jana Pawła II, not round Rondo Czterdziestolatka"
     },
     {
-      "from": "604101",
-      "to": "609345",
-      "via": [52.263125, 20.9619329],
-      "comment": "C14 for Powązki - Cm. Wojskowy 45 via Elbląska, Krasińskiego, not round Park Olszyna via Armii Krajowej"
-    },
-    {
       "from": "227502",
       "to": "227503",
       "via": [52.222319, 21.2433293],
