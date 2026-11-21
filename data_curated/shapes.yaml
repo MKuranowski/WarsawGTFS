@@ -131,6 +131,10 @@ force_via:
     to: 167502
     via: [52.366465, 21.283188]
     comment: "L36 for Lipinki Wiosenna 02 via Kolejowa, Willowa, Parkowa and up Wiosenna, not reversing at PKP Zagościniec 02 and in Wiosenna"
+  - from: 179601
+    to: 199701
+    via: [52.409237, 20.7844005]
+    comment: "L-7, L41 for Suchocin Wiklinowa 01 through the whole bus bay from its west end, not reversing into it from the east"
   - from: 181002
     to: 181102
     via: [52.453792, 20.9550041]
