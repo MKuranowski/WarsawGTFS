@@ -225,6 +225,10 @@ force_via:
     to: 301202
     via: [52.1554342, 21.0178082]
     comment: "300 for Metro Wilanowska, turning around at Romera"
+  - from: 302303
+    to: 302301
+    via: [52.1060348, 21.0242143]
+    comment: "L39 for Dąbrówka 01 round the Kuropatwy/Przedsiębiorców roundabout, not reversing at 03"
   - from: 302601
     to: 302701
     via: [52.2036892, 21.0336465]
