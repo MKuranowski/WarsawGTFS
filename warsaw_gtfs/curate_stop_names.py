@@ -17,11 +17,12 @@ class CurateStopNames(Task):
         self.resource = resource
 
     def execute(self, r: TaskRuntime) -> None:
-        to_curate = cast(dict[str, CuratedName], r.resources[self.resource].json()["names"])
+        to_curate = cast(dict[str | int, CuratedName], r.resources[self.resource].yaml()["names"])
         curated = 0
 
         with r.db.transaction():
             for stop_id_prefix, data in to_curate.items():
+                stop_id_prefix = str(stop_id_prefix)
                 new_name = data["name"]
                 new_stem = data.get("stem", new_name)
                 new_town = data.get("town")

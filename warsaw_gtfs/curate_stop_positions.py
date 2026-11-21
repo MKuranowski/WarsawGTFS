@@ -19,11 +19,15 @@ class CurateStopPositions(Task):
         self.max_distance_m = max_distance_m
 
     def execute(self, r: TaskRuntime) -> None:
-        to_curate = cast(dict[str, CuratedStop], r.resources[self.resource].json()["positions"])
+        to_curate = cast(
+            dict[str | int, CuratedStop],
+            r.resources[self.resource].yaml()["positions"],
+        )
         curated = 0
 
         with r.db.transaction():
             for stop_id, data in to_curate.items():
+                stop_id = str(stop_id)
                 current_pos = r.db.raw_execute(
                     "SELECT lat, lon FROM stops WHERE stop_id = ?",
                     (stop_id,),

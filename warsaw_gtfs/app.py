@@ -125,7 +125,7 @@ def get_generate_shapes_tasks() -> list[Task]:
             generate_shapes.GraphConfig(
                 osm_resource="tram_rail_shapes.osm",
                 profile=routx.OsmProfile.RAILWAY,
-                curation_resource="shapes.json",
+                curation_resource="shapes.yaml",
             ),
             generate_shapes.GenerateConfig(
                 routes=selector.Routes(type=Route.Type.RAIL),
@@ -140,7 +140,7 @@ def get_generate_shapes_tasks() -> list[Task]:
             generate_shapes.GraphConfig(
                 osm_resource="tram_rail_shapes.osm",
                 profile=routx.OsmProfile.TRAM,
-                curation_resource="shapes.json",
+                curation_resource="shapes.yaml",
             ),
             generate_shapes.GenerateConfig(
                 routes=selector.Routes(type=Route.Type.TRAM),
@@ -156,7 +156,7 @@ def get_generate_shapes_tasks() -> list[Task]:
                 osm_resource="mazowieckie-latest.osm.pbf",
                 profile=routx.OsmProfile.BUS,
                 bbox=(20.58, 51.92, 21.47, 52.5),
-                curation_resource="shapes.json",
+                curation_resource="shapes.yaml",
             ),
             generate_shapes.GenerateConfig(
                 routes=selector.Routes(type=Route.Type.BUS),
@@ -180,7 +180,7 @@ def get_generate_shapes_resources() -> dict[str, Resource]:
             ),
             minimal_time_between=timedelta(days=3),
         ),
-        "shapes.json": LocalResource("data_curated/shapes.json"),
+        "shapes.yaml": LocalResource("data_curated/shapes.yaml"),
     }
 
 
@@ -404,8 +404,8 @@ def create_intermediate_pipeline(
                 ("663351", "663301"),  # Kiełpin KMŁ 51 → Kiełpin KMŁ 01
             ],
         ),
-        CurateStopNames("stops.json"),
-        CurateStopPositions("stops.json"),
+        CurateStopNames("stops.yaml"),
+        CurateStopPositions("stops.yaml"),
         CollapseDuplicateStopTimes(),
         # ========================
         # 9. Prettify other attributes
@@ -522,7 +522,7 @@ class WarsawGTFS(App):
     ) -> Pipeline | MultiFile[ZTMResource]:
         resources: dict[str, Resource] = {
             "calendar_exceptions.csv": polish_calendar_exceptions.RESOURCE,
-            "stops.json": LocalResource("data_curated/stops.json"),
+            "stops.yaml": LocalResource("data_curated/stops.yaml"),
             "metro_routes.csv": LocalResource("data_curated/metro/routes.csv"),
             "metro_schedules.csv": LocalResource("data_curated/metro/schedules.csv"),
             "metro_services.csv": LocalResource("data_curated/metro/services.csv"),

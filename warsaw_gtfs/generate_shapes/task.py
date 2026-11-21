@@ -142,18 +142,18 @@ class Task(ImpulsTask):
         if not self.graph.curation_resource:
             return {}, {}
 
-        curation = resources[self.graph.curation_resource].json()
+        curation = resources[self.graph.curation_resource].yaml()
         ratio_overrides = self.load_ratio_overrides(curation)
         force_via = self.load_force_via(curation)
         return ratio_overrides, force_via
 
     @staticmethod
     def load_ratio_overrides(curation: Any) -> RatioOverrides:
-        return {(i["from"], i["to"]): i["ratio"] for i in curation["ratio_overrides"]}
+        return {(str(i["from"]), str(i["to"])): i["ratio"] for i in curation["ratio_overrides"]}
 
     @staticmethod
     def load_force_via(curation: Any) -> ForceVia:
-        return {(i["from"], i["to"]): tuple(i["via"]) for i in curation["force_via"]}
+        return {(str(i["from"]), str(i["to"])): tuple(i["via"]) for i in curation["force_via"]}
 
     def load_stop_positions(self, db: DBConnection, osm_file: StrPath) -> dict[str, LatLon]:
         """Returns a mapping from stop_ids to its positions, based on data
