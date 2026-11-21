@@ -285,6 +285,10 @@ force_via:
     to: 375006
     via: [52.0394262, 20.9958087]
     comment: "L28 for Jazgarzew Główna 06 round Rondo 700-lecia Jazgarzewa, not reversing at the stop"
+  - from: 386501
+    to: 386502
+    via: [52.0772199, 21.0983753]
+    comment: "L24 for Konstancin-Jeziorna Kazimierzowska 02 up Chylicka and round Rondo Miasta Partnerskiego Nowa Wilejka, not reversing at the stop"
   - from: 388301
     to: 384201
     via: [52.0224721, 21.0424542]
