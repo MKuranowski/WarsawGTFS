@@ -635,6 +635,12 @@
       "to": "149001",
       "via": [52.3384619, 21.2143668],
       "comment": "L26 for PKP Kobyłka 01 via Piaskowa and 11 Listopada, not reversing at either stop"
+    },
+    {
+      "from": "375005",
+      "to": "375006",
+      "via": [52.0394262, 20.9958087],
+      "comment": "L28 for Jazgarzew Główna 06 round Rondo 700-lecia Jazgarzewa, not reversing at the stop"
     }
   ],
   "ratio_overrides": [
