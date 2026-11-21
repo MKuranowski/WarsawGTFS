@@ -261,6 +261,10 @@ force_via:
     to: 316403
     via: [52.0776309, 21.0354209]
     comment: "L53 for Piaseczno Chyliczkowska - Technikum 03 via Armii Krajowej, not reversing at the stop"
+  - from: 322304
+    to: 372401
+    via: [52.0813598, 21.0979863]
+    comment: "L16 for Konstancin-Jeziorna Oborska 01 via Sułkowskiego and down Rycerska, not via Chylicka and Oborska"
   - from: 326771
     to: 324502
     via: [52.1712457, 21.0045415]
@@ -273,6 +277,10 @@ force_via:
     to: 337302
     via: [52.02445, 21.1194478]
     comment: "L28 for Solec 02 on along Szkolna and up Graniczna, not reversing at Baniocha - Szkoła 02"
+  - from: 372402
+    to: 322301
+    via: [52.0813598, 21.0979863]
+    comment: "L16 for Konstancin-Jeziorna Bydgoska 01 up Rycerska and via Sułkowskiego, not reversing at Oborska 02 and via Oborska and Chylicka"
   - from: 375005
     to: 375006
     via: [52.0394262, 20.9958087]
