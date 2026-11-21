@@ -99,6 +99,10 @@ force_via:
     to: 147601
     via: [52.2877272, 21.1265092]
     comment: "245 for Ząbki Gajowa 01 round the Gajowa/Sosnowa/Sikorskiego roundabout, not reversing at 01"
+  - from: 149002
+    to: 195801
+    via: [52.3384619, 21.2143668]
+    comment: "L26 for Kobyłka Miejski Ośrodek Kultury 01 via 11 Listopada and Piaskowa, not reversing at either stop"
   - from: 156101
     to: 128701
     via: [52.3242592, 21.048336]
@@ -111,18 +115,38 @@ force_via:
     to: 138902
     via: [52.346775, 21.228277]
     comment: "L36, L40, L44 for Wołomin Sasina 02 on along Gdyńska and down Sasina, not reversing at Sasina - Liceum 01 into Średnia"
+  - from: 175601
+    to: 175701
+    via: [52.3340971, 21.2427242]
+    comment: "L38 for Wołomin Gryczana 01 down Legionów and along Gryczana, not reversing at Partyzantów - Szkoła 01 and round by Partyzantów and Sikorskiego"
   - from: 175652
     to: 175502
     via: [52.3368843, 21.2384961]
     comment: "L38 for Wołomin Lipińska 02 via Brzozowa and Wiejska, not via Sikorskiego and back along Lipińska"
+  - from: 175702
+    to: 175652
+    via: [52.3340971, 21.2427242]
+    comment: "L38 for Wołomin Partyzantów - Szkoła 52 along Gryczana and up Legionów, not reversing at Gryczana 02 and round by Sikorskiego and Partyzantów"
   - from: 177202
     to: 167502
     via: [52.366465, 21.283188]
     comment: "L36 for Lipinki Wiosenna 02 via Kolejowa, Willowa, Parkowa and up Wiosenna, not reversing at PKP Zagościniec 02 and in Wiosenna"
+  - from: 179601
+    to: 199701
+    via: [52.409237, 20.7844005]
+    comment: "L-7, L41 for Suchocin Wiklinowa 01 through the whole bus bay from its west end, not reversing into it from the east"
   - from: 181002
     to: 181102
     via: [52.453792, 20.9550041]
     comment: "L10, L11, L-9 for Wieliszew Willowa 02 up Słoneczna, not back along Modlińska and Krótka"
+  - from: 181302
+    to: 181401
+    via: [52.4710823, 20.9495042]
+    comment: "L10, L11 for Wieliszew Wodociąg Płn. 01 round the loop at the end of Przedpełskiego and down the bus bay, not reversing at the stop"
+  - from: 181402
+    to: 181501
+    via: [52.4782891, 20.9467221]
+    comment: "L-9, L10 for Wieliszew - Plaża 01 round the turning loop past the stop, not reversing at the stop on 600-lecia"
   - from: 182003
     to: 184701
     via: [52.4477457, 20.9729858]
@@ -131,6 +155,14 @@ force_via:
     to: 184901
     via: [52.2966244, 21.1589383]
     comment: "L46 for Marki"
+  - from: 195802
+    to: 149001
+    via: [52.3384619, 21.2143668]
+    comment: "L26 for PKP Kobyłka 01 via Piaskowa and 11 Listopada, not reversing at either stop"
+  - from: 199001
+    to: 177702
+    via: [52.3556413, 21.326755]
+    comment: "L35 for Nowe Grabie II 02 round the cemetery car park, not reversing at Nowe Grabie - Cmentarz 01"
 
   - from: 201901
     to: 226101
@@ -197,6 +229,10 @@ force_via:
     to: 301202
     via: [52.1554342, 21.0178082]
     comment: "300 for Metro Wilanowska, turning around at Romera"
+  - from: 302303
+    to: 302301
+    via: [52.1060348, 21.0242143]
+    comment: "L39 for Dąbrówka 01 round the Kuropatwy/Przedsiębiorców roundabout, not reversing at 03"
   - from: 302601
     to: 302701
     via: [52.2036892, 21.0336465]
@@ -221,6 +257,14 @@ force_via:
     to: 302704
     via: [52.1984193, 21.0383774]
     comment: "172 for Dolna 04 up the Sobieskiego busway, not a U-turn at Beethovena"
+  - from: 316203
+    to: 316403
+    via: [52.0776309, 21.0354209]
+    comment: "L53 for Piaseczno Chyliczkowska - Technikum 03 via Armii Krajowej, not reversing at the stop"
+  - from: 322304
+    to: 372401
+    via: [52.0813598, 21.0979863]
+    comment: "L16 for Konstancin-Jeziorna Oborska 01 via Sułkowskiego and down Rycerska, not via Chylicka and Oborska"
   - from: 326771
     to: 324502
     via: [52.1712457, 21.0045415]
@@ -229,6 +273,22 @@ force_via:
     to: 333802
     via: [52.163423, 21.027161]
     comment: "401 for Bacha 02 via the U-turn near P&R Ursynów"
+  - from: 361602
+    to: 337302
+    via: [52.02445, 21.1194478]
+    comment: "L28 for Solec 02 on along Szkolna and up Graniczna, not reversing at Baniocha - Szkoła 02"
+  - from: 372402
+    to: 322301
+    via: [52.0813598, 21.0979863]
+    comment: "L16 for Konstancin-Jeziorna Bydgoska 01 up Rycerska and via Sułkowskiego, not reversing at Oborska 02 and via Oborska and Chylicka"
+  - from: 375005
+    to: 375006
+    via: [52.0394262, 20.9958087]
+    comment: "L28 for Jazgarzew Główna 06 round Rondo 700-lecia Jazgarzewa, not reversing at the stop"
+  - from: 386501
+    to: 386502
+    via: [52.0772199, 21.0983753]
+    comment: "L24 for Konstancin-Jeziorna Kazimierzowska 02 up Chylicka and round Rondo Miasta Partnerskiego Nowa Wilejka, not reversing at the stop"
   - from: 388301
     to: 384201
     via: [52.0224721, 21.0424542]
@@ -270,6 +330,10 @@ force_via:
     to: 435801
     via: [52.10678, 20.96913]
     comment: "L33 for PKP Jeziorki via Raszyńska street"
+  - from: 418101
+    to: 438401
+    via: [52.1016101, 20.9828498]
+    comment: "L33 for Zgorzała Storczykowa 01 round the roundabout at the end of Storczykowa, not reversing at the stop"
   - from: 418303
     to: 413104
     via: [52.1824861, 20.8989669]
@@ -298,6 +362,10 @@ force_via:
     to: 428701
     via: [52.0822827, 20.7673806]
     comment: "733 for Stara Wieś 01 round the turning loop, not reversing at the stop"
+  - from: 432902
+    to: 438401
+    via: [52.1016101, 20.9828498]
+    comment: "L33 for Zgorzała Storczykowa 01 round the roundabout at the end of Storczykowa, not reversing at the stop"
   - from: 434201
     to: 420501
     via: [52.1928229, 20.8718127]
@@ -310,6 +378,10 @@ force_via:
     to: 512701
     via: [52.2145685, 20.9309098]
     comment: "228 for Wagonownia 01 round the Potrzebna roundabout, not reversing at 01"
+  - from: 485101
+    to: 485001
+    via: [52.088804, 20.8542103]
+    comment: "L-4 for Walendów Konwaliowa 01 round the turning loop at the end of Brzozowa, not reversing at Os. Walendia 01"
 
   - from: 503401
     to: 503471
