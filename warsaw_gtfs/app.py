@@ -176,7 +176,7 @@ def get_generate_shapes_resources() -> dict[str, Resource]:
         "tram_rail_shapes.osm": LocalResource("data_curated/tram_rail_shapes.osm"),
         "mazowieckie-latest.osm.pbf": TimeLimitedResource(
             r=HTTPResource.get(
-                "https://download.geofabrik.de/europe/poland/mazowieckie-latest.osm.pbf",
+                "https://download.geofabrik.de/europe/poland/mazowieckie/mazowieckie-latest.osm.pbf",
             ),
             minimal_time_between=timedelta(days=3),
         ),
